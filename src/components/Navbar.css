@@ -1,0 +1,576 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Ethiopian-inspired color palette */
+:root {
+  --ethiopian-gold: #D4AF37;
+  --ethiopian-green: #1E4D2B;
+  --ethiopian-red: #B22234;
+  --ethiopian-cream: #FDF5E6;
+  --ethiopian-brown: #8B4513;
+  --ethiopian-terracotta: #CD5C5C;
+  --ethiopian-charcoal: #2C3E50;
+  --ethiopian-sand: #C4A484;
+  --text-dark: #2C1810;
+  --text-light: #FDF5E6;
+}
+
+/* Top Bar */
+.top-bar {
+  background: linear-gradient(135deg, var(--ethiopian-charcoal) 0%, #1a2632 100%);
+  color: var(--ethiopian-cream);
+  padding: 10px 0;
+  font-size: 0.9rem;
+  font-family: 'Poppins', sans-serif;
+  border-bottom: 3px solid var(--ethiopian-gold);
+  letter-spacing: 0.3px;
+}
+
+.top-bar-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.top-bar-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.top-bar-icon {
+  color: var(--ethiopian-gold);
+  font-size: 0.9rem;
+}
+
+/* Main Navbar */
+.navbar {
+  background: var(--ethiopian-cream);
+  height: 90px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.navbar.scrolled {
+  height: 80px;
+  background: rgba(253, 245, 230, 0.98);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 90px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px;
+  transition: height 0.3s ease;
+}
+
+.scrolled .navbar-container {
+  height: 80px;
+}
+
+/* Logo Section - Left Aligned */
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  gap: 12px;
+  min-width: 200px;
+}
+
+.logo-circle {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, var(--ethiopian-gold), var(--ethiopian-brown));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.navbar-logo:hover .logo-circle {
+  transform: rotate(10deg);
+}
+
+.logo-icon {
+  color: var(--ethiopian-cream);
+  font-size: 1.6rem;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.restaurant-name {
+  color: var(--ethiopian-charcoal);
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1.2;
+  font-family: 'Playfair Display', serif;
+  letter-spacing: 0.5px;
+}
+
+.restaurant-cuisine {
+  color: var(--ethiopian-brown);
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Desktop Navigation - Centered */
+.nav-menu-desktop {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 30px;
+  flex: 1;
+  justify-content: center;
+}
+
+.nav-link {
+  color: var(--ethiopian-charcoal);
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+  position: relative;
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: 0.3px;
+}
+
+.nav-link:hover {
+  color: var(--ethiopian-gold);
+}
+
+.nav-link.active {
+  color: var(--ethiopian-gold);
+  font-weight: 600;
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 25px;
+  height: 3px;
+  background: var(--ethiopian-gold);
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(212, 175, 55, 0.3);
+}
+
+/* Right Side Icons */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 200px;
+  justify-content: flex-end;
+}
+
+.nav-icon {
+  color: var(--ethiopian-charcoal);
+  font-size: 1.2rem;
+  text-decoration: none;
+  position: relative;
+  transition: all 0.3s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.nav-icon:hover {
+  color: var(--ethiopian-gold);
+  background: rgba(212, 175, 55, 0.2);
+  transform: translateY(-2px);
+}
+
+.cart-icon-nav {
+  position: relative;
+}
+
+.cart-badge-nav {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--ethiopian-red);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--ethiopian-cream);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.admin-link {
+  background: var(--ethiopian-gold);
+  color: var(--ethiopian-charcoal);
+  text-decoration: none;
+  padding: 6px 16px;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.admin-link:hover {
+  background: transparent;
+  color: var(--ethiopian-gold);
+  border-color: var(--ethiopian-gold);
+  transform: translateY(-2px);
+}
+
+/* Menu Icon - Hidden on Desktop */
+.menu-icon {
+  display: none;
+  font-size: 1.8rem;
+  color: var(--ethiopian-charcoal);
+  cursor: pointer;
+  z-index: 1002;
+  transition: color 0.3s ease;
+}
+
+.menu-icon:hover {
+  color: var(--ethiopian-gold);
+}
+
+/* Mobile Menu Overlay */
+.mobile-menu-overlay {
+  display: none;
+  position: fixed;
+  top: 90px;
+  left: 0;
+  width: 100%;
+  height: calc(100vh - 90px);
+  background: linear-gradient(135deg, var(--ethiopian-cream) 0%, #f5e6d3 100%);
+  z-index: 1001;
+  transform: translateX(-100%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+}
+
+.scrolled .mobile-menu-overlay {
+  top: 80px;
+  height: calc(100vh - 80px);
+}
+
+.mobile-menu-overlay.active {
+  transform: translateX(0);
+}
+
+.nav-menu-mobile {
+  list-style: none;
+  padding: 40px;
+  margin: 0;
+}
+
+.mobile-nav-item {
+  margin-bottom: 25px;
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.mobile-menu-overlay.active .mobile-nav-item {
+  animation: slideIn 0.4s ease forwards;
+  animation-delay: calc(0.1s * var(--i));
+}
+
+@keyframes slideIn {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.mobile-nav-link {
+  color: var(--ethiopian-charcoal);
+  text-decoration: none;
+  font-size: 1.4rem;
+  font-weight: 500;
+  display: block;
+  padding: 12px 0;
+  border-bottom: 2px solid rgba(212, 175, 55, 0.2);
+  transition: all 0.3s ease;
+  font-family: 'Playfair Display', serif;
+}
+
+.mobile-nav-link:hover {
+  color: var(--ethiopian-gold);
+  border-bottom-color: var(--ethiopian-gold);
+  padding-left: 10px;
+}
+
+.mobile-menu-address {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 30px 40px;
+  background: linear-gradient(135deg, var(--ethiopian-charcoal) 0%, #1a2632 100%);
+  color: var(--ethiopian-cream);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.mobile-address-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 0.95rem;
+}
+
+.mobile-address-icon {
+  color: var(--ethiopian-gold);
+  font-size: 1.1rem;
+  width: 20px;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 1024px) {
+  .navbar-container,
+  .top-bar-container {
+    padding: 0 30px;
+  }
+
+  .restaurant-name {
+    font-size: 1.2rem;
+  }
+
+  .nav-menu-desktop {
+    gap: 20px;
+  }
+}
+
+@media screen and (max-width: 968px) {
+  .nav-menu-desktop {
+    display: none;
+  }
+
+  .menu-icon {
+    display: block;
+  }
+
+  .mobile-menu-overlay {
+    display: block;
+  }
+
+  .nav-right {
+    min-width: auto;
+  }
+
+  .restaurant-name {
+    font-size: 1.1rem;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .top-bar {
+    padding: 8px 0;
+  }
+
+  .top-bar-container {
+    flex-direction: column;
+    gap: 5px;
+    text-align: center;
+    padding: 0 20px;
+  }
+
+  .navbar {
+    height: 80px;
+  }
+
+  .navbar-container {
+    height: 80px;
+    padding: 0 20px;
+  }
+
+  .scrolled {
+    height: 70px;
+  }
+
+  .scrolled .navbar-container {
+    height: 70px;
+  }
+
+  .logo-circle {
+    width: 40px;
+    height: 40px;
+  }
+
+  .logo-icon {
+    font-size: 1.3rem;
+  }
+
+  .restaurant-name {
+    font-size: 1rem;
+  }
+
+  .restaurant-cuisine {
+    font-size: 0.6rem;
+  }
+
+  .nav-right {
+    gap: 10px;
+  }
+
+  .nav-icon {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+
+  .admin-link {
+    padding: 4px 12px;
+    font-size: 0.8rem;
+  }
+
+  .mobile-menu-overlay {
+    top: 80px;
+  }
+
+  .scrolled .mobile-menu-overlay {
+    top: 70px;
+  }
+
+  .nav-menu-mobile {
+    padding: 30px 20px;
+  }
+
+  .mobile-nav-link {
+    font-size: 1.2rem;
+  }
+
+  .mobile-menu-address {
+    padding: 20px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .navbar-logo {
+    min-width: auto;
+    gap: 8px;
+  }
+
+  .logo-circle {
+    width: 35px;
+    height: 35px;
+  }
+
+  .logo-icon {
+    font-size: 1.1rem;
+  }
+
+  .restaurant-name {
+    font-size: 0.9rem;
+  }
+
+  .restaurant-cuisine {
+    font-size: 0.5rem;
+  }
+
+  .nav-right {
+    gap: 5px;
+  }
+
+  .nav-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+  }
+
+  .cart-badge-nav {
+    width: 18px;
+    height: 18px;
+    font-size: 0.6rem;
+  }
+}
+
+/* Desktop hover effects */
+@media (min-width: 969px) {
+  .nav-link::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 100%;
+    height: 2px;
+    background: var(--ethiopian-gold);
+    transition: transform 0.3s ease;
+    transform-origin: center;
+  }
+
+  .nav-link:hover::before {
+    transform: translateX(-50%) scaleX(0.8);
+  }
+}
+
+/* Custom scrollbar for mobile menu */
+.mobile-menu-overlay::-webkit-scrollbar {
+  width: 5px;
+}
+
+.mobile-menu-overlay::-webkit-scrollbar-track {
+  background: var(--ethiopian-cream);
+}
+
+.mobile-menu-overlay::-webkit-scrollbar-thumb {
+  background: var(--ethiopian-gold);
+  border-radius: 10px;
+}
+
+.mobile-menu-overlay::-webkit-scrollbar-thumb:hover {
+  background: var(--ethiopian-brown);
+}
+
+/* Ensure proper spacing */
+body {
+  padding-top: 0;
+  font-family: 'Poppins', sans-serif;
+  background: var(--ethiopian-cream);
+}
+
+/* When mobile menu is open */
+body.menu-open {
+  overflow: hidden;
+}

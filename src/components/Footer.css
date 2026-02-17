@@ -1,0 +1,568 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap');
+
+/* Ethiopian-inspired color palette */
+:root {
+  --ethiopian-gold: #D4AF37;
+  --ethiopian-green: #1E4D2B;
+  --ethiopian-red: #B22234;
+  --ethiopian-cream: #FDF5E6;
+  --ethiopian-brown: #8B4513;
+  --ethiopian-terracotta: #CD5C5C;
+  --ethiopian-charcoal: #2C3E50;
+  --ethiopian-sand: #C4A484;
+  --ethiopian-ochre: #CC7722;
+  --text-dark: #2C1810;
+  --text-light: #FDF5E6;
+}
+
+/* Footer Styles */
+.footer {
+  background: linear-gradient(135deg, var(--ethiopian-charcoal) 0%, #1a2632 100%);
+  color: var(--ethiopian-cream);
+  font-family: 'Poppins', sans-serif;
+  position: relative;
+  margin-top: 60px;
+  border-top: 5px solid var(--ethiopian-gold);
+}
+
+/* Main Footer Section */
+.footer-main {
+  padding: 60px 0 40px;
+}
+
+.footer-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+}
+
+/* Footer Sections */
+.footer-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Logo */
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.footer-logo-circle {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, var(--ethiopian-gold), var(--ethiopian-ochre));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+}
+
+.footer-logo-icon {
+  color: var(--ethiopian-charcoal);
+  font-size: 1.6rem;
+}
+
+.footer-logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-restaurant-name {
+  color: var(--ethiopian-gold);
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-family: 'Playfair Display', serif;
+}
+
+.footer-restaurant-cuisine {
+  color: var(--ethiopian-cream);
+  font-size: 0.7rem;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+/* Description */
+.footer-description {
+  color: var(--ethiopian-cream);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  opacity: 0.9;
+}
+
+/* Social Links */
+.footer-social {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.social-link {
+  width: 45px;
+  height: 45px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.3rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.social-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--social-color);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 0;
+}
+
+.social-link:hover::before {
+  opacity: 1;
+}
+
+.social-link:hover {
+  transform: translateY(-5px) scale(1.1);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.social-link svg {
+  position: relative;
+  z-index: 1;
+}
+
+/* TikTok specific hover */
+.social-link[style*="--social-color: #000000"]:hover {
+  background: #000000;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Footer Titles */
+.footer-title {
+  color: var(--ethiopian-gold);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 25px;
+  position: relative;
+  font-family: 'Playfair Display', serif;
+}
+
+.footer-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background: var(--ethiopian-gold);
+  border-radius: 5px;
+}
+
+/* Quick Links */
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 12px;
+}
+
+.footer-link {
+  color: var(--ethiopian-cream);
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  position: relative;
+  padding-left: 15px;
+}
+
+.footer-link::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: var(--ethiopian-gold);
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+.footer-link:hover {
+  color: var(--ethiopian-gold);
+  padding-left: 20px;
+}
+
+.footer-link:hover::before {
+  transform: rotate(90deg);
+}
+
+/* Working Hours */
+.footer-hours {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.hour-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed rgba(212, 175, 55, 0.2);
+}
+
+.hour-day {
+  color: var(--ethiopian-cream);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.hour-time {
+  color: var(--ethiopian-gold);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.hour-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+  color: var(--ethiopian-gold);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.hour-note-icon {
+  font-size: 0.9rem;
+}
+
+/* Contact Info */
+.footer-contact {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-contact li {
+  margin-bottom: 15px;
+}
+
+.contact-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ethiopian-cream);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.contact-link:hover {
+  color: var(--ethiopian-gold);
+  transform: translateX(5px);
+}
+
+.contact-icon {
+  color: var(--ethiopian-gold);
+  font-size: 1rem;
+  min-width: 20px;
+}
+
+.contact-text {
+  word-break: break-word;
+}
+
+/* Map Section */
+.footer-map {
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+  position: relative;
+  border-top: 1px solid rgba(212, 175, 55, 0.2);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.map-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  filter: grayscale(20%) sepia(10%) hue-rotate(10deg);
+  transition: filter 0.3s ease;
+}
+
+.map-iframe:hover {
+  filter: grayscale(0%) sepia(0%) hue-rotate(0deg);
+}
+
+/* Bottom Bar */
+.footer-bottom {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px 0;
+}
+
+.footer-bottom-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.copyright {
+  color: var(--ethiopian-cream);
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.made-with {
+  color: var(--ethiopian-cream);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.heart-icon {
+  color: var(--ethiopian-red);
+  animation: heartbeat 1.5s ease infinite;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.footer-bottom-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bottom-link {
+  color: var(--ethiopian-cream);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: color 0.3s ease;
+}
+
+.bottom-link:hover {
+  color: var(--ethiopian-gold);
+}
+
+.separator {
+  color: var(--ethiopian-gold);
+  opacity: 0.5;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 1024px) {
+  .footer-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .footer-main {
+    padding: 40px 0 30px;
+  }
+
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 0 30px;
+  }
+
+  .footer-section {
+    text-align: center;
+  }
+
+  .footer-logo {
+    justify-content: center;
+  }
+
+  .footer-title::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .footer-social {
+    justify-content: center;
+  }
+
+  .footer-link {
+    padding-left: 0;
+  }
+
+  .footer-link::before {
+    display: none;
+  }
+
+  .footer-link:hover {
+    padding-left: 0;
+  }
+
+  .hour-item {
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .contact-link {
+    justify-content: center;
+  }
+
+  .footer-bottom-container {
+    flex-direction: column;
+    text-align: center;
+    padding: 0 20px;
+  }
+
+  .footer-map {
+    height: 200px;
+  }
+
+  .social-link {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .footer-container {
+    padding: 0 20px;
+  }
+
+  .footer-logo-circle {
+    width: 40px;
+    height: 40px;
+  }
+
+  .footer-logo-icon {
+    font-size: 1.3rem;
+  }
+
+  .footer-restaurant-name {
+    font-size: 1.1rem;
+  }
+
+  .footer-title {
+    font-size: 1.1rem;
+  }
+
+  .footer-description {
+    font-size: 0.85rem;
+  }
+
+  .social-link {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+
+  .footer-bottom-links {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .separator {
+    display: none;
+  }
+
+  .footer-map {
+    height: 150px;
+  }
+}
+
+/* Hover Effects */
+.footer-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.footer-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.03) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.footer-section:hover::before {
+  opacity: 1;
+}
+
+/* Loading Animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.footer-section {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.footer-section:nth-child(1) { animation-delay: 0.1s; }
+.footer-section:nth-child(2) { animation-delay: 0.2s; }
+.footer-section:nth-child(3) { animation-delay: 0.3s; }
+.footer-section:nth-child(4) { animation-delay: 0.4s; }
+
+/* Print Styles */
+@media print {
+  .footer {
+    display: none;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .footer {
+    background: #000;
+    border-top: 5px solid #ff0;
+  }
+  
+  .footer-title {
+    color: #ff0;
+  }
+  
+  .footer-title::after {
+    background: #ff0;
+  }
+  
+  .social-link {
+    border: 2px solid #fff;
+  }
+}

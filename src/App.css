@@ -1,0 +1,78 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f8f9fa;
+}
+
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ethiopian-cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--ethiopian-gold), var(--ethiopian-ochre));
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--ethiopian-ochre), var(--ethiopian-brown));
+}
+
+/* Toast customization */
+.Toastify__toast {
+  border-radius: 10px !important;
+  font-family: 'Poppins', sans-serif !important;
+}
+
+.Toastify__toast--success {
+  background: linear-gradient(135deg, var(--ethiopian-green), #2a6b3a) !important;
+}
+
+.Toastify__toast--error {
+  background: linear-gradient(135deg, var(--ethiopian-red), #8b1e1e) !important;
+}
+
+.Toastify__toast--info {
+  background: linear-gradient(135deg, var(--ethiopian-charcoal), #1e2a3a) !important;
+}
+
+.Toastify__toast--warning {
+  background: linear-gradient(135deg, var(--ethiopian-gold), #b38f2c) !important;
+}
+
+/* Loading animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: fadeIn 0.5s ease forwards;
+}

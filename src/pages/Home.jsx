@@ -338,7 +338,7 @@ const Home = () => {
   const testimonials = [
     {
       id: 1,
-      name: 'Abebe Kebede',
+      name: 'Abebe ',
       image: 'https://randomuser.me/api/portraits/men/1.jpg',
       rating: 5,
       comment: 'Best view in Addis! The Sewrica Burger is absolutely amazing. Love the atmosphere and food.',
@@ -347,7 +347,7 @@ const Home = () => {
     },
     {
       id: 2,
-      name: 'Sara Hailu',
+      name: 'Sara',
       image: 'https://randomuser.me/api/portraits/women/2.jpg',
       rating: 5,
       comment: 'The city view from this cafe is breathtaking. Their pizza and traditional dishes are delicious!',
@@ -356,7 +356,7 @@ const Home = () => {
     },
     {
       id: 3,
-      name: 'John Smith',
+      name: 'Kebede',
       image: 'https://randomuser.me/api/portraits/men/3.jpg',
       rating: 5,
       comment: 'Great food, amazing view, excellent service. The Chechebsa is my favorite breakfast now.',

@@ -27,7 +27,7 @@ const Contact = () => {
     name: 'SEWRICA Cafe',
     address: 'Megenagna, Metebaber Building, 2nd Floor',
     city: 'Addis Ababa, Ethiopia',
-    phone: '+251 911 234 567',
+    phone: '+251 910339744',
     phone2: '+251 922 345 678',
     email: 'info@sewricacafe.com',
     email2: 'reservations@sewricacafe.com',

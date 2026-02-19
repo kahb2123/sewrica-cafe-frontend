@@ -574,3 +574,109 @@ body {
 body.menu-open {
   overflow: hidden;
 }
+/* User Menu Dropdown */
+.user-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.user-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: transparent;
+  border: 2px solid var(--ethiopian-gold);
+  border-radius: 50px;
+  color: var(--ethiopian-charcoal);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.user-menu-btn:hover {
+  background: var(--ethiopian-gold);
+  color: var(--ethiopian-charcoal);
+}
+
+.user-name {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 200px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  margin-top: 10px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.user-menu:hover .user-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  color: var(--ethiopian-charcoal);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid #eee;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: var(--ethiopian-gold);
+  color: white;
+}
+
+.logout-item {
+  color: #dc3545;
+}
+
+.logout-item:hover {
+  background: #dc3545;
+  color: white;
+}
+
+.logout-mobile {
+  color: #dc3545;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 1.2rem;
+  padding: 12px 0;
+  cursor: pointer;
+}
+
+.logout-mobile:hover {
+  color: #ff4444;
+}
+
+.user-info {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--ethiopian-gold);
+}

@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FaShoppingCart, FaUser, FaBars, FaTimes, FaUtensils, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
+import { 
+  FaShoppingCart, FaUser, FaBars, FaTimes, 
+  FaUtensils, FaPhone, FaMapMarkerAlt, FaSignOutAlt
+} from 'react-icons/fa';
+import { toast } from 'react-toastify';
+import { authService } from '../services/api';
 import './Navbar.css';
 
 const Navbar = () => {
@@ -8,12 +13,14 @@ const Navbar = () => {
   const [cartCount, setCartCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState('');
+  const [userName, setUserName] = useState('');
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    const getCartCount = () => {
+    // Load cart count from localStorage
+    const updateCartCount = () => {
       try {
         const cart = localStorage.getItem('cart');
         if (cart) {
@@ -35,36 +42,50 @@ const Navbar = () => {
       }
     };
 
+    // Check login status from real auth service
     const checkLoginStatus = () => {
-      try {
-        const token = localStorage.getItem('token');
-        const role = localStorage.getItem('userRole');
-        
-        if (token && token !== 'undefined' && token !== 'null') {
-          setIsLoggedIn(true);
-          setUserRole(role || 'customer');
-        } else {
-          setIsLoggedIn(false);
-          setUserRole('');
-        }
-      } catch (error) {
-        console.error('Error checking login:', error);
+      const user = authService.getCurrentUser();
+      if (user) {
+        setIsLoggedIn(true);
+        setUserRole(user.role || 'customer');
+        setUserName(user.name || 'User');
+      } else {
         setIsLoggedIn(false);
         setUserRole('');
+        setUserName('');
       }
     };
 
-    getCartCount();
+    updateCartCount();
     checkLoginStatus();
 
+    // Listen for storage events (for multi-tab support)
     const handleStorageChange = (e) => {
-      if (e.key === 'cart') getCartCount();
-      if (e.key === 'token' || e.key === 'userRole') checkLoginStatus();
+      if (e.key === 'cart') {
+        updateCartCount();
+      }
+      if (e.key === 'user' || e.key === 'token') {
+        checkLoginStatus();
+      }
     };
 
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('cartUpdated', getCartCount);
 
+    // Custom event for cart updates (for same-tab updates)
+    const handleCartUpdate = () => {
+      updateCartCount();
+    };
+
+    window.addEventListener('cartUpdated', handleCartUpdate);
+
+    // Custom event for auth updates
+    const handleAuthUpdate = () => {
+      checkLoginStatus();
+    };
+
+    window.addEventListener('authUpdated', handleAuthUpdate);
+
+    // Scroll effect
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
     };
@@ -73,13 +94,15 @@ const Navbar = () => {
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('cartUpdated', getCartCount);
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('authUpdated', handleAuthUpdate);
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+    // Prevent body scroll when menu is open
     if (!isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -89,16 +112,21 @@ const Navbar = () => {
 
   const handleLogout = () => {
     try {
-      localStorage.removeItem('token');
-      localStorage.removeItem('userRole');
+      authService.logout(); // Clear token and user from localStorage
       setIsLoggedIn(false);
       setUserRole('');
+      setUserName('');
       navigate('/');
       setIsOpen(false);
       document.body.style.overflow = 'unset';
-      window.dispatchEvent(new Event('cartUpdated'));
+      
+      // Dispatch custom event for other components
+      window.dispatchEvent(new Event('authUpdated'));
+      
+      toast.success('Logged out successfully!');
     } catch (error) {
       console.error('Error during logout:', error);
+      toast.error('Logout failed');
     }
   };
 
@@ -136,8 +164,8 @@ const Navbar = () => {
               <FaUtensils className="logo-icon" />
             </div>
             <div className="logo-text">
-              <span className="restaurant-name">Megenagna</span>
-              <span className="restaurant-cuisine">Ethiopian Cuisine</span>
+              <span className="restaurant-name">SEWRICA</span>
+              <span className="restaurant-cuisine">Cafe & Restaurant</span>
             </div>
           </Link>
 
@@ -163,26 +191,53 @@ const Navbar = () => {
           {/* Right Side Icons */}
           <div className="nav-right">
             {/* Cart Icon */}
-            <Link to="/cart" className="nav-icon cart-icon-nav">
+            <Link to="/cart" className="nav-icon cart-icon-nav" title="Shopping Cart">
               <FaShoppingCart />
               {cartCount > 0 && <span className="cart-badge-nav">{cartCount}</span>}
             </Link>
 
-            {/* User Icon / Login */}
+            {/* User Menu */}
             {isLoggedIn ? (
-              <button onClick={handleLogout} className="nav-icon user-icon-nav" title="Logout">
-                <FaUser />
-              </button>
+              <div className="user-menu">
+                <button className="user-menu-btn" title="User Menu">
+                  <FaUser className="user-icon" />
+                  <span className="user-name">{userName.split(' ')[0]}</span>
+                </button>
+                <div className="user-dropdown">
+                  <Link to="/profile" className="dropdown-item" onClick={closeMenu}>
+                    <FaUser /> My Profile
+                  </Link>
+                  {userRole === 'admin' && (
+                    <Link to="/admin" className="dropdown-item" onClick={closeMenu}>
+                      <FaUtensils /> Admin Dashboard
+                    </Link>
+                  )}
+                  {userRole === 'cashier' && (
+                    <Link to="/cashier" className="dropdown-item" onClick={closeMenu}>
+                      <FaUtensils /> Cashier Panel
+                    </Link>
+                  )}
+                  {userRole === 'cook' && (
+                    <Link to="/kitchen" className="dropdown-item" onClick={closeMenu}>
+                      <FaUtensils /> Kitchen View
+                    </Link>
+                  )}
+                  {userRole === 'delivery' && (
+                    <Link to="/delivery" className="dropdown-item" onClick={closeMenu}>
+                      <FaUtensils /> Delivery Dashboard
+                    </Link>
+                  )}
+                  <Link to="/orders" className="dropdown-item" onClick={closeMenu}>
+                    <FaShoppingCart /> My Orders
+                  </Link>
+                  <button onClick={handleLogout} className="dropdown-item logout-item">
+                    <FaSignOutAlt /> Logout
+                  </button>
+                </div>
+              </div>
             ) : (
               <Link to="/login" className="nav-icon user-icon-nav" title="Login">
                 <FaUser />
-              </Link>
-            )}
-
-            {/* Admin Link - Only for admin */}
-            {userRole === 'admin' && (
-              <Link to="/admin" className="admin-link">
-                Admin
               </Link>
             )}
 
@@ -211,23 +266,73 @@ const Navbar = () => {
                 Contact
               </Link>
             </li>
+            
+            {isLoggedIn && (
+              <>
+                <li className="mobile-nav-item" style={{ '--i': 4 }}>
+                  <Link to="/profile" className="mobile-nav-link" onClick={closeMenu}>
+                    My Profile
+                  </Link>
+                </li>
+                <li className="mobile-nav-item" style={{ '--i': 5 }}>
+                  <Link to="/orders" className="mobile-nav-link" onClick={closeMenu}>
+                    My Orders
+                  </Link>
+                </li>
+              </>
+            )}
+            
             {userRole === 'admin' && (
-              <li className="mobile-nav-item" style={{ '--i': 4 }}>
+              <li className="mobile-nav-item" style={{ '--i': 6 }}>
                 <Link to="/admin" className="mobile-nav-link" onClick={closeMenu}>
-                  Admin
+                  Admin Dashboard
                 </Link>
               </li>
             )}
-            <li className="mobile-nav-item" style={{ '--i': 5 }}>
+            
+            {userRole === 'cashier' && (
+              <li className="mobile-nav-item" style={{ '--i': 6 }}>
+                <Link to="/cashier" className="mobile-nav-link" onClick={closeMenu}>
+                  Cashier Panel
+                </Link>
+              </li>
+            )}
+            
+            {userRole === 'cook' && (
+              <li className="mobile-nav-item" style={{ '--i': 6 }}>
+                <Link to="/kitchen" className="mobile-nav-link" onClick={closeMenu}>
+                  Kitchen View
+                </Link>
+              </li>
+            )}
+            
+            {userRole === 'delivery' && (
+              <li className="mobile-nav-item" style={{ '--i': 6 }}>
+                <Link to="/delivery" className="mobile-nav-link" onClick={closeMenu}>
+                  Delivery Dashboard
+                </Link>
+              </li>
+            )}
+            
+            <li className="mobile-nav-item" style={{ '--i': 7 }}>
               <Link to="/cart" className="mobile-nav-link" onClick={closeMenu}>
                 Cart {cartCount > 0 && `(${cartCount})`}
               </Link>
             </li>
+            
             {!isLoggedIn && (
-              <li className="mobile-nav-item" style={{ '--i': 6 }}>
+              <li className="mobile-nav-item" style={{ '--i': 8 }}>
                 <Link to="/login" className="mobile-nav-link" onClick={closeMenu}>
-                  Login
+                  Login / Sign Up
                 </Link>
+              </li>
+            )}
+            
+            {isLoggedIn && (
+              <li className="mobile-nav-item" style={{ '--i': 9 }}>
+                <button onClick={handleLogout} className="mobile-nav-link logout-mobile">
+                  Logout
+                </button>
               </li>
             )}
           </ul>
@@ -242,6 +347,12 @@ const Navbar = () => {
               <FaPhone className="mobile-address-icon" />
               <span>+251 911 234 567</span>
             </div>
+            {isLoggedIn && (
+              <div className="mobile-address-item user-info">
+                <FaUser className="mobile-address-icon" />
+                <span>Logged in as {userName}</span>
+              </div>
+            )}
           </div>
         </div>
       </nav>

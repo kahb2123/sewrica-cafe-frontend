@@ -10,10 +10,13 @@ import {
 import { MdDeliveryDining, MdRestaurantMenu } from 'react-icons/md';
 import { RiTakeawayLine } from 'react-icons/ri';
 import { toast } from 'react-toastify';
+import { orderService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import './Cart.css';
 
 const Cart = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [checkoutStep, setCheckoutStep] = useState(1); // 1: cart, 2: checkout, 3: payment, 4: confirmation
@@ -35,6 +38,7 @@ const Cart = () => {
   const [formErrors, setFormErrors] = useState({});
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
+  const [currentOrderId, setCurrentOrderId] = useState('');
 
   // Load cart items from localStorage
   useEffect(() => {
@@ -190,30 +194,89 @@ const Cart = () => {
   };
 
   // Place order
-  const placeOrder = () => {
-    // Generate random order number
-    const newOrderNumber = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
-    setOrderNumber(newOrderNumber);
-    
-    // Here you would typically send the order to your backend
-    console.log('Order placed:', {
-      orderNumber: newOrderNumber,
-      items: cartItems,
-      customer: customerInfo,
-      subtotal: calculateSubtotal(),
-      total: calculateTotal(),
-      orderDate: new Date().toISOString()
-    });
-    
+  const placeOrder = async () => {
+    // Check if user is logged in
+    if (!user) {
+      toast.error('Please login to place an order');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Prepare order data for backend
+      const orderData = {
+        items: cartItems.map(item => ({
+          menuItem: item.id,
+          quantity: item.quantity
+        })),
+        customerInfo: {
+          name: customerInfo.name,
+          email: customerInfo.email,
+          phone: customerInfo.phone,
+          address: customerInfo.address,
+          city: customerInfo.city,
+          area: customerInfo.area,
+          building: customerInfo.building,
+          floor: customerInfo.floor,
+          additionalInfo: customerInfo.additionalInfo
+        },
+        paymentMethod: customerInfo.paymentMethod,
+        deliveryMethod: customerInfo.deliveryMethod,
+        deliveryTime: customerInfo.deliveryTime,
+        specialInstructions: customerInfo.specialInstructions || ''
+      };
+
+      // Submit order to backend
+      const response = await orderService.createOrder(orderData);
+
+      // Handle different payment methods
+      if (customerInfo.paymentMethod === 'card') {
+        // For card payments, proceed to payment step
+        setOrderNumber(response.order.orderNumber);
+        setCurrentOrderId(response.order._id);
+        setCheckoutStep(3); // Go to payment step
+      } else {
+        // For cash payments, order is complete
+        setOrderNumber(response.order.orderNumber);
+
+        // Clear cart
+        localStorage.removeItem('cart');
+        window.dispatchEvent(new Event('cartUpdated'));
+
+        setOrderPlaced(true);
+        setCheckoutStep(4);
+        window.scrollTo(0, 0);
+
+        toast.success('Order placed successfully!');
+      }
+
+    } catch (error) {
+      console.error('Order placement error:', error);
+      toast.error(error.message || 'Failed to place order. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle successful payment
+  const handlePaymentSuccess = (paymentIntent) => {
     // Clear cart
     localStorage.removeItem('cart');
     window.dispatchEvent(new Event('cartUpdated'));
-    
+
     setOrderPlaced(true);
     setCheckoutStep(4);
     window.scrollTo(0, 0);
-    
-    toast.success('Order placed successfully!');
+
+    toast.success('Payment successful! Order confirmed.');
+  };
+
+  // Handle payment error
+  const handlePaymentError = (error) => {
+    console.error('Payment error:', error);
+    toast.error('Payment failed. Please try again.');
   };
 
   // Continue shopping

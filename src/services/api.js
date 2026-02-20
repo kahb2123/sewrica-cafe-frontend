@@ -249,16 +249,16 @@ export const adminService = {
   },
 
   // Update order status
-  updateOrderStatus: async (orderId, status, assignedTo = null) => {
+  updateOrderStatus: async (orderId, status, notes = null) => {
     try {
-      const response = await api.put(`/admin/orders/${orderId}`, {
+      const response = await api.patch(`/orders/${orderId}/status`, {
         status,
-        assignedTo
+        notes
       });
       return response.data;
     } catch (error) {
-      console.error('Error updating order:', error);
-      throw error.response?.data || { message: 'Failed to update order' };
+      console.error('Error updating order status:', error);
+      throw error.response?.data || { message: 'Failed to update order status' };
     }
   },
 
@@ -409,6 +409,20 @@ export const adminService = {
       console.error('Error exporting report:', error);
       throw error.response?.data || { message: 'Failed to export report' };
     }
+  },
+
+  // Update order status (for staff)
+  updateOrderStatus: async (orderId, status, notes = null) => {
+    try {
+      const response = await api.patch(`/orders/${orderId}/status`, {
+        status,
+        notes
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      throw error.response?.data || { message: 'Failed to update order status' };
+    }
   }
 };
 
@@ -452,6 +466,43 @@ export const orderService = {
     } catch (error) {
       throw error.response?.data || { message: 'Failed to cancel order' };
     }
+  },
+
+  // Create payment intent for Stripe
+  createPaymentIntent: async (orderId, paymentMethodId) => {
+    try {
+      const response = await api.post('/payments/create-payment-intent', {
+        orderId,
+        paymentMethodId
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to create payment intent' };
+    }
+  },
+
+  // Process cash payment
+  processCashPayment: async (orderId, amountReceived, change) => {
+    try {
+      const response = await api.post('/payments/cash-payment', {
+        orderId,
+        amountReceived,
+        change
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to process cash payment' };
+    }
+  },
+
+  // Get saved payment methods
+  getPaymentMethods: async () => {
+    try {
+      const response = await api.get('/payments/payment-methods');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to get payment methods' };
+    }
   }
 };
 
@@ -461,12 +512,19 @@ export const cartService = {
   addToCart: (item, quantity = 1) => {
     try {
       let cart = JSON.parse(localStorage.getItem('cart')) || [];
-      const existingItem = cart.find(i => i._id === item._id);
+      const existingItem = cart.find(i => i.id === item._id);
       
       if (existingItem) {
         existingItem.quantity += quantity;
       } else {
-        cart.push({ ...item, quantity });
+        cart.push({ 
+          id: item._id,
+          name: item.name,
+          nameAm: item.nameAm,
+          price: item.price,
+          image: item.image,
+          quantity: quantity
+        });
       }
       
       localStorage.setItem('cart', JSON.stringify(cart));
@@ -491,11 +549,11 @@ export const cartService = {
   updateQuantity: (itemId, quantity) => {
     try {
       let cart = JSON.parse(localStorage.getItem('cart')) || [];
-      const item = cart.find(i => i._id === itemId);
+      const item = cart.find(i => i.id === itemId);
       if (item) {
         item.quantity = quantity;
         if (quantity <= 0) {
-          cart = cart.filter(i => i._id !== itemId);
+          cart = cart.filter(i => i.id !== itemId);
         }
       }
       localStorage.setItem('cart', JSON.stringify(cart));
@@ -511,7 +569,7 @@ export const cartService = {
   removeFromCart: (itemId) => {
     try {
       let cart = JSON.parse(localStorage.getItem('cart')) || [];
-      cart = cart.filter(i => i._id !== itemId);
+      cart = cart.filter(i => i.id !== itemId);
       localStorage.setItem('cart', JSON.stringify(cart));
       window.dispatchEvent(new Event('cartUpdated'));
       return cart;

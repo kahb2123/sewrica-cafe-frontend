@@ -6,18 +6,16 @@ import {
   FaTachometerAlt  // Added for Admin Dashboard
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import { authService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState('');
-  const [userName, setUserName] = useState('');
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     // Load cart count from localStorage
@@ -43,17 +41,10 @@ const Navbar = () => {
       }
     };
 
-    // Check login status from real auth service
+    // Check login status from AuthContext
     const checkLoginStatus = () => {
-      const user = authService.getCurrentUser();
       if (user) {
-        setIsLoggedIn(true);
-        setUserRole(user.role || 'customer');
-        setUserName(user.name || 'User');
-      } else {
-        setIsLoggedIn(false);
-        setUserRole('');
-        setUserName('');
+        // User is already available from useAuth
       }
     };
 
@@ -113,10 +104,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     try {
-      authService.logout(); // Clear token and user from localStorage
-      setIsLoggedIn(false);
-      setUserRole('');
-      setUserName('');
+      logout(); // Clear token and user from localStorage
       navigate('/');
       setIsOpen(false);
       document.body.style.overflow = 'unset';
@@ -198,11 +186,11 @@ const Navbar = () => {
             </Link>
 
             {/* User Menu */}
-            {isLoggedIn ? (
+            {user ? (
               <div className="user-menu">
                 <button className="user-menu-btn" title="User Menu">
                   <FaUser className="user-icon" />
-                  <span className="user-name">{userName.split(' ')[0]}</span>
+                  <span className="user-name">{user?.name?.split(' ')[0] || 'User'}</span>
                 </button>
                 <div className="user-dropdown">
                   <Link to="/profile" className="dropdown-item" onClick={closeMenu}>
@@ -210,7 +198,7 @@ const Navbar = () => {
                   </Link>
                   
                   {/* Admin Dashboard Link - Updated with better styling */}
-                  {userRole === 'admin' && (
+                  {user?.role === 'admin' && (
                     <Link 
                       to="/admin" 
                       className="dropdown-item admin-dropdown-item" 
@@ -225,17 +213,17 @@ const Navbar = () => {
                     </Link>
                   )}
                   
-                  {userRole === 'cashier' && (
+                  {user?.role === 'cashier' && (
                     <Link to="/cashier" className="dropdown-item" onClick={closeMenu}>
                       <FaUtensils /> Cashier Panel
                     </Link>
                   )}
-                  {userRole === 'cook' && (
+                  {user?.role === 'cook' && (
                     <Link to="/kitchen" className="dropdown-item" onClick={closeMenu}>
                       <FaUtensils /> Kitchen View
                     </Link>
                   )}
-                  {userRole === 'delivery' && (
+                  {user?.role === 'delivery' && (
                     <Link to="/delivery" className="dropdown-item" onClick={closeMenu}>
                       <FaUtensils /> Delivery Dashboard
                     </Link>
@@ -280,7 +268,7 @@ const Navbar = () => {
               </Link>
             </li>
             
-            {isLoggedIn && (
+            {user && (
               <>
                 <li className="mobile-nav-item" style={{ '--i': 4 }}>
                   <Link to="/profile" className="mobile-nav-link" onClick={closeMenu}>
@@ -296,7 +284,7 @@ const Navbar = () => {
             )}
             
             {/* Admin Dashboard in Mobile Menu */}
-            {userRole === 'admin' && (
+            {user?.role === 'admin' && (
               <li className="mobile-nav-item" style={{ '--i': 6 }}>
                 <Link 
                   to="/admin" 
@@ -316,7 +304,7 @@ const Navbar = () => {
               </li>
             )}
             
-            {userRole === 'cashier' && (
+            {user?.role === 'cashier' && (
               <li className="mobile-nav-item" style={{ '--i': 6 }}>
                 <Link to="/cashier" className="mobile-nav-link" onClick={closeMenu}>
                   Cashier Panel
@@ -324,7 +312,7 @@ const Navbar = () => {
               </li>
             )}
             
-            {userRole === 'cook' && (
+            {user?.role === 'cook' && (
               <li className="mobile-nav-item" style={{ '--i': 6 }}>
                 <Link to="/kitchen" className="mobile-nav-link" onClick={closeMenu}>
                   Kitchen View
@@ -332,7 +320,7 @@ const Navbar = () => {
               </li>
             )}
             
-            {userRole === 'delivery' && (
+            {user?.role === 'delivery' && (
               <li className="mobile-nav-item" style={{ '--i': 6 }}>
                 <Link to="/delivery" className="mobile-nav-link" onClick={closeMenu}>
                   Delivery Dashboard
@@ -346,7 +334,7 @@ const Navbar = () => {
               </Link>
             </li>
             
-            {!isLoggedIn && (
+            {!user && (
               <li className="mobile-nav-item" style={{ '--i': 8 }}>
                 <Link to="/login" className="mobile-nav-link" onClick={closeMenu}>
                   Login / Sign Up
@@ -354,7 +342,7 @@ const Navbar = () => {
               </li>
             )}
             
-            {isLoggedIn && (
+            {user && (
               <li className="mobile-nav-item" style={{ '--i': 9 }}>
                 <button onClick={handleLogout} className="mobile-nav-link logout-mobile">
                   Logout
@@ -373,10 +361,10 @@ const Navbar = () => {
               <FaPhone className="mobile-address-icon" />
               <span>+251 911 234 567</span>
             </div>
-            {isLoggedIn && (
+            {user && (
               <div className="mobile-address-item user-info">
                 <FaUser className="mobile-address-icon" />
-                <span>Logged in as {userName}</span>
+                <span>Logged in as {user?.name}</span>
               </div>
             )}
           </div>

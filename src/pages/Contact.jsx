@@ -232,7 +232,6 @@ const Contact = () => {
                   allowFullScreen=""
                   loading="lazy"
                   className="google-map"
-                  title="Google Maps"
                 ></iframe>
               </div>
               <div className="map-address">

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   FaShoppingCart, FaUser, FaBars, FaTimes, 
-  FaUtensils, FaPhone, FaMapMarkerAlt, FaSignOutAlt
+  FaUtensils, FaPhone, FaMapMarkerAlt, FaSignOutAlt,
+  FaTachometerAlt  // Added for Admin Dashboard
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { authService } from '../services/api';
@@ -207,11 +208,23 @@ const Navbar = () => {
                   <Link to="/profile" className="dropdown-item" onClick={closeMenu}>
                     <FaUser /> My Profile
                   </Link>
+                  
+                  {/* Admin Dashboard Link - Updated with better styling */}
                   {userRole === 'admin' && (
-                    <Link to="/admin" className="dropdown-item" onClick={closeMenu}>
-                      <FaUtensils /> Admin Dashboard
+                    <Link 
+                      to="/admin" 
+                      className="dropdown-item admin-dropdown-item" 
+                      onClick={closeMenu}
+                      style={{
+                        background: '#f0f9ff',
+                        borderLeft: '4px solid #27ae60',
+                        fontWeight: '600'
+                      }}
+                    >
+                      <FaTachometerAlt style={{ color: '#27ae60' }} /> Admin Dashboard
                     </Link>
                   )}
+                  
                   {userRole === 'cashier' && (
                     <Link to="/cashier" className="dropdown-item" onClick={closeMenu}>
                       <FaUtensils /> Cashier Panel
@@ -282,10 +295,23 @@ const Navbar = () => {
               </>
             )}
             
+            {/* Admin Dashboard in Mobile Menu */}
             {userRole === 'admin' && (
               <li className="mobile-nav-item" style={{ '--i': 6 }}>
-                <Link to="/admin" className="mobile-nav-link" onClick={closeMenu}>
-                  Admin Dashboard
+                <Link 
+                  to="/admin" 
+                  className="mobile-nav-link admin-mobile-link" 
+                  onClick={closeMenu}
+                  style={{
+                    background: 'linear-gradient(135deg, #27ae60 0%, #229954 100%)',
+                    color: 'white',
+                    borderRadius: '8px',
+                    margin: '5px 15px',
+                    padding: '12px 20px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  <FaTachometerAlt style={{ marginRight: '10px' }} /> Admin Dashboard
                 </Link>
               </li>
             )}

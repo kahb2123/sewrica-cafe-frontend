@@ -25,14 +25,14 @@ api.interceptors.request.use(
   }
 );
 
-// Auth services (your existing code)
+// Auth services
 export const authService = {
   register: async (userData) => {
     try {
       const response = await api.post('/auth/register', userData);
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data));
+        localStorage.setItem('user', JSON.stringify(response.data.user || response.data));
       }
       return response.data;
     } catch (error) {
@@ -45,7 +45,7 @@ export const authService = {
       const response = await api.post('/auth/login', credentials);
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data));
+        localStorage.setItem('user', JSON.stringify(response.data.user || response.data));
       }
       return response.data;
     } catch (error) {
@@ -70,7 +70,11 @@ export const authService = {
   getCurrentUser: () => {
     const userStr = localStorage.getItem('user');
     if (userStr) {
-      return JSON.parse(userStr);
+      try {
+        return JSON.parse(userStr);
+      } catch (e) {
+        return null;
+      }
     }
     return null;
   },
@@ -80,12 +84,11 @@ export const authService = {
   }
 };
 
-// 🆕 NEW: Menu services
+// Menu services
 export const menuService = {
   // Get all menu items with optional filters
   getAllItems: async (filters = {}) => {
     try {
-      // Build query string from filters
       const params = new URLSearchParams();
       if (filters.category) params.append('category', filters.category);
       if (filters.vegetarian) params.append('vegetarian', filters.vegetarian);
@@ -132,21 +135,19 @@ export const menuService = {
     }
   },
 
-  // 🆕 Admin only: Create new menu item
+  // Admin only: Create new menu item
   createItem: async (itemData, imageFile) => {
     try {
       const formData = new FormData();
       
-      // Append all text fields
       Object.keys(itemData).forEach(key => {
         if (key === 'ingredients' && Array.isArray(itemData[key])) {
           formData.append(key, itemData[key].join(','));
-        } else {
+        } else if (itemData[key] !== null && itemData[key] !== undefined) {
           formData.append(key, itemData[key]);
         }
       });
       
-      // Append image if exists
       if (imageFile) {
         formData.append('image', imageFile);
       }
@@ -162,7 +163,7 @@ export const menuService = {
     }
   },
 
-  // 🆕 Admin only: Update menu item
+  // Admin only: Update menu item
   updateItem: async (id, itemData, imageFile) => {
     try {
       const formData = new FormData();
@@ -170,7 +171,7 @@ export const menuService = {
       Object.keys(itemData).forEach(key => {
         if (key === 'ingredients' && Array.isArray(itemData[key])) {
           formData.append(key, itemData[key].join(','));
-        } else {
+        } else if (itemData[key] !== null && itemData[key] !== undefined) {
           formData.append(key, itemData[key]);
         }
       });
@@ -190,7 +191,7 @@ export const menuService = {
     }
   },
 
-  // 🆕 Admin only: Delete menu item
+  // Admin only: Delete menu item
   deleteItem: async (id) => {
     try {
       const response = await api.delete(`/menu/${id}`);
@@ -200,13 +201,353 @@ export const menuService = {
     }
   },
 
-  // 🆕 Admin only: Toggle availability
+  // Admin only: Toggle availability
   toggleAvailability: async (id) => {
     try {
       const response = await api.patch(`/menu/${id}/toggle`);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to toggle availability' };
+    }
+  }
+};
+
+// 🆕 NEW: Admin Dashboard Services
+export const adminService = {
+  // Get dashboard statistics
+  getStats: async () => {
+    try {
+      const response = await api.get('/admin/stats');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      throw error.response?.data || { message: 'Failed to fetch dashboard stats' };
+    }
+  },
+
+  // Get recent orders
+  getRecentOrders: async () => {
+    try {
+      const response = await api.get('/admin/recent-orders');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching recent orders:', error);
+      throw error.response?.data || { message: 'Failed to fetch recent orders' };
+    }
+  },
+
+  // Get all orders with optional filter
+  getAllOrders: async (status = 'all') => {
+    try {
+      const url = status === 'all' ? '/admin/orders' : `/admin/orders?status=${status}`;
+      const response = await api.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      throw error.response?.data || { message: 'Failed to fetch orders' };
+    }
+  },
+
+  // Update order status
+  updateOrderStatus: async (orderId, status, assignedTo = null) => {
+    try {
+      const response = await api.put(`/admin/orders/${orderId}`, {
+        status,
+        assignedTo
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating order:', error);
+      throw error.response?.data || { message: 'Failed to update order' };
+    }
+  },
+
+  // Get order details
+  getOrderDetails: async (orderId) => {
+    try {
+      const response = await api.get(`/admin/orders/${orderId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      throw error.response?.data || { message: 'Failed to fetch order details' };
+    }
+  },
+
+  // Get all users (admin only)
+  getAllUsers: async () => {
+    try {
+      const response = await api.get('/admin/users');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      throw error.response?.data || { message: 'Failed to fetch users' };
+    }
+  },
+
+  // Update user role
+  updateUserRole: async (userId, role) => {
+    try {
+      const response = await api.put(`/admin/users/${userId}/role`, { role });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      throw error.response?.data || { message: 'Failed to update user role' };
+    }
+  },
+
+  // Toggle user status (active/inactive)
+  toggleUserStatus: async (userId) => {
+    try {
+      const response = await api.patch(`/admin/users/${userId}/toggle-status`);
+      return response.data;
+    } catch (error) {
+      console.error('Error toggling user status:', error);
+      throw error.response?.data || { message: 'Failed to toggle user status' };
+    }
+  },
+
+  // Get sales reports
+  getReport: async (type, startDate = null, endDate = null) => {
+    try {
+      let url = `/admin/reports/${type}`;
+      if (startDate && endDate) {
+        url += `?start=${startDate}&end=${endDate}`;
+      }
+      const response = await api.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching report:', error);
+      throw error.response?.data || { message: 'Failed to fetch report' };
+    }
+  },
+
+  // Get daily report
+  getDailyReport: async (date = null) => {
+    try {
+      const url = date ? `/admin/reports/daily?date=${date}` : '/admin/reports/daily';
+      const response = await api.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching daily report:', error);
+      throw error.response?.data || { message: 'Failed to fetch daily report' };
+    }
+  },
+
+  // Get weekly report
+  getWeeklyReport: async (week = null) => {
+    try {
+      const url = week ? `/admin/reports/weekly?week=${week}` : '/admin/reports/weekly';
+      const response = await api.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching weekly report:', error);
+      throw error.response?.data || { message: 'Failed to fetch weekly report' };
+    }
+  },
+
+  // Get monthly report
+  getMonthlyReport: async (month = null) => {
+    try {
+      const url = month ? `/admin/reports/monthly?month=${month}` : '/admin/reports/monthly';
+      const response = await api.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching monthly report:', error);
+      throw error.response?.data || { message: 'Failed to fetch monthly report' };
+    }
+  },
+
+  // Get sales by category
+  getSalesByCategory: async (startDate, endDate) => {
+    try {
+      const response = await api.get(`/admin/reports/category-sales?start=${startDate}&end=${endDate}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching category sales:', error);
+      throw error.response?.data || { message: 'Failed to fetch category sales' };
+    }
+  },
+
+  // Get delivery performance
+  getDeliveryPerformance: async (startDate, endDate) => {
+    try {
+      const response = await api.get(`/admin/reports/delivery-performance?start=${startDate}&end=${endDate}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching delivery performance:', error);
+      throw error.response?.data || { message: 'Failed to fetch delivery performance' };
+    }
+  },
+
+  // Get top selling items
+  getTopSellingItems: async (limit = 10, startDate = null, endDate = null) => {
+    try {
+      let url = `/admin/reports/top-items?limit=${limit}`;
+      if (startDate && endDate) {
+        url += `&start=${startDate}&end=${endDate}`;
+      }
+      const response = await api.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching top items:', error);
+      throw error.response?.data || { message: 'Failed to fetch top selling items' };
+    }
+  },
+
+  // Export report as CSV/PDF
+  exportReport: async (type, format = 'csv', startDate = null, endDate = null) => {
+    try {
+      let url = `/admin/reports/export/${type}?format=${format}`;
+      if (startDate && endDate) {
+        url += `&start=${startDate}&end=${endDate}`;
+      }
+      const response = await api.get(url, {
+        responseType: 'blob' // Important for file download
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error exporting report:', error);
+      throw error.response?.data || { message: 'Failed to export report' };
+    }
+  }
+};
+
+// 🆕 NEW: Order services for customers
+export const orderService = {
+  // Create new order
+  createOrder: async (orderData) => {
+    try {
+      const response = await api.post('/orders', orderData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to create order' };
+    }
+  },
+
+  // Get user's orders
+  getUserOrders: async () => {
+    try {
+      const response = await api.get('/orders/my-orders');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch orders' };
+    }
+  },
+
+  // Get single order
+  getOrder: async (orderId) => {
+    try {
+      const response = await api.get(`/orders/${orderId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch order' };
+    }
+  },
+
+  // Cancel order
+  cancelOrder: async (orderId) => {
+    try {
+      const response = await api.patch(`/orders/${orderId}/cancel`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to cancel order' };
+    }
+  }
+};
+
+// 🆕 NEW: Cart services (for future backend cart)
+export const cartService = {
+  // Add to cart
+  addToCart: (item, quantity = 1) => {
+    try {
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const existingItem = cart.find(i => i._id === item._id);
+      
+      if (existingItem) {
+        existingItem.quantity += quantity;
+      } else {
+        cart.push({ ...item, quantity });
+      }
+      
+      localStorage.setItem('cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('cartUpdated'));
+      return cart;
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      throw { message: 'Failed to add to cart' };
+    }
+  },
+
+  // Get cart
+  getCart: () => {
+    try {
+      return JSON.parse(localStorage.getItem('cart')) || [];
+    } catch (error) {
+      return [];
+    }
+  },
+
+  // Update quantity
+  updateQuantity: (itemId, quantity) => {
+    try {
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const item = cart.find(i => i._id === itemId);
+      if (item) {
+        item.quantity = quantity;
+        if (quantity <= 0) {
+          cart = cart.filter(i => i._id !== itemId);
+        }
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('cartUpdated'));
+      return cart;
+    } catch (error) {
+      console.error('Error updating cart:', error);
+      throw { message: 'Failed to update cart' };
+    }
+  },
+
+  // Remove from cart
+  removeFromCart: (itemId) => {
+    try {
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      cart = cart.filter(i => i._id !== itemId);
+      localStorage.setItem('cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('cartUpdated'));
+      return cart;
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      throw { message: 'Failed to remove from cart' };
+    }
+  },
+
+  // Clear cart
+  clearCart: () => {
+    try {
+      localStorage.removeItem('cart');
+      window.dispatchEvent(new Event('cartUpdated'));
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+    }
+  },
+
+  // Get cart total
+  getCartTotal: () => {
+    try {
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    } catch (error) {
+      return 0;
+    }
+  },
+
+  // Get cart count
+  getCartCount: () => {
+    try {
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      return cart.reduce((total, item) => total + item.quantity, 0);
+    } catch (error) {
+      return 0;
     }
   }
 };

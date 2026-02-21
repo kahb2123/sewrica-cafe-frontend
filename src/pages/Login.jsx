@@ -123,7 +123,7 @@ const Login = () => {
         navigate('/');
       } else {
         // REAL REGISTRATION - using your backend API
-        const userData = await authService.register({
+        await authService.register({
           name: formData.name,
           email: formData.email,
           password: formData.password,

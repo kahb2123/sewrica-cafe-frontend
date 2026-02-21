@@ -1,107 +1,319 @@
-.payment-form {
-  max-width: 400px;
+/* PaymentConfirmation.css - Using unique class name to avoid conflicts */
+
+.payment-confirmation-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem 1rem;
+  margin: 0;
+}
+
+/* All styles are nested under .payment-confirmation-page */
+.payment-confirmation-page .confirmation-container {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  overflow: hidden;
 }
 
-.payment-amount {
+.payment-confirmation-page .success-header {
   text-align: center;
-  margin-bottom: 30px;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
-.payment-amount h3 {
-  color: #2c3e50;
-  font-size: 24px;
-  margin: 0;
-  font-weight: 600;
+.payment-confirmation-page .success-icon {
+  font-size: 5rem;
+  color: #4CAF50;
 }
 
-.card-element-container {
-  margin-bottom: 20px;
+.payment-confirmation-page .success-header h1 {
+  font-size: 2.5rem;
+  color: #333;
+  margin: 1rem 0 0.5rem;
 }
 
-.card-element-container label {
+.payment-confirmation-page .success-header p {
+  font-size: 1.1rem;
+  color: #666;
+}
+
+.payment-confirmation-page .order-info-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.payment-confirmation-page .info-item {
+  text-align: center;
+}
+
+.payment-confirmation-page .info-item .label {
   display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: #2c3e50;
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.5rem;
 }
 
-.card-element-wrapper {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 12px 16px;
-  background: white;
-  transition: border-color 0.2s ease;
-}
-
-.card-element-wrapper:hover {
-  border-color: #3498db;
-}
-
-.card-element-wrapper.StripeElement--focus {
-  border-color: #3498db;
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
-}
-
-.card-element {
-  width: 100%;
-}
-
-.payment-button {
-  width: 100%;
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
+.payment-confirmation-page .info-item .value {
+  display: block;
+  font-size: 1.2rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-bottom: 20px;
+  color: #333;
 }
 
-.payment-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #229954 0%, #1e8449 100%);
-  transform: translateY(-1px);
+.payment-confirmation-page .confirmation-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  padding: 2rem;
 }
 
-.payment-button:disabled {
-  background: #bdc3c7;
-  cursor: not-allowed;
-  transform: none;
+.payment-confirmation-page .order-details h2,
+.payment-confirmation-page .customer-info h2 {
+  color: #333;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #f0f0f0;
 }
 
-.payment-security {
-  text-align: center;
-  color: #7f8c8d;
-  font-size: 14px;
+.payment-confirmation-page .items-list {
+  margin-bottom: 1.5rem;
 }
 
-.payment-security p {
-  margin: 0;
+.payment-confirmation-page .item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px dashed #f0f0f0;
+}
+
+.payment-confirmation-page .item-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.payment-confirmation-page .item-price {
+  font-weight: 600;
+  color: #4CAF50;
+}
+
+.payment-confirmation-page .price-breakdown {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.payment-confirmation-page .price-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  color: #666;
+}
+
+.payment-confirmation-page .price-row.total {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 2px solid #e0e0e0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.payment-confirmation-page .free {
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+.payment-confirmation-page .payment-details {
+  background: #e8f5e8;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.payment-confirmation-page .payment-method {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #333;
+}
+
+.payment-confirmation-page .payment-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.payment-confirmation-page .payment-status.completed {
+  background: #4CAF50;
+  color: white;
+}
+
+.payment-confirmation-page .action-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.payment-confirmation-page .btn-print,
+.payment-confirmation-page .btn-download,
+.payment-confirmation-page .btn-email {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
 }
 
-/* Responsive design */
-@media (max-width: 480px) {
-  .payment-form {
-    margin: 0 10px;
-    padding: 15px;
-  }
+.payment-confirmation-page .btn-print {
+  background: #3498db;
+  color: white;
+}
 
-  .payment-amount h3 {
-    font-size: 20px;
-  }
+.payment-confirmation-page .btn-download {
+  background: #2ecc71;
+  color: white;
+}
 
-  .card-element-wrapper {
-    padding: 10px 12px;
+.payment-confirmation-page .btn-email {
+  background: #9b59b6;
+  color: white;
+}
+
+.payment-confirmation-page .info-card {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.payment-confirmation-page .info-row {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.payment-confirmation-page .info-icon {
+  font-size: 1.2rem;
+  color: #4CAF50;
+}
+
+.payment-confirmation-page .special-instructions {
+  background: #fff3e0;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.payment-confirmation-page .timeline {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.payment-confirmation-page .timeline-step {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.payment-confirmation-page .step-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e0e0e0;
+}
+
+.payment-confirmation-page .timeline-step.completed .step-dot {
+  background: #4CAF50;
+}
+
+.payment-confirmation-page .bottom-navigation {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.payment-confirmation-page .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #666;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid #e0e0e0;
+}
+
+.payment-confirmation-page .thank-you {
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+/* Loading and Error states */
+.payment-confirmation-page.loading .loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.payment-confirmation-page .loader {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #4CAF50;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .payment-confirmation-page .confirmation-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .payment-confirmation-page .order-info-bar {
+    grid-template-columns: 1fr;
+  }
+  
+  .payment-confirmation-page .action-buttons {
+    grid-template-columns: 1fr;
+  }
+  
+  .payment-confirmation-page .bottom-navigation {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }

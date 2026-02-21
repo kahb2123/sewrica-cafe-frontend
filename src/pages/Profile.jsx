@@ -11,6 +11,8 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -24,13 +26,48 @@ const Profile = () => {
     try {
       setLoading(true);
       const data = await orderService.getUserOrders();
-      setOrders(Array.isArray(data) ? data : []);
+      setOrders(Array.isArray(data) ? data : data?.orders || []);
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast.error('Failed to load your orders');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm('Are you sure you want to cancel this order?')) {
+      return;
+    }
+
+    try {
+      await orderService.cancelOrder(orderId);
+      toast.success('Order cancelled successfully');
+      fetchUserOrders(); // Refresh orders
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast.error(error.message || 'Failed to cancel order');
+    }
+  };
+
+  const handleReorder = (order) => {
+    // Clear existing cart
+    localStorage.removeItem('cart');
+    
+    // Add items to cart
+    const cartItems = order.items.map(item => ({
+      id: item.menuItem?._id || item.menuItem,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      image: item.menuItem?.image
+    }));
+    
+    localStorage.setItem('cart', JSON.stringify(cartItems));
+    window.dispatchEvent(new Event('cartUpdated'));
+    
+    toast.success('Items added to cart!');
+    navigate('/cart');
   };
 
   const getStatusColor = (status) => {
@@ -45,6 +82,15 @@ const Profile = () => {
     return colors[status] || '#95a5a6';
   };
 
+  const getPaymentIcon = (method) => {
+    switch(method) {
+      case 'cash': return '💵';
+      case 'card': return '💳';
+      case 'tele_birr': return '📱';
+      default: return '💳';
+    }
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -54,6 +100,10 @@ const Profile = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const calculateTotalSpent = () => {
+    return orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
   };
 
   const handleLogout = () => {
@@ -85,6 +135,24 @@ const Profile = () => {
                 <p>{user.email}</p>
                 <p>{user.phone}</p>
                 <span className="user-role">{user.role}</span>
+              </div>
+            </div>
+
+            {/* Stats Summary */}
+            <div className="user-stats">
+              <div className="stat-item">
+                <span className="stat-value">{orders.length}</span>
+                <span className="stat-label">Total Orders</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-value">
+                  {orders.filter(o => o.status === 'delivered').length}
+                </span>
+                <span className="stat-label">Delivered</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-value">{calculateTotalSpent()} ETB</span>
+                <span className="stat-label">Total Spent</span>
               </div>
             </div>
 
@@ -136,7 +204,7 @@ const Profile = () => {
                       <div key={order._id} className="order-card">
                         <div className="order-header">
                           <div className="order-info">
-                            <h3>Order #{order.orderNumber}</h3>
+                            <h3>Order #{order.orderNumber || order._id.slice(-8)}</h3>
                             <p className="order-date">
                               {formatDate(order.createdAt)}
                             </p>
@@ -152,15 +220,25 @@ const Profile = () => {
                         </div>
 
                         <div className="order-items">
-                          {order.items.map((item, index) => (
+                          {order.items?.map((item, index) => (
                             <div key={index} className="order-item">
                               <div className="item-info">
                                 <span className="item-name">{item.name}</span>
                                 <span className="item-quantity">×{item.quantity}</span>
                               </div>
-                              <span className="item-price">{item.price} ETB</span>
+                              <span className="item-price">{item.price * item.quantity} ETB</span>
                             </div>
                           ))}
+                        </div>
+
+                        {/* Payment Info */}
+                        <div className="order-payment-info">
+                          <span className="payment-method">
+                            {getPaymentIcon(order.paymentMethod)} {order.paymentMethod}
+                          </span>
+                          <span className={`payment-status ${order.paymentStatus}`}>
+                            {order.paymentStatus}
+                          </span>
                         </div>
 
                         <div className="order-footer">
@@ -168,18 +246,31 @@ const Profile = () => {
                             <strong>Total: {order.totalAmount} ETB</strong>
                           </div>
                           <div className="order-actions">
-                            <button className="btn-secondary">
+                            <button 
+                              className="btn-secondary"
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setShowModal(true);
+                              }}
+                            >
                               View Details
                             </button>
+                            
                             {order.status === 'pending' && (
                               <button
                                 className="btn-danger"
-                                onClick={() => {
-                                  // Cancel order functionality
-                                  toast.info('Cancel order functionality coming soon');
-                                }}
+                                onClick={() => handleCancelOrder(order._id)}
                               >
                                 Cancel Order
+                              </button>
+                            )}
+                            
+                            {(order.status === 'delivered' || order.status === 'cancelled') && (
+                              <button
+                                className="btn-reorder"
+                                onClick={() => handleReorder(order)}
+                              >
+                                🔄 Reorder
                               </button>
                             )}
                           </div>
@@ -237,6 +328,52 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      {/* Order Details Modal */}
+      {showModal && selectedOrder && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h2>Order Details</h2>
+            <p className="order-number">Order #{selectedOrder.orderNumber || selectedOrder._id.slice(-8)}</p>
+            
+            <div className="modal-section">
+              <h3>Items</h3>
+              {selectedOrder.items?.map((item, idx) => (
+                <div key={idx} className="modal-item">
+                  <span>{item.name} x{item.quantity}</span>
+                  <span>{item.price * item.quantity} ETB</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="modal-section">
+              <h3>Summary</h3>
+              <p><strong>Subtotal:</strong> {selectedOrder.subtotal || selectedOrder.totalAmount} ETB</p>
+              <p><strong>Delivery:</strong> FREE</p>
+              <p><strong>Total:</strong> {selectedOrder.totalAmount} ETB</p>
+            </div>
+
+            <div className="modal-section">
+              <h3>Payment</h3>
+              <p><strong>Method:</strong> {selectedOrder.paymentMethod}</p>
+              <p><strong>Status:</strong> {selectedOrder.paymentStatus}</p>
+              {selectedOrder.paidAt && (
+                <p><strong>Paid At:</strong> {formatDate(selectedOrder.paidAt)}</p>
+              )}
+            </div>
+
+            <div className="modal-section">
+              <h3>Delivery</h3>
+              <p><strong>Method:</strong> {selectedOrder.deliveryMethod}</p>
+              <p><strong>Address:</strong> {selectedOrder.deliveryAddress || 'Megenagna, Metebaber Building'}</p>
+            </div>
+
+            <button className="modal-close" onClick={() => setShowModal(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

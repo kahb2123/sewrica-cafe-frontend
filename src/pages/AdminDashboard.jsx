@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { adminService, menuService } from '../services/api';
+import { adminService, menuService, orderService } from '../services/api';
 import { toast } from 'react-toastify';
 import './AdminDashboard.css';
-
+import { staffService } from '../services/api'; // ✅ ADD THIS IMPORT
+import StaffReports from './StaffReports'; // ✅ ADD THIS IMPORT
+// import { orderService } from '../services/api';
 const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
+  // ========== ADD THIS FOR MOBILE MENU ==========
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
   const [stats, setStats] = useState({
     totalOrders: 0,
     totalRevenue: 0,
@@ -49,6 +54,14 @@ const AdminDashboard = () => {
     fetchDashboardStats();
   }, []);
 
+  // ========== ADD THIS FUNCTION FOR MOBILE MENU ==========
+  const handleMenuClick = (tab) => {
+    setActiveTab(tab);
+    if (window.innerWidth <= 768) {
+      setMobileMenuOpen(false);
+    }
+  };
+
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
@@ -72,23 +85,27 @@ const AdminDashboard = () => {
     }
   };
 
-  const renderContent = () => {
-    switch(activeTab) {
-      case 'overview':
-        return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
-      case 'orders':
-        return <OrdersTab />;
-      case 'menu':
-        return <MenuTab />;
-      case 'reports':
-        return <ReportsTab />;
-      case 'users':
-        return <UsersTab />;
-      default:
-        return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
-    }
-  };
-
+ 
+const renderContent = () => {
+  switch(activeTab) {
+    case 'overview':
+      return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
+    case 'orders':
+      return <OrdersTab />;
+    case 'staff':
+      return <StaffTab />;
+    case 'menu':
+      return <MenuTab />;
+    case 'reports':
+      return <ReportsTab />;
+    case 'users':
+      return <UsersTab />;
+    case 'staff-reports': // ✅ ADD THIS CASE
+      return <StaffReports />;
+    default:
+      return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
+  }
+};
   if (loading) return (
     <div className="loading-container">
       <div className="loading-spinner"></div>
@@ -98,38 +115,60 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-dashboard">
-      <div className="admin-sidebar">
+      {/* ========== MOBILE MENU TOGGLE BUTTON ========== */}
+      <button 
+        className="mobile-menu-toggle"
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+      >
+        {mobileMenuOpen ? '✕' : '☰'}
+      </button>
+
+      {/* ========== SIDEBAR WITH CONDITIONAL CLASS ========== */}
+      <div className={`admin-sidebar ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <h2>Sewrica Cafe</h2>
           <p>Admin Panel</p>
         </div>
+        
+        {/* ========== UPDATED MENU ITEMS WITH handleMenuClick ========== */}
         <ul className="sidebar-menu">
           <li className={activeTab === 'overview' ? 'active' : ''} 
-              onClick={() => setActiveTab('overview')}>
+              onClick={() => handleMenuClick('overview')}>
             <span className="menu-icon">📊</span>
             <span className="menu-text">Overview</span>
           </li>
           <li className={activeTab === 'orders' ? 'active' : ''} 
-              onClick={() => setActiveTab('orders')}>
+              onClick={() => handleMenuClick('orders')}>
             <span className="menu-icon">📦</span>
             <span className="menu-text">Orders</span>
           </li>
+          <li className={activeTab === 'staff' ? 'active' : ''} 
+              onClick={() => handleMenuClick('staff')}>
+            <span className="menu-icon">👨‍🍳</span>
+            <span className="menu-text">Staff</span>
+          </li>
           <li className={activeTab === 'menu' ? 'active' : ''} 
-              onClick={() => setActiveTab('menu')}>
+              onClick={() => handleMenuClick('menu')}>
             <span className="menu-icon">🍽️</span>
             <span className="menu-text">Menu Items</span>
           </li>
           <li className={activeTab === 'reports' ? 'active' : ''} 
-              onClick={() => setActiveTab('reports')}>
+              onClick={() => handleMenuClick('reports')}>
             <span className="menu-icon">📈</span>
             <span className="menu-text">Reports</span>
           </li>
           <li className={activeTab === 'users' ? 'active' : ''} 
-              onClick={() => setActiveTab('users')}>
+              onClick={() => handleMenuClick('users')}>
             <span className="menu-icon">👥</span>
             <span className="menu-text">Users</span>
           </li>
+          <li className={activeTab === 'staff-reports' ? 'active' : ''} 
+            onClick={() => handleMenuClick('staff-reports')}>
+            <span className="menu-icon">📋</span>
+            <span className="menu-text">Staff Reports</span>
+          </li>
         </ul>
+
         <div className="sidebar-footer">
           <div className="user-info">
             <span className="user-name">{user?.name || 'Admin'}</span>
@@ -140,6 +179,15 @@ const AdminDashboard = () => {
           </button>
         </div>
       </div>
+
+      {/* ========== OVERLAY FOR MOBILE ========== */}
+      {mobileMenuOpen && (
+        <div 
+          className="sidebar-overlay"
+          onClick={() => setMobileMenuOpen(false)}
+        ></div>
+      )}
+
       <div className="admin-content">
         {renderContent()}
       </div>
@@ -291,75 +339,141 @@ const OverviewTab = ({ stats, onRefresh }) => {
   );
 };
 
-// ==================== ORDERS TAB ====================
+// ==================== UPDATED ORDERS TAB WITH ASSIGNMENT ====================
+// ==================== COMPLETE WORKING ORDERS TAB ====================
 const OrdersTab = () => {
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [cashAmount, setCashAmount] = useState('');
+  const [processingPayment, setProcessingPayment] = useState(false);
+  
+  // State for assignment modals
+  const [showAssignChefModal, setShowAssignChefModal] = useState(false);
+  const [showAssignDeliveryModal, setShowAssignDeliveryModal] = useState(false);
+  const [availableChefs, setAvailableChefs] = useState([]);
+  const [availableDelivery, setAvailableDelivery] = useState([]);
+  const [selectedChefId, setSelectedChefId] = useState('');
+  const [selectedDeliveryId, setSelectedDeliveryId] = useState('');
+  const [assignmentNotes, setAssignmentNotes] = useState('');
 
   useEffect(() => {
     fetchOrders();
+    fetchAvailableStaff();
   }, [filter]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const data = await adminService.getAllOrders(filter);
-      setOrders(Array.isArray(data) ? data : []);
+      const response = await adminService.getAllOrders(filter);
+      setOrders(Array.isArray(response) ? response : response?.orders || []);
     } catch (error) {
       console.error('Error fetching orders:', error);
-      // Mock data
-      setOrders([
-        { 
-          _id: 'ORD001', 
-          customer: { name: 'John Doe', phone: '0912345678' }, 
-          items: [
-            { name: 'Cheese Burger', quantity: 2, price: 250 },
-            { name: 'French Fries', quantity: 1, price: 100 }
-          ], 
-          totalAmount: 600, 
-          status: 'pending',
-          paymentMethod: 'Cash',
-          createdAt: new Date().toISOString()
-        },
-        { 
-          _id: 'ORD002', 
-          customer: { name: 'Jane Smith', phone: '0923456789' }, 
-          items: [
-            { name: 'Margherita Pizza', quantity: 1, price: 350 },
-            { name: 'Coca Cola', quantity: 2, price: 60 }
-          ], 
-          totalAmount: 470, 
-          status: 'confirmed',
-          paymentMethod: 'Tele Birr',
-          createdAt: new Date().toISOString()
-        },
-        { 
-          _id: 'ORD003', 
-          customer: { name: 'Bob Johnson', phone: '0934567890' }, 
-          items: [
-            { name: 'Pasta Carbonara', quantity: 1, price: 280 },
-            { name: 'Garlic Bread', quantity: 1, price: 80 }
-          ], 
-          totalAmount: 360, 
-          status: 'preparing',
-          paymentMethod: 'Cash',
-          createdAt: new Date().toISOString()
-        },
-      ]);
+      toast.error('Failed to fetch orders');
     } finally {
       setLoading(false);
     }
   };
 
-  const updateOrderStatus = async (orderId, newStatus, assignedTo = null) => {
+  const fetchAvailableStaff = async () => {
     try {
-      await adminService.updateOrderStatus(orderId, newStatus, assignedTo);
+      const [chefs, delivery] = await Promise.all([
+        staffService.getStaffByRole('cook'),
+        staffService.getStaffByRole('delivery')
+      ]);
+      
+      setAvailableChefs(chefs.staff || []);
+      setAvailableDelivery(delivery.staff || []);
+    } catch (error) {
+      console.error('Error fetching staff:', error);
+      // Set mock data for testing if API fails
+      setAvailableChefs([
+        { _id: 'chef1', name: 'Chef Berhanu' },
+        { _id: 'chef2', name: 'Chef Tigist' },
+        { _id: 'chef3', name: 'Chef Solomon' }
+      ]);
+      setAvailableDelivery([
+        { _id: 'del1', name: 'Abebe Kebede' },
+        { _id: 'del2', name: 'Almaz Worku' },
+        { _id: 'del3', name: 'Kebede Alemu' }
+      ]);
+    }
+  };
+
+  const handleAssignChef = async () => {
+    if (!selectedOrder || !selectedChefId) {
+      toast.error('Please select a chef');
+      return;
+    }
+
+    try {
+      await staffService.assignChef(selectedOrder._id, selectedChefId, assignmentNotes);
+      toast.success('Chef assigned successfully');
+      setShowAssignChefModal(false);
+      setSelectedChefId('');
+      setAssignmentNotes('');
+      fetchOrders(); // Refresh orders
+      fetchAvailableStaff(); // Refresh staff list
+    } catch (error) {
+      console.error('Error assigning chef:', error);
+      toast.error(error.message || 'Failed to assign chef');
+    }
+  };
+
+  const handleAssignDelivery = async () => {
+    if (!selectedOrder || !selectedDeliveryId) {
+      toast.error('Please select a delivery person');
+      return;
+    }
+
+    try {
+      await staffService.assignDelivery(selectedOrder._id, selectedDeliveryId, assignmentNotes);
+      toast.success('Delivery person assigned successfully');
+      setShowAssignDeliveryModal(false);
+      setSelectedDeliveryId('');
+      setAssignmentNotes('');
+      fetchOrders(); // Refresh orders
+      fetchAvailableStaff(); // Refresh staff list
+    } catch (error) {
+      console.error('Error assigning delivery:', error);
+      toast.error(error.message || 'Failed to assign delivery');
+    }
+  };
+
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      await adminService.updateOrderStatus(orderId, newStatus);
       toast.success(`Order status updated to ${newStatus}`);
       fetchOrders();
     } catch (error) {
       console.error('Error updating order:', error);
       toast.error('Failed to update order status');
+    }
+  };
+
+  const processCashPayment = async () => {
+    if (!selectedOrder) return;
+    
+    if (!cashAmount || parseFloat(cashAmount) < selectedOrder.totalAmount) {
+      toast.error(`Amount must be at least ETB ${selectedOrder.totalAmount}`);
+      return;
+    }
+
+    try {
+      setProcessingPayment(true);
+      await orderService.processCashPayment(selectedOrder._id, parseFloat(cashAmount));
+      toast.success('Cash payment processed successfully');
+      setShowPaymentModal(false);
+      setSelectedOrder(null);
+      setCashAmount('');
+      fetchOrders();
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      toast.error(error.message || 'Failed to process payment');
+    } finally {
+      setProcessingPayment(false);
     }
   };
 
@@ -377,15 +491,70 @@ const OrdersTab = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
   };
 
-  if (loading) return <div className="loading-spinner"></div>;
+  const handleCashPaymentClick = (order) => {
+    setSelectedOrder(order);
+    setCashAmount(order.totalAmount.toString());
+    setShowPaymentModal(true);
+  };
+
+  const handleAssignChefClick = (order) => {
+    setSelectedOrder(order);
+    setSelectedChefId(order.assignedChef?._id || '');
+    setAssignmentNotes(order.chefNotes || '');
+    setShowAssignChefModal(true);
+  };
+
+  const handleAssignDeliveryClick = (order) => {
+    setSelectedOrder(order);
+    setSelectedDeliveryId(order.assignedDelivery?._id || '');
+    setAssignmentNotes(order.deliveryNotes || '');
+    setShowAssignDeliveryModal(true);
+  };
+
+  const handleQuickAssignChef = async (orderId, chefId) => {
+    try {
+      await staffService.assignChef(orderId, chefId);
+      toast.success('Chef assigned successfully');
+      fetchOrders(); // Refresh orders
+      fetchAvailableStaff(); // Refresh staff list
+    } catch (error) {
+      console.error('Error assigning chef:', error);
+      toast.error(error.message || 'Failed to assign chef');
+    }
+  };
+
+  const handleQuickAssignDelivery = async (orderId, deliveryId) => {
+    try {
+      await staffService.assignDelivery(orderId, deliveryId);
+      toast.success('Delivery person assigned successfully');
+      fetchOrders(); // Refresh orders
+      fetchAvailableStaff(); // Refresh staff list
+    } catch (error) {
+      console.error('Error assigning delivery:', error);
+      toast.error(error.message || 'Failed to assign delivery person');
+    }
+  };
+
+  if (loading) return (
+    <div className="loading-container">
+      <div className="loading-spinner"></div>
+      <p>Loading orders...</p>
+    </div>
+  );
 
   return (
     <div className="orders-tab">
       <h1 className="page-title">Order Management</h1>
       
+      {/* Filter Buttons */}
       <div className="filter-section">
         <div className="filter-buttons">
           <button 
@@ -427,13 +596,14 @@ const OrdersTab = () => {
         </div>
       </div>
 
+      {/* Orders Grid */}
       <div className="orders-grid">
         {orders.length > 0 ? (
           orders.map(order => (
             <div key={order._id} className="order-card">
               <div className="order-card-header">
                 <div>
-                  <h3>Order #{order._id.slice(-6)}</h3>
+                  <h3>Order #{order.orderNumber || order._id.slice(-6)}</h3>
                   <span className="order-date">{formatDate(order.createdAt)}</span>
                 </div>
                 <span className="status-badge" style={{backgroundColor: getStatusColor(order.status)}}>
@@ -443,10 +613,67 @@ const OrdersTab = () => {
               
               <div className="order-card-body">
                 <div className="customer-info">
-                  <p><strong>👤 Customer:</strong> {order.customer?.name || 'Guest'}</p>
-                  <p><strong>📞 Phone:</strong> {order.customer?.phone || 'N/A'}</p>
-                  <p><strong>💰 Total:</strong> {order.totalAmount} ETB</p>
-                  <p><strong>💳 Payment:</strong> {order.paymentMethod}</p>
+                  <p><strong>👤 Customer:</strong> {order.customerName || order.customer?.name || 'Guest'}</p>
+                  <p><strong>📞 Phone:</strong> {order.customerPhone || order.customer?.phone || 'N/A'}</p>
+                  <p><strong>💰 Total:</strong> ETB {order.totalAmount}</p>
+                </div>
+
+                {/* Assignment Info */}
+                <div className="assignment-info">
+                  <h4>👨‍🍳 Staff Assignments</h4>
+                  <div className="assignment-details">
+                    <div className="assignment-row">
+                      <div className="assignment-current">
+                        <strong>Chef:</strong> {order.assignedChef?.name || 'Not assigned'}
+                        {order.assignedAt?.chef && (
+                          <span className="assignment-time">
+                            {' '}({formatDate(order.assignedAt.chef)})
+                          </span>
+                        )}
+                      </div>
+                      <div className="assignment-select">
+                        <select
+                          value=""
+                          onChange={(e) => e.target.value && handleQuickAssignChef(order._id, e.target.value)}
+                          disabled={order.status === 'delivered' || order.status === 'cancelled'}
+                          className="quick-assign-select"
+                        >
+                          <option value="">👨‍🍳 Assign Chef</option>
+                          {availableChefs.map(chef => (
+                            <option key={chef._id} value={chef._id}>
+                              {chef.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div className="assignment-row">
+                      <div className="assignment-current">
+                        <strong>Delivery:</strong> {order.assignedDelivery?.name || 'Not assigned'}
+                        {order.assignedAt?.delivery && (
+                          <span className="assignment-time">
+                            {' '}({formatDate(order.assignedAt.delivery)})
+                          </span>
+                        )}
+                      </div>
+                      <div className="assignment-select">
+                        <select
+                          value=""
+                          onChange={(e) => e.target.value && handleQuickAssignDelivery(order._id, e.target.value)}
+                          disabled={order.status === 'delivered' || order.status === 'cancelled'}
+                          className="quick-assign-select"
+                        >
+                          <option value="">🚚 Assign Delivery</option>
+                          {availableDelivery.map(delivery => (
+                            <option key={delivery._id} value={delivery._id}>
+                              {delivery.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="order-items">
@@ -454,85 +681,112 @@ const OrdersTab = () => {
                   {order.items?.map((item, idx) => (
                     <div key={idx} className="order-item">
                       <span>{item.name} x{item.quantity}</span>
-                      <span>{item.price * item.quantity} ETB</span>
+                      <span>ETB {item.price * item.quantity}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className="order-card-footer">
-                {order.status === 'pending' && (
-                  <div className="action-buttons">
-                    <button 
-                      className="btn-confirm"
-                      onClick={() => updateOrderStatus(order._id, 'confirmed')}
-                    >
-                      ✅ Confirm Order
-                    </button>
-                    <button 
-                      className="btn-cancel"
-                      onClick={() => updateOrderStatus(order._id, 'cancelled')}
-                    >
-                      ❌ Cancel
-                    </button>
+                {/* Status Update Section */}
+                <div className="status-update-section">
+                  <div className="current-status">
+                    <span className="status-label">Status:</span>
+                    <span className="status-value" style={{color: getStatusColor(order.status)}}>
+                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    </span>
                   </div>
-                )}
+                  
+                  <div className="status-actions">
+                    {/* Status Update Buttons */}
+                    {order.status === 'pending' && (
+                      <div className="status-buttons">
+                        <button 
+                          className="btn-status-confirm"
+                          onClick={() => updateOrderStatus(order._id, 'confirmed')}
+                        >
+                          ✅ Confirm
+                        </button>
+                        <button 
+                          className="btn-status-cancel"
+                          onClick={() => updateOrderStatus(order._id, 'cancelled')}
+                        >
+                          ❌ Cancel
+                        </button>
+                      </div>
+                    )}
 
-                {order.status === 'confirmed' && (
-                  <div className="action-buttons">
-                    <button 
-                      className="btn-chef"
-                      onClick={() => updateOrderStatus(order._id, 'preparing')}
-                    >
-                      👨‍🍳 Send to Kitchen
-                    </button>
-                    <select 
-                      className="assign-select"
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          updateOrderStatus(order._id, 'preparing', e.target.value);
-                        }
-                      }}
-                    >
-                      <option value="">Assign Chef...</option>
-                      <option value="chef1">Chef Berhanu</option>
-                      <option value="chef2">Chef Tigist</option>
-                      <option value="chef3">Chef Solomon</option>
-                    </select>
+                    {order.status === 'confirmed' && (
+                      <button 
+                        className="btn-status-preparing"
+                        onClick={() => updateOrderStatus(order._id, 'preparing')}
+                      >
+                        👨‍🍳 Start Preparing
+                      </button>
+                    )}
+
+                    {order.status === 'preparing' && (
+                      <button 
+                        className="btn-status-ready"
+                        onClick={() => updateOrderStatus(order._id, 'ready')}
+                      >
+                        ✅ Mark Ready
+                      </button>
+                    )}
+
+                    {order.status === 'ready' && (
+                      <button 
+                        className="btn-status-delivered"
+                        onClick={() => updateOrderStatus(order._id, 'delivered')}
+                      >
+                        🚚 Mark Delivered
+                      </button>
+                    )}
+
+                    {/* Quick Status Dropdown for Advanced Control */}
+                    <div className="quick-status-control">
+                      <select
+                        value={order.status}
+                        onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                        className="status-dropdown"
+                      >
+                        <option value="pending">⏳ Pending</option>
+                        <option value="confirmed">✅ Confirmed</option>
+                        <option value="preparing">👨‍🍳 Preparing</option>
+                        <option value="ready">🍽️ Ready</option>
+                        <option value="delivered">🚚 Delivered</option>
+                        <option value="cancelled">❌ Cancelled</option>
+                      </select>
+                    </div>
                   </div>
-                )}
+                </div>
 
-                {order.status === 'preparing' && (
+                {/* Assignment Buttons - THESE ARE THE ONES YOU SEE */}
+                <div className="assignment-buttons">
                   <button 
-                    className="btn-ready"
-                    onClick={() => updateOrderStatus(order._id, 'ready')}
+                    className="btn-assign-chef"
+                    onClick={() => handleAssignChefClick(order)}
+                    disabled={order.status === 'delivered' || order.status === 'cancelled'}
                   >
-                    ✅ Mark as Ready
+                    {order.assignedChef ? '🔄 Reassign Chef' : '👨‍🍳 Assign Chef'}
                   </button>
-                )}
+                  <button 
+                    className="btn-assign-delivery"
+                    onClick={() => handleAssignDeliveryClick(order)}
+                    disabled={order.status === 'delivered' || order.status === 'cancelled'}
+                  >
+                    {order.assignedDelivery ? '🔄 Reassign Delivery' : '🚚 Assign Delivery'}
+                  </button>
+                </div>
 
-                {order.status === 'ready' && (
-                  <div className="action-buttons">
-                    <button 
-                      className="btn-delivery"
-                      onClick={() => updateOrderStatus(order._id, 'delivered')}
-                    >
-                      🚚 Mark as Delivered
-                    </button>
-                    <select 
-                      className="assign-select"
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          updateOrderStatus(order._id, 'delivered', e.target.value);
-                        }
-                      }}
-                    >
-                      <option value="">Assign Delivery...</option>
-                      <option value="delivery1">Abebe</option>
-                      <option value="delivery2">Kebede</option>
-                      <option value="delivery3">Almaz</option>
-                    </select>
-                  </div>
+                {/* Cash Payment Button */}
+                {order.paymentMethod === 'cash' && order.paymentStatus !== 'completed' && (
+                  <button 
+                    className="btn-cash-payment"
+                    onClick={() => handleCashPaymentClick(order)}
+                  >
+                    💵 Process Cash Payment
+                  </button>
                 )}
               </div>
             </div>
@@ -541,11 +795,173 @@ const OrdersTab = () => {
           <div className="no-orders">No orders found</div>
         )}
       </div>
+
+      {/* Cash Payment Modal */}
+      {showPaymentModal && selectedOrder && (
+        <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
+          <div className="modal-content payment-modal" onClick={e => e.stopPropagation()}>
+            <h2>Process Cash Payment</h2>
+            <p>Order #{selectedOrder.orderNumber || selectedOrder._id.slice(-6)}</p>
+            <p className="total-amount">Total: ETB {selectedOrder.totalAmount}</p>
+            
+            <div className="form-group">
+              <label>Amount Received:</label>
+              <input
+                type="number"
+                step="0.01"
+                min={selectedOrder.totalAmount}
+                value={cashAmount}
+                onChange={(e) => setCashAmount(e.target.value)}
+                placeholder="Enter amount received"
+                className="cash-input"
+              />
+            </div>
+
+            {parseFloat(cashAmount) > selectedOrder.totalAmount && (
+              <div className="change-amount">
+                Change: ETB {(parseFloat(cashAmount) - selectedOrder.totalAmount).toFixed(2)}
+              </div>
+            )}
+
+            <div className="modal-actions">
+              <button 
+                className="btn-confirm"
+                onClick={processCashPayment}
+                disabled={processingPayment}
+              >
+                {processingPayment ? 'Processing...' : 'Confirm Payment'}
+              </button>
+              <button 
+                className="btn-cancel"
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  setSelectedOrder(null);
+                  setCashAmount('');
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Chef Modal */}
+      {showAssignChefModal && selectedOrder && (
+        <div className="modal-overlay" onClick={() => setShowAssignChefModal(false)}>
+          <div className="modal-content assign-modal" onClick={e => e.stopPropagation()}>
+            <h2>👨‍🍳 Assign Chef</h2>
+            <p>Order #{selectedOrder.orderNumber || selectedOrder._id.slice(-6)}</p>
+            
+            <div className="form-group">
+              <label>Select Chef:</label>
+              <select
+                value={selectedChefId}
+                onChange={(e) => setSelectedChefId(e.target.value)}
+                className="form-control"
+              >
+                <option value="">Choose a chef...</option>
+                {availableChefs.map(chef => (
+                  <option key={chef._id} value={chef._id}>
+                    {chef.name} {selectedOrder.assignedChef?._id === chef._id ? '(Current)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Notes (optional):</label>
+              <textarea
+                value={assignmentNotes}
+                onChange={(e) => setAssignmentNotes(e.target.value)}
+                placeholder="Special instructions for the chef..."
+                rows="3"
+                className="form-control"
+              />
+            </div>
+
+            <div className="modal-actions">
+              <button 
+                className="btn-confirm"
+                onClick={handleAssignChef}
+              >
+                Assign Chef
+              </button>
+              <button 
+                className="btn-cancel"
+                onClick={() => {
+                  setShowAssignChefModal(false);
+                  setSelectedOrder(null);
+                  setSelectedChefId('');
+                  setAssignmentNotes('');
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Delivery Modal */}
+      {showAssignDeliveryModal && selectedOrder && (
+        <div className="modal-overlay" onClick={() => setShowAssignDeliveryModal(false)}>
+          <div className="modal-content assign-modal" onClick={e => e.stopPropagation()}>
+            <h2>🚚 Assign Delivery Person</h2>
+            <p>Order #{selectedOrder.orderNumber || selectedOrder._id.slice(-6)}</p>
+            
+            <div className="form-group">
+              <label>Select Delivery Person:</label>
+              <select
+                value={selectedDeliveryId}
+                onChange={(e) => setSelectedDeliveryId(e.target.value)}
+                className="form-control"
+              >
+                <option value="">Choose a delivery person...</option>
+                {availableDelivery.map(person => (
+                  <option key={person._id} value={person._id}>
+                    {person.name} {selectedOrder.assignedDelivery?._id === person._id ? '(Current)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Notes (optional):</label>
+              <textarea
+                value={assignmentNotes}
+                onChange={(e) => setAssignmentNotes(e.target.value)}
+                placeholder="Delivery instructions..."
+                rows="3"
+                className="form-control"
+              />
+            </div>
+
+            <div className="modal-actions">
+              <button 
+                className="btn-confirm"
+                onClick={handleAssignDelivery}
+              >
+                Assign Delivery
+              </button>
+              <button 
+                className="btn-cancel"
+                onClick={() => {
+                  setShowAssignDeliveryModal(false);
+                  setSelectedOrder(null);
+                  setSelectedDeliveryId('');
+                  setAssignmentNotes('');
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
-// ==================== MENU TAB ====================
 // ==================== MENU TAB ====================
 const MenuTab = () => {
   const [menuItems, setMenuItems] = useState([]);
@@ -576,9 +992,7 @@ const MenuTab = () => {
       setLoading(true);
       setError(null);
       const response = await menuService.getAllItems();
-      console.log('API Response:', response);
       
-      // Handle different response formats
       if (Array.isArray(response)) {
         setMenuItems(response);
       } else if (response && response.data && Array.isArray(response.data)) {
@@ -672,7 +1086,6 @@ const MenuTab = () => {
     }
   };
 
-  // Helper function to get emoji for category
   const getEmojiForCategory = (category) => {
     const emojis = {
       'burgers': '🍔',
@@ -878,7 +1291,6 @@ const MenuTab = () => {
                     alt={item.name}
                     onError={(e) => {
                       e.target.onerror = null;
-                      // Replace with emoji on error
                       e.target.style.display = 'none';
                       const emojiSpan = document.createElement('span');
                       emojiSpan.style.fontSize = '48px';
@@ -940,6 +1352,7 @@ const MenuTab = () => {
     </div>
   );
 };
+
 // ==================== REPORTS TAB ====================
 const ReportsTab = () => {
   const [reportType, setReportType] = useState('daily');
@@ -975,7 +1388,6 @@ const ReportsTab = () => {
       setReportData(data);
     } catch (error) {
       console.error('Error generating report:', error);
-      // Mock data
       setReportData({
         totalOrders: 45,
         totalRevenue: 12500,
@@ -1188,7 +1600,6 @@ const UsersTab = () => {
       setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching users:', error);
-      // Mock data
       setUsers([
         { _id: '1', name: 'John Doe', email: 'john@example.com', phone: '0912345678', role: 'customer', status: 'active', createdAt: new Date().toISOString() },
         { _id: '2', name: 'Chef Berhanu', email: 'berhanu@sewrica.com', phone: '0923456789', role: 'chef', status: 'active', createdAt: new Date().toISOString() },
@@ -1291,6 +1702,212 @@ const UsersTab = () => {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+};
+
+// ==================== STAFF TAB ====================
+const StaffTab = () => {
+  const [chefs, setChefs] = useState([]);
+  const [deliveryPersons, setDeliveryPersons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState('chefs');
+
+  useEffect(() => {
+    fetchStaff();
+  }, []);
+
+  const fetchStaff = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch chefs
+      const chefsResponse = await staffService.getStaffByRole('cook');
+      setChefs(chefsResponse.staff || []);
+      
+      // Fetch delivery persons
+      const deliveryResponse = await staffService.getStaffByRole('delivery');
+      setDeliveryPersons(deliveryResponse.staff || []);
+      
+    } catch (error) {
+      console.error('Error fetching staff:', error);
+      toast.error('Failed to load staff data');
+      
+      // Set mock data for testing
+      setChefs([
+        { _id: 'chef1', name: 'Chef Berhanu', email: 'berhanu@sewrica.com', phone: '0923456789', status: 'active', assignedOrders: 5, completedOrders: 45 },
+        { _id: 'chef2', name: 'Chef Tigist', email: 'tigist@sewrica.com', phone: '0934567890', status: 'active', assignedOrders: 3, completedOrders: 38 },
+        { _id: 'chef3', name: 'Chef Solomon', email: 'solomon@sewrica.com', phone: '0945678901', status: 'busy', assignedOrders: 7, completedOrders: 52 },
+      ]);
+      
+      setDeliveryPersons([
+        { _id: 'del1', name: 'Abebe Kebede', email: 'abebe@sewrica.com', phone: '0956789012', status: 'active', assignedOrders: 4, completedOrders: 67 },
+        { _id: 'del2', name: 'Almaz Worku', email: 'almaz@sewrica.com', phone: '0967890123', status: 'active', assignedOrders: 2, completedOrders: 43 },
+        { _id: 'del3', name: 'Kebede Alemu', email: 'kebede@sewrica.com', phone: '0978901234', status: 'on_delivery', assignedOrders: 6, completedOrders: 58 },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      active: '#27ae60',
+      busy: '#f39c12',
+      on_delivery: '#3498db',
+      offline: '#95a5a6'
+    };
+    return colors[status] || '#95a5a6';
+  };
+
+  const getStatusText = (status) => {
+    const texts = {
+      active: 'Available',
+      busy: 'Busy',
+      on_delivery: 'On Delivery',
+      offline: 'Offline'
+    };
+    return texts[status] || status;
+  };
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading staff data...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="staff-tab">
+      <div className="tab-header">
+        <h1 className="page-title">Staff Management</h1>
+        <div className="staff-tabs">
+          <button 
+            className={activeSection === 'chefs' ? 'active' : ''} 
+            onClick={() => setActiveSection('chefs')}
+          >
+            👨‍🍳 Chefs ({chefs.length})
+          </button>
+          <button 
+            className={activeSection === 'delivery' ? 'active' : ''} 
+            onClick={() => setActiveSection('delivery')}
+          >
+            🚚 Delivery Persons ({deliveryPersons.length})
+          </button>
+        </div>
+      </div>
+
+      {activeSection === 'chefs' && (
+        <div className="staff-section">
+          <h2>Chefs</h2>
+          {chefs.length > 0 ? (
+            <div className="staff-grid">
+              {chefs.map(chef => (
+                <div key={chef._id} className="staff-card">
+                  <div className="staff-header">
+                    <div className="staff-avatar">
+                      👨‍🍳
+                    </div>
+                    <div className="staff-info">
+                      <h3>{chef.name}</h3>
+                      <span className="staff-status" style={{backgroundColor: getStatusColor(chef.status)}}>
+                        {getStatusText(chef.status)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="staff-details">
+                    <div className="detail-row">
+                      <span className="label">📧 Email:</span>
+                      <span className="value">{chef.email}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">📱 Phone:</span>
+                      <span className="value">{chef.phone || 'N/A'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">📦 Active Orders:</span>
+                      <span className="value">{chef.assignedOrders || 0}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">✅ Completed:</span>
+                      <span className="value">{chef.completedOrders || 0}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="staff-actions">
+                    <button className="btn-view">View Details</button>
+                    <button className="btn-assign">Assign Order</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <div className="empty-icon">👨‍🍳</div>
+              <h3>No Chefs Found</h3>
+              <p>No chefs are currently registered in the system.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeSection === 'delivery' && (
+        <div className="staff-section">
+          <h2>Delivery Persons</h2>
+          {deliveryPersons.length > 0 ? (
+            <div className="staff-grid">
+              {deliveryPersons.map(person => (
+                <div key={person._id} className="staff-card">
+                  <div className="staff-header">
+                    <div className="staff-avatar">
+                      🚚
+                    </div>
+                    <div className="staff-info">
+                      <h3>{person.name}</h3>
+                      <span className="staff-status" style={{backgroundColor: getStatusColor(person.status)}}>
+                        {getStatusText(person.status)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="staff-details">
+                    <div className="detail-row">
+                      <span className="label">📧 Email:</span>
+                      <span className="value">{person.email}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">📱 Phone:</span>
+                      <span className="value">{person.phone || 'N/A'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">📦 Active Deliveries:</span>
+                      <span className="value">{person.assignedOrders || 0}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">✅ Completed:</span>
+                      <span className="value">{person.completedOrders || 0}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="staff-actions">
+                    <button className="btn-view">View Details</button>
+                    <button className="btn-assign">Assign Delivery</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <div className="empty-icon">🚚</div>
+              <h3>No Delivery Persons Found</h3>
+              <p>No delivery persons are currently registered in the system.</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

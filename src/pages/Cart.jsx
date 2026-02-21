@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+// NEW: Import Stripe hooks
+import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import { 
   FaShoppingCart, FaTrash, FaPlus, FaMinus, 
   FaArrowLeft, FaArrowRight, FaCreditCard, 
@@ -17,9 +19,15 @@ import './Cart.css';
 const Cart = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  // NEW: Initialize Stripe hooks
+  const stripe = useStripe();
+  const elements = useElements();
+  // NEW: Add processing state for payments
+  const [processing, setProcessing] = useState(false);
+  
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [checkoutStep, setCheckoutStep] = useState(1); // 1: cart, 2: checkout, 3: payment, 4: confirmation
+  const [checkoutStep, setCheckoutStep] = useState(1); // 1: cart, 2: checkout, 3: payment
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
     email: '',
@@ -31,19 +39,78 @@ const Cart = () => {
     floor: '2nd Floor',
     additionalInfo: '',
     deliveryMethod: 'delivery', // 'delivery' or 'pickup'
-    paymentMethod: 'cash', // 'cash', 'tele_birr', 'bank'
+    paymentMethod: 'cash', // 'cash', 'tele_birr', 'bank', 'card'
     deliveryTime: 'asap'
   });
 
   const [formErrors, setFormErrors] = useState({});
-  const [orderPlaced, setOrderPlaced] = useState(false);
-  const [orderNumber, setOrderNumber] = useState('');
-  const [currentOrderId, setCurrentOrderId] = useState('');
+  // NEW: State for payment error
+  const [paymentError, setPaymentError] = useState('');
+
+  // ========== IMAGE FIX: Helper function to get correct image URL ==========
+  const getImageUrl = (imagePath) => {
+  if (!imagePath) {
+    return 'https://via.placeholder.com/100x100?text=No+Image';
+  }
+  
+  // If it's already a full URL, return it
+  if (imagePath.startsWith('http')) {
+    return imagePath;
+  }
+  
+  // If it's a relative path, prepend the backend URL with /uploads/
+  const baseURL = 'http://localhost:5000';
+  
+  // Remove leading slash if present to avoid double slashes
+  const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
+  
+  // IMPORTANT: Add /uploads/ to the path since images are stored in uploads folder
+  return `${baseURL}/uploads/${cleanPath}`;
+};
+  // ========== IMAGE FIX: Helper function to get emoji based on category ==========
+  const getCategoryEmoji = (category) => {
+    const emojis = {
+      'burgers': '🍔',
+      'sandwiches': '🥪',
+      'pizza': '🍕',
+      'wraps': '🌯',
+      'traditional': '🍛',
+      'fastfood': '🍟',
+      'beverages': '☕',
+      'desserts': '🍰',
+      'fetira': '🥙'
+    };
+    return emojis[category] || '🍽️';
+  };
 
   // Load cart items from localStorage
   useEffect(() => {
     loadCartItems();
   }, []);
+
+  // IMAGE FIX: Debug effect to check image paths
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      console.log('Cart items with images:', cartItems.map(item => ({
+        name: item.name,
+        image: item.image,
+        category: item.category,
+        fullUrl: getImageUrl(item.image)
+      })));
+    }
+  }, [cartItems]);
+
+  // NEW: Update customer info when user changes
+  useEffect(() => {
+    if (user) {
+      setCustomerInfo(prev => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone
+      }));
+    }
+  }, [user]);
 
   const loadCartItems = () => {
     setLoading(true);
@@ -193,7 +260,106 @@ const Cart = () => {
     window.scrollTo(0, 0);
   };
 
-  // Place order
+  // ========== ✅ UPDATED: Handle card payment with Stripe ==========
+  const handleCardPayment = async (orderId) => {
+    if (!stripe || !elements) {
+      throw new Error('Payment system not initialized');
+    }
+
+    try {
+      // Create payment intent
+      const paymentResponse = await orderService.createPaymentIntent(orderId);
+      
+      if (!paymentResponse.clientSecret) {
+        throw new Error('Failed to initialize payment');
+      }
+
+      // Get card element
+      const cardElement = elements.getElement(CardElement);
+      
+      if (!cardElement) {
+        throw new Error('Card information is required');
+      }
+
+      // Prepare billing details
+      const billingDetails = {
+        name: customerInfo.name,
+        email: customerInfo.email,
+        phone: customerInfo.phone,
+        address: {
+          line1: customerInfo.address || customerInfo.area,
+          city: customerInfo.city,
+          country: 'ET',
+        }
+      };
+
+      // Confirm payment with Stripe
+      const { error, paymentIntent } = await stripe.confirmCardPayment(
+        paymentResponse.clientSecret,
+        {
+          payment_method: {
+            card: cardElement,
+            billing_details: billingDetails
+          }
+        }
+      );
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (paymentIntent.status === 'succeeded') {
+        // Confirm order with backend
+        await orderService.confirmOrderPayment(orderId, paymentIntent.id);
+        
+        // ✅ UPDATED: Navigate to confirmation page
+        toast.success('Payment successful! Order confirmed.');
+        navigate(`/order-confirmation/${orderId}`);
+        
+        return paymentIntent;
+      } else {
+        throw new Error('Payment was not successful');
+      }
+    } catch (error) {
+      console.error('Card payment error:', error);
+      throw error;
+    }
+  };
+
+  // ========== ✅ UPDATED: Handle Tele Birr payment ==========
+  const handleTeleBirrPayment = (order) => {
+    // Clear cart
+    localStorage.removeItem('cart');
+    window.dispatchEvent(new Event('cartUpdated'));
+    
+    // ✅ UPDATED: Navigate to confirmation page
+    toast.info('Please complete your Tele Birr payment using the instructions provided.');
+    navigate(`/order-confirmation/${order._id}`);
+  };
+
+  // ========== ✅ UPDATED: Handle Bank Transfer payment ==========
+  const handleBankPayment = (order) => {
+    // Clear cart
+    localStorage.removeItem('cart');
+    window.dispatchEvent(new Event('cartUpdated'));
+    
+    // ✅ UPDATED: Navigate to confirmation page
+    toast.info('Please complete your bank transfer using the account details provided.');
+    navigate(`/order-confirmation/${order._id}`);
+  };
+
+  // ========== ✅ UPDATED: Handle Cash payment ==========
+  const handleCashPayment = (order) => {
+    // Clear cart
+    localStorage.removeItem('cart');
+    window.dispatchEvent(new Event('cartUpdated'));
+
+    // ✅ UPDATED: Navigate to confirmation page
+    toast.success('Order placed successfully! You will pay on delivery.');
+    navigate(`/order-confirmation/${order._id}`);
+  };
+
+  // ========== ✅ UPDATED: Place order function ==========
   const placeOrder = async () => {
     // Check if user is logged in
     if (!user) {
@@ -202,8 +368,24 @@ const Cart = () => {
       return;
     }
 
+    // Validate form for card payments
+    if (customerInfo.paymentMethod === 'card') {
+      if (!stripe || !elements) {
+        toast.error('Payment system not initialized. Please refresh the page.');
+        return;
+      }
+      
+      // Validate card element
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) {
+        toast.error('Please enter your card details');
+        return;
+      }
+    }
+
     try {
-      setLoading(true);
+      setProcessing(true);
+      setPaymentError('');
 
       // Prepare order data for backend
       const orderData = {
@@ -225,64 +407,54 @@ const Cart = () => {
         paymentMethod: customerInfo.paymentMethod,
         deliveryMethod: customerInfo.deliveryMethod,
         deliveryTime: customerInfo.deliveryTime,
-        specialInstructions: customerInfo.specialInstructions || ''
+        specialInstructions: customerInfo.additionalInfo || ''
       };
+
+      console.log('Creating order with data:', orderData);
 
       // Submit order to backend
       const response = await orderService.createOrder(orderData);
+      console.log('Order created:', response);
+      
+      const order = response.order;
 
-      // Handle different payment methods
-      if (customerInfo.paymentMethod === 'card') {
-        // For card payments, proceed to payment step
-        setOrderNumber(response.order.orderNumber);
-        setCurrentOrderId(response.order._id);
-        setCheckoutStep(3); // Go to payment step
-      } else {
-        // For cash payments, order is complete
-        setOrderNumber(response.order.orderNumber);
-
-        // Clear cart
-        localStorage.removeItem('cart');
-        window.dispatchEvent(new Event('cartUpdated'));
-
-        setOrderPlaced(true);
-        setCheckoutStep(4);
-        window.scrollTo(0, 0);
-
-        toast.success('Order placed successfully!');
+      // Handle payment based on method
+      switch (customerInfo.paymentMethod) {
+        case 'card':
+          try {
+            await handleCardPayment(order._id);
+            // ✅ UPDATED: Removed duplicate code - navigation is in handleCardPayment
+          } catch (error) {
+            setPaymentError(error.message);
+            throw error;
+          }
+          break;
+          
+        case 'cash':
+          handleCashPayment(order);
+          break;
+          
+        case 'tele_birr':
+          handleTeleBirrPayment(order);
+          break;
+          
+        case 'bank':
+          handleBankPayment(order);
+          break;
+          
+        default:
+          toast.error('Invalid payment method');
       }
 
     } catch (error) {
       console.error('Order placement error:', error);
       toast.error(error.message || 'Failed to place order. Please try again.');
     } finally {
-      setLoading(false);
+      setProcessing(false);
     }
   };
 
-  // Handle successful payment
-  const handlePaymentSuccess = (paymentIntent) => {
-    // Clear cart
-    localStorage.removeItem('cart');
-    window.dispatchEvent(new Event('cartUpdated'));
-
-    setOrderPlaced(true);
-    setCheckoutStep(4);
-    window.scrollTo(0, 0);
-
-    toast.success('Payment successful! Order confirmed.');
-  };
-
-  // Handle payment error
-  const handlePaymentError = (error) => {
-    console.error('Payment error:', error);
-    toast.error('Payment failed. Please try again.');
-  };
-
-  // Continue shopping
-  const continueShopping = () => {
-    navigate('/menu');
-  };
+  // ✅ UPDATED: Removed handlePaymentSuccess as it's no longer needed
 
   // Render loading state
   if (loading) {
@@ -294,72 +466,7 @@ const Cart = () => {
     );
   }
 
-  // Render order confirmation
-  if (checkoutStep === 4) {
-    return (
-      <div className="cart-page">
-        <div className="container">
-          <div className="confirmation-container">
-            <div className="confirmation-icon">
-              <FaCheckCircle />
-            </div>
-            <h1 className="confirmation-title">Order Confirmed!</h1>
-            <p className="confirmation-order-number">Order #{orderNumber}</p>
-            <p className="confirmation-message">
-              Thank you for your order! We've received your order and will start preparing it right away.
-            </p>
-            
-            <div className="confirmation-details">
-              <h3>Order Summary</h3>
-              <div className="confirmation-info">
-                <p><strong>Name:</strong> {customerInfo.name}</p>
-                <p><strong>Phone:</strong> {customerInfo.phone}</p>
-                <p><strong>Email:</strong> {customerInfo.email}</p>
-                <p><strong>Method:</strong> {customerInfo.deliveryMethod === 'delivery' ? 'Free Delivery' : 'Pickup'}</p>
-                {customerInfo.deliveryMethod === 'delivery' && (
-                  <p><strong>Address:</strong> {customerInfo.area}, {customerInfo.building}, {customerInfo.floor}</p>
-                )}
-                <p><strong>Payment:</strong> {
-                  customerInfo.paymentMethod === 'cash' ? 'Cash on Delivery' :
-                  customerInfo.paymentMethod === 'tele_birr' ? 'Tele Birr' : 'Bank Transfer'
-                }</p>
-                <p><strong>Total:</strong> ETB {calculateTotal().toFixed(2)}</p>
-              </div>
-              
-              <h3>What's Next?</h3>
-              <div className="next-steps">
-                <div className="step">
-                  <span className="step-number">1</span>
-                  <p>We'll confirm your order via SMS</p>
-                </div>
-                <div className="step">
-                  <span className="step-number">2</span>
-                  <p>Your food will be prepared</p>
-                </div>
-                <div className="step">
-                  <span className="step-number">3</span>
-                  <p>{customerInfo.deliveryMethod === 'delivery' ? 'Free delivery to your location' : 'Ready for pickup'}</p>
-                </div>
-                <div className="step">
-                  <span className="step-number">4</span>
-                  <p>Enjoy your meal!</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="confirmation-actions">
-              <button onClick={continueShopping} className="btn-primary">
-                <MdRestaurantMenu /> Continue Shopping
-              </button>
-              <Link to="/" className="btn-secondary">
-                <FaArrowLeft /> Back to Home
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // ✅ UPDATED: Removed the entire order confirmation section (lines ~400-450)
 
   return (
     <div className="cart-page">
@@ -426,8 +533,28 @@ const Cart = () => {
                   <h2>Cart Items ({getItemCount()})</h2>
                   {cartItems.map(item => (
                     <div key={item.id} className="cart-item">
+                      {/* ========== IMAGE FIX: Updated image section with error handling ========== */}
                       <div className="cart-item-image">
-                        <img src={item.image} alt={item.name} />
+                        {item.image ? (
+                          <img 
+                            src={getImageUrl(item.image)} 
+                            alt={item.name}
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              // Replace with emoji on error
+                              e.target.style.display = 'none';
+                              const parent = e.target.parentNode;
+                              const emojiSpan = document.createElement('span');
+                              emojiSpan.style.fontSize = '48px';
+                              emojiSpan.textContent = getCategoryEmoji(item.category);
+                              parent.appendChild(emojiSpan);
+                            }}
+                          />
+                        ) : (
+                          <div className="no-image">
+                            <span style={{ fontSize: '48px' }}>{getCategoryEmoji(item.category)}</span>
+                          </div>
+                        )}
                       </div>
                       <div className="cart-item-details">
                         <div className="cart-item-header">
@@ -511,6 +638,7 @@ const Cart = () => {
                       <span className="payment-icon">Cash</span>
                       <span className="payment-icon">Tele Birr</span>
                       <span className="payment-icon">Bank</span>
+                      <span className="payment-icon">Card</span>
                     </div>
                   </div>
                 </div>
@@ -729,6 +857,21 @@ const Cart = () => {
                       </div>
                     </label>
 
+                    <label className={`payment-option ${customerInfo.paymentMethod === 'card' ? 'selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="card"
+                        checked={customerInfo.paymentMethod === 'card'}
+                        onChange={handleInputChange}
+                      />
+                      <FaCreditCard className="payment-icon" />
+                      <div className="payment-info">
+                        <strong>Credit / Debit Card</strong>
+                        <small>Pay securely with Stripe</small>
+                      </div>
+                    </label>
+
                     <label className={`payment-option ${customerInfo.paymentMethod === 'tele_birr' ? 'selected' : ''}`}>
                       <input
                         type="radio"
@@ -759,6 +902,47 @@ const Cart = () => {
                       </div>
                     </label>
                   </div>
+
+                  {/* ========== NEW: Card Payment Section ========== */}
+                  {customerInfo.paymentMethod === 'card' && (
+                    <div className="card-payment-section">
+                      <h3>Card Details</h3>
+                      <div className="card-element-container">
+                        <CardElement 
+                          options={{
+                            style: {
+                              base: {
+                                fontSize: '16px',
+                                color: '#424770',
+                                '::placeholder': {
+                                  color: '#aab7c4',
+                                },
+                              },
+                              invalid: {
+                                color: '#9e2146',
+                              },
+                            },
+                          }}
+                        />
+                      </div>
+                      
+                      {/* Test card hint */}
+                      <div className="test-card-hint">
+                        <p>Test Card: 4242 4242 4242 4242 | Any future date | Any CVC</p>
+                      </div>
+
+                      {/* Payment error display */}
+                      {paymentError && (
+                        <div className="payment-error-message">
+                          <p>❌ {paymentError}</p>
+                        </div>
+                      )}
+
+                      <p className="secure-note">
+                        🔒 Your payment information is secure and encrypted by Stripe
+                      </p>
+                    </div>
+                  )}
 
                   {customerInfo.paymentMethod === 'tele_birr' && (
                     <div className="payment-instructions">
@@ -806,8 +990,21 @@ const Cart = () => {
                     <button onClick={backToCheckout} className="back-btn">
                       <FaArrowLeft /> Back
                     </button>
-                    <button onClick={placeOrder} className="place-order-btn">
-                      Place Order <FaRegSmile />
+                    <button 
+                      onClick={placeOrder} 
+                      className={`place-order-btn ${processing ? 'processing' : ''}`}
+                      disabled={processing || (customerInfo.paymentMethod === 'card' && !stripe)}
+                    >
+                      {processing ? (
+                        <>
+                          <span className="spinner"></span>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          Place Order <FaRegSmile />
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>

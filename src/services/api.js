@@ -72,7 +72,7 @@ export const authService = {
     if (userStr) {
       try {
         return JSON.parse(userStr);
-      } catch (e) {
+      } catch {
         return null;
       }
     }
@@ -212,7 +212,7 @@ export const menuService = {
   }
 };
 
-// 🆕 NEW: Admin Dashboard Services
+// Admin Dashboard Services
 export const adminService = {
   // Get dashboard statistics
   getStats: async () => {
@@ -409,24 +409,12 @@ export const adminService = {
       console.error('Error exporting report:', error);
       throw error.response?.data || { message: 'Failed to export report' };
     }
-  },
-
-  // Update order status (for staff)
-  updateOrderStatus: async (orderId, status, notes = null) => {
-    try {
-      const response = await api.patch(`/orders/${orderId}/status`, {
-        status,
-        notes
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error updating order status:', error);
-      throw error.response?.data || { message: 'Failed to update order status' };
-    }
   }
 };
 
-// 🆕 NEW: Order services for customers
+// ============================================
+// ORDER SERVICES - WITH PAYMENT METHODS
+// ============================================
 export const orderService = {
   // Create new order
   createOrder: async (orderData) => {
@@ -468,45 +456,299 @@ export const orderService = {
     }
   },
 
-  // Create payment intent for Stripe
-  createPaymentIntent: async (orderId, paymentMethodId) => {
+  // ========== PAYMENT METHODS ==========
+  
+  createPaymentIntent: async (orderId) => {
     try {
-      const response = await api.post('/payments/create-payment-intent', {
-        orderId,
-        paymentMethodId
-      });
+      const response = await api.post('/payments/create-payment-intent', { orderId });
       return response.data;
     } catch (error) {
+      console.error('Create payment intent error:', error);
       throw error.response?.data || { message: 'Failed to create payment intent' };
     }
   },
 
-  // Process cash payment
-  processCashPayment: async (orderId, amountReceived, change) => {
+  confirmOrderPayment: async (orderId, paymentIntentId) => {
     try {
-      const response = await api.post('/payments/cash-payment', {
-        orderId,
-        amountReceived,
-        change
+      const response = await api.post(`/orders/${orderId}/confirm-payment`, {
+        paymentIntentId
       });
       return response.data;
     } catch (error) {
+      console.error('Confirm payment error:', error);
+      throw error.response?.data || { message: 'Failed to confirm payment' };
+    }
+  },
+
+  processCashPayment: async (orderId, amountReceived) => {
+    try {
+      const response = await api.post(`/orders/${orderId}/cash-payment`, {
+        amountReceived
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Process cash payment error:', error);
       throw error.response?.data || { message: 'Failed to process cash payment' };
     }
   },
 
-  // Get saved payment methods
   getPaymentMethods: async () => {
     try {
       const response = await api.get('/payments/payment-methods');
       return response.data;
     } catch (error) {
+      console.error('Get payment methods error:', error);
       throw error.response?.data || { message: 'Failed to get payment methods' };
+    }
+  },
+
+  getOrderWithPayment: async (orderId) => {
+    try {
+      const response = await api.get(`/orders/${orderId}/payment`);
+      return response.data;
+    } catch (error) {
+      console.error('Get order with payment error:', error);
+      throw error.response?.data || { message: 'Failed to fetch order payment details' };
+    }
+  },
+
+  getPaymentStatus: async (orderId) => {
+    try {
+      const response = await api.get(`/orders/${orderId}/payment-status`);
+      return response.data;
+    } catch (error) {
+      console.error('Get payment status error:', error);
+      throw error.response?.data || { message: 'Failed to get payment status' };
+    }
+  },
+
+  refundPayment: async (orderId, reason) => {
+    try {
+      const response = await api.post(`/orders/${orderId}/refund`, { reason });
+      return response.data;
+    } catch (error) {
+      console.error('Refund payment error:', error);
+      throw error.response?.data || { message: 'Failed to process refund' };
     }
   }
 };
 
-// 🆕 NEW: Cart services (for future backend cart)
+// ============================================
+// STAFF MANAGEMENT SERVICES - NEW
+// ============================================
+export const staffService = {
+  // Get staff by role (cook, delivery, cashier)
+  getStaffByRole: async (role) => {
+    try {
+      const response = await api.get(`/staff/${role}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching ${role}s:`, error);
+      throw error.response?.data || { message: `Failed to fetch ${role}s` };
+    }
+  },
+
+  // Assign order to chef
+  assignChef: async (orderId, chefId, notes = '') => {
+    try {
+      const response = await api.post(`/staff/assign-chef/${orderId}`, { 
+        chefId, 
+        notes 
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error assigning chef:', error);
+      throw error.response?.data || { message: 'Failed to assign chef' };
+    }
+  },
+
+  // Assign order to delivery person
+  assignDelivery: async (orderId, deliveryId, notes = '') => {
+    try {
+      const response = await api.post(`/staff/assign-delivery/${orderId}`, { 
+        deliveryId, 
+        notes 
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error assigning delivery:', error);
+      throw error.response?.data || { message: 'Failed to assign delivery person' };
+    }
+  },
+
+  // Chef starts cooking
+  startCooking: async (orderId) => {
+    try {
+      const response = await api.post(`/staff/start-cooking/${orderId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error starting cooking:', error);
+      throw error.response?.data || { message: 'Failed to start cooking' };
+    }
+  },
+
+  // Chef completes cooking
+  completeCooking: async (orderId) => {
+    try {
+      const response = await api.post(`/staff/complete-cooking/${orderId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error completing cooking:', error);
+      throw error.response?.data || { message: 'Failed to complete cooking' };
+    }
+  },
+
+  // Delivery person starts delivery
+  startDelivery: async (orderId) => {
+    try {
+      const response = await api.post(`/staff/start-delivery/${orderId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error starting delivery:', error);
+      throw error.response?.data || { message: 'Failed to start delivery' };
+    }
+  },
+
+  // Delivery person completes delivery
+  completeDelivery: async (orderId) => {
+    try {
+      const response = await api.post(`/staff/complete-delivery/${orderId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error completing delivery:', error);
+      throw error.response?.data || { message: 'Failed to complete delivery' };
+    }
+  },
+
+  // Get orders assigned to current chef
+  getMyCookingOrders: async () => {
+    try {
+      const response = await api.get('/staff/my-cooking-orders');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching cooking orders:', error);
+      throw error.response?.data || { message: 'Failed to fetch cooking orders' };
+    }
+  },
+
+  // Get orders assigned to current delivery person
+  getMyDeliveryOrders: async () => {
+    try {
+      const response = await api.get('/staff/my-delivery-orders');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching delivery orders:', error);
+      throw error.response?.data || { message: 'Failed to fetch delivery orders' };
+    }
+  },
+
+  // Get unassigned orders (for assignment)
+  getUnassignedOrders: async () => {
+    try {
+      const response = await api.get('/staff/unassigned-orders');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching unassigned orders:', error);
+      throw error.response?.data || { message: 'Failed to fetch unassigned orders' };
+    }
+  }
+};
+
+// ============================================
+// STAFF REPORTING SERVICES - NEW
+// ============================================
+export const staffReportService = {
+  // Get staff performance summary
+  getStaffSummary: async (startDate, endDate) => {
+    try {
+      const params = new URLSearchParams();
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      
+      const response = await api.get(`/staff/reports/summary?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching staff summary:', error);
+      throw error.response?.data || { message: 'Failed to get staff summary' };
+    }
+  },
+
+  // Get chef performance report
+  getChefReport: async (chefId, startDate, endDate) => {
+    try {
+      const params = new URLSearchParams();
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      
+      const response = await api.get(`/staff/reports/chef/${chefId}?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching chef report:', error);
+      throw error.response?.data || { message: 'Failed to get chef report' };
+    }
+  },
+
+  // Get delivery person performance report
+  getDeliveryReport: async (deliveryId, startDate, endDate) => {
+    try {
+      const params = new URLSearchParams();
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      
+      const response = await api.get(`/staff/reports/delivery/${deliveryId}?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching delivery report:', error);
+      throw error.response?.data || { message: 'Failed to get delivery report' };
+    }
+  },
+
+  // Get items cooked by chef (detailed breakdown)
+  getChefItemsBreakdown: async (chefId, startDate, endDate) => {
+    try {
+      const params = new URLSearchParams();
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      
+      const response = await api.get(`/staff/reports/chef/${chefId}/items?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching chef items breakdown:', error);
+      throw error.response?.data || { message: 'Failed to get chef items breakdown' };
+    }
+  },
+
+  // Get daily delivery performance
+  getDailyDeliveryStats: async (deliveryId, date) => {
+    try {
+      const response = await api.get(`/staff/reports/delivery/${deliveryId}/daily?date=${date}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching daily delivery stats:', error);
+      throw error.response?.data || { message: 'Failed to get daily delivery stats' };
+    }
+  },
+
+  // Export staff report
+  exportStaffReport: async (type, format = 'csv', startDate, endDate) => {
+    try {
+      const params = new URLSearchParams();
+      params.append('format', format);
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      
+      const response = await api.get(`/staff/reports/export/${type}?${params.toString()}`, {
+        responseType: 'blob'
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error exporting staff report:', error);
+      throw error.response?.data || { message: 'Failed to export staff report' };
+    }
+  }
+};
+
+// Cart services
 export const cartService = {
   // Add to cart
   addToCart: (item, quantity = 1) => {
@@ -523,6 +765,7 @@ export const cartService = {
           nameAm: item.nameAm,
           price: item.price,
           image: item.image,
+          category: item.category,
           quantity: quantity
         });
       }
@@ -540,7 +783,7 @@ export const cartService = {
   getCart: () => {
     try {
       return JSON.parse(localStorage.getItem('cart')) || [];
-    } catch (error) {
+    } catch {
       return [];
     }
   },
@@ -594,7 +837,7 @@ export const cartService = {
     try {
       const cart = JSON.parse(localStorage.getItem('cart')) || [];
       return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-    } catch (error) {
+    } catch {
       return 0;
     }
   },
@@ -604,7 +847,7 @@ export const cartService = {
     try {
       const cart = JSON.parse(localStorage.getItem('cart')) || [];
       return cart.reduce((total, item) => total + item.quantity, 0);
-    } catch (error) {
+    } catch {
       return 0;
     }
   }

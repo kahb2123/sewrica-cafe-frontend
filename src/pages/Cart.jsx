@@ -12,7 +12,7 @@ import {
 import { MdDeliveryDining, MdRestaurantMenu } from 'react-icons/md';
 import { RiTakeawayLine } from 'react-icons/ri';
 import { toast } from 'react-toastify';
-import { orderService } from '../services/api';
+import { orderService, UPLOADS_URL } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import './Cart.css';
 
@@ -49,24 +49,19 @@ const Cart = () => {
 
   // ========== IMAGE FIX: Helper function to get correct image URL ==========
   const getImageUrl = (imagePath) => {
-  if (!imagePath) {
-    return 'https://via.placeholder.com/100x100?text=No+Image';
-  }
-  
-  // If it's already a full URL, return it
-  if (imagePath.startsWith('http')) {
-    return imagePath;
-  }
-  
-  // If it's a relative path, prepend the backend URL with /uploads/
-  const baseURL = 'http://localhost:5000';
-  
-  // Remove leading slash if present to avoid double slashes
-  const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
-  
-  // IMPORTANT: Add /uploads/ to the path since images are stored in uploads folder
-  return `${baseURL}/uploads/${cleanPath}`;
-};
+    if (!imagePath) {
+      return 'https://via.placeholder.com/100x100?text=No+Image';
+    }
+
+    // If it's already a full URL, return it
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+
+    // If it's a relative path, prepend the uploads base URL
+    const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
+    return `${UPLOADS_URL}/${cleanPath}`;
+  };
   // ========== IMAGE FIX: Helper function to get emoji based on category ==========
   const getCategoryEmoji = (category) => {
     const emojis = {

@@ -12,7 +12,7 @@ import { IoFastFoodOutline } from 'react-icons/io5';
 import { RiTakeawayLine, RiRestaurantLine } from 'react-icons/ri';
 import { TbBread } from 'react-icons/tb';
 import { toast } from 'react-toastify';
-import { menuService } from '../services/api';
+import { menuService, UPLOADS_URL } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import './Menu.css';
 
@@ -356,7 +356,7 @@ const Menu = () => {
                 <div key={item._id} className="menu-card" onClick={() => handleItemClick(item)}>
                   <div className="menu-card-image">
                             <img 
-                            src={item.image ? `http://localhost:5000/uploads/${item.image}` : `https://via.placeholder.com/400x300?text=${encodeURIComponent(item.name)}`}
+                            src={item.image ? `${UPLOADS_URL}/${item.image}` : `https://via.placeholder.com/400x300?text=${encodeURIComponent(item.name)}`}
                             alt={item.name}
                             onError={(e) => {
                               e.target.src = `https://via.placeholder.com/400x300?text=${encodeURIComponent(item.name)}`;
@@ -425,7 +425,7 @@ const Menu = () => {
             <div className="modal-grid">
               <div className="modal-image">
                 <img 
-                  src={selectedItem.image ? `http://localhost:5000/uploads/${selectedItem.image}` : '/default-food.jpg'}
+                  src={selectedItem.image ? `${UPLOADS_URL}/${selectedItem.image}` : '/default-food.jpg'}
                   alt={selectedItem.name}
                   onError={(e) => {
                     e.target.src = '/default-food.jpg';

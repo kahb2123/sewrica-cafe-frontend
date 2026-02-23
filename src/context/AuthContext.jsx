@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { authService } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -36,34 +37,24 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        const userData = {
-          id: data.user.id,
-          name: data.user.name,
-          email: data.user.email,
-          role: data.user.role || 'customer'
+      const data = await authService.login({ email, password });
+      if (data && data.token) {
+        const userData = data.user || data;
+        const normalized = {
+          id: userData.id || userData._id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role || 'customer'
         };
-
         localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(normalized));
+        setUser(normalized);
         return { success: true };
-      } else {
-        return { success: false, error: data.message };
       }
+      return { success: false, error: data.message || 'Login failed' };
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, error: 'Network error' };
+      return { success: false, error: error.message || 'Network error' };
     }
   };
 

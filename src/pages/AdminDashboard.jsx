@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { adminService, menuService, orderService } from '../services/api';
+import { adminService, menuService, orderService, UPLOADS_URL } from '../services/api';
 import { toast } from 'react-toastify';
 import './AdminDashboard.css';
 import { staffService } from '../services/api'; // ✅ ADD THIS IMPORT
@@ -1287,7 +1287,7 @@ const MenuTab = () => {
               <div className="menu-item-image">
                 {item.image ? (
                   <img 
-                    src={item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`} 
+                    src={item.image.startsWith('http') ? item.image : `${UPLOADS_URL}/${item.image.replace(/^\//, '')}`} 
                     alt={item.name}
                     onError={(e) => {
                       e.target.onerror = null;

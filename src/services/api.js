@@ -1,7 +1,12 @@
 import axios from 'axios';
 
 // Base URL for your backend API
-const API_URL = 'http://localhost:5000/api';
+// Prefer Vite env var (set at build). If missing (e.g. Vercel not configured),
+// fall back to the deployed backend so the production site still works.
+const API_URL = import.meta.env.VITE_API_URL || 'https://sewrica-cafe-backend.onrender.com/api';
+
+// Base uploads URL (strip trailing /api if present)
+export const UPLOADS_URL = API_URL.replace(/\/api\/?$/, '') + '/uploads';
 
 // Create axios instance
 const api = axios.create({

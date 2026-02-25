@@ -38,37 +38,132 @@ const Menu = () => {
   // Fetch menu items from API
   useEffect(() => {
     fetchMenuItems();
+  }, []);
+
+  // Fetch categories separately
+  useEffect(() => {
     fetchCategories();
   }, []);
 
   const fetchMenuItems = async () => {
     setLoading(true);
     try {
-                           src={(function() {
-                             if (!item.image) return '/default-food.jpg';
-                             if (item.image.startsWith('http')) return item.image;
-                             const parts = item.image.split('/');
-                             const filename = parts[parts.length - 1];
-                             return `${UPLOADS_URL}/${filename}`;
-                           })()}
-      setMenuItems(response.data.data);
-      setFilteredItems(response.data.data);
+      const response = await menuService.getAllItems();
+      
+      // Handle different response formats
+      let items = [];
+      if (Array.isArray(response)) {
+        items = response;
+      } else if (response && response.data) {
+        items = Array.isArray(response.data) ? response.data : 
+               (response.data.data ? response.data.data : []);
+      } else if (response && response.success && response.data) {
+        items = response.data;
+      }
+
+      // Map backend field names to frontend expected names
+      const mappedItems = items.map(item => ({
+        ...item,
+        vegetarian: item.isVegetarian || false,
+        spicy: item.isSpicy || false,
+        signature: item.isSignature || false,
+        rating: item.rating || 4.5, // Default rating if not provided
+        prepTime: item.prepTime || '15-20 min', // Default prep time
+        spiceLevel: item.spiceLevel || 'Mild', // Default spice level
+        ingredients: item.ingredients || ['Ingredients not specified']
+      }));
+
+      setMenuItems(mappedItems);
+      setFilteredItems(mappedItems);
     } catch (error) {
-      toast.error('Failed to load menu items');
       console.error('Error fetching menu:', error);
+      toast.error('Failed to load menu items');
+      
+      // Set mock data for testing if API fails
+      const mockItems = [
+        {
+          _id: '1',
+          name: 'Cheese Burger',
+          nameAm: 'በርገር አይብ',
+          description: 'Delicious beef patty with melted cheese, lettuce, tomato, and our special sauce',
+          fullDescription: 'A classic cheeseburger made with 100% beef patty, topped with melted cheddar cheese, fresh lettuce, ripe tomatoes, and our secret house sauce, served in a brioche bun.',
+          price: 450,
+          category: 'burgers',
+          isVegetarian: false,
+          isSpicy: false,
+          isSignature: true,
+          available: true,
+          rating: 4.8,
+          prepTime: '15-20 min',
+          spiceLevel: 'Mild',
+          ingredients: ['Beef patty', 'Cheddar cheese', 'Lettuce', 'Tomato', 'Special sauce', 'Brioche bun'],
+          image: '/images/burger.jpg'
+        },
+        {
+          _id: '2',
+          name: 'Doro Wat',
+          nameAm: 'ዶሮ ወጥ',
+          description: 'Spicy Ethiopian chicken stew with hard-boiled eggs',
+          fullDescription: 'Traditional Ethiopian spicy chicken stew simmered with berbere spice, served with a hard-boiled egg and injera.',
+          price: 380,
+          category: 'traditional',
+          isVegetarian: false,
+          isSpicy: true,
+          isSignature: true,
+          available: true,
+          rating: 4.9,
+          prepTime: '20-25 min',
+          spiceLevel: 'Spicy',
+          ingredients: ['Chicken', 'Berbere spice', 'Onions', 'Garlic', 'Hard-boiled eggs', 'Injera'],
+          image: '/images/doro-wat.jpg'
+        },
+        {
+          _id: '3',
+          name: 'Vegetarian Pizza',
+          nameAm: 'አትክልት ፒዛ',
+          description: 'Fresh vegetables on a crispy crust with mozzarella',
+          fullDescription: 'Thin crust pizza topped with fresh bell peppers, mushrooms, olives, onions, and generous mozzarella cheese.',
+          price: 520,
+          category: 'pizza',
+          isVegetarian: true,
+          isSpicy: false,
+          isSignature: false,
+          available: true,
+          rating: 4.6,
+          prepTime: '20-25 min',
+          spiceLevel: 'Mild',
+          ingredients: ['Pizza dough', 'Mozzarella', 'Bell peppers', 'Mushrooms', 'Olives', 'Tomato sauce'],
+          image: '/images/pizza.jpg'
+        }
+      ];
+      setMenuItems(mockItems);
+      setFilteredItems(mockItems);
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchCategories = async () => {
     try {
       const response = await menuService.getAllCategories();
-      setCategories(response.data.data);
+      if (Array.isArray(response)) {
+        setCategories(response);
+      } else if (response && response.data) {
+        setCategories(Array.isArray(response.data) ? response.data : []);
+      }
     } catch (error) {
       console.error('Error fetching categories:', error);
+      // Set default categories
+      setCategories(['burgers', 'pizza', 'sandwiches', 'traditional', 'fastfood', 'wraps', 'fetira']);
     }
   };
 
   // Apply filters whenever they change
   useEffect(() => {
+    filterItems();
+  }, [activeCategory, searchTerm, filters, menuItems]);
+
+  const filterItems = () => {
     let filtered = [...menuItems];
 
     // Filter by category
@@ -77,11 +172,11 @@ const Menu = () => {
     }
 
     // Filter by search term
-    if (searchTerm) {
+    if (searchTerm.trim()) {
       filtered = filtered.filter(item => 
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.nameAm.includes(searchTerm) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase())
+        (item.nameAm && item.nameAm.includes(searchTerm)) ||
+        (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -105,7 +200,14 @@ const Menu = () => {
     }
 
     setFilteredItems(filtered);
-  }, [activeCategory, searchTerm, filters, menuItems]);
+  };
+
+  const getImageUrl = (image) => {
+    if (!image) return '/default-food.jpg';
+    if (image.startsWith('http')) return image;
+    if (image.startsWith('/uploads')) return `${UPLOADS_URL}${image}`;
+    return `${UPLOADS_URL}/${image.split('/').pop()}`;
+  };
 
   const handleItemClick = (item) => {
     setSelectedItem(item);
@@ -187,13 +289,14 @@ const Menu = () => {
   };
 
   const getCategoryIcon = (category) => {
-    switch(category) {
+    switch(category?.toLowerCase()) {
       case 'burgers': return <FaHamburger />;
       case 'sandwiches': return <FaBreadSlice />;
       case 'fastfood': return <IoFastFoodOutline />;
       case 'pizza': return <MdLocalPizza />;
       case 'wraps': return <RiTakeawayLine />;
       case 'fetira': return <TbBread />;
+      case 'traditional': return <GiBowlOfRice />;
       default: return <RiRestaurantLine />;
     }
   };
@@ -358,26 +461,26 @@ const Menu = () => {
               {filteredItems.map(item => (
                 <div key={item._id} className="menu-card" onClick={() => handleItemClick(item)}>
                   <div className="menu-card-image">
-                            <img 
-                            src={item.image ? `${UPLOADS_URL}/${item.image}` : `https://via.placeholder.com/400x300?text=${encodeURIComponent(item.name)}`}
-                            alt={item.name}
-                            onError={(e) => {
-                              e.target.src = `https://via.placeholder.com/400x300?text=${encodeURIComponent(item.name)}`;
-                              e.target.onerror = null; // Prevent infinite loop
-                            }}
-/>
+                    <img 
+                      src={getImageUrl(item.image)}
+                      alt={item.name}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = `https://via.placeholder.com/400x300?text=${encodeURIComponent(item.name)}`;
+                      }}
+                    />
                     {item.isSignature && (
                       <div className="signature-badge">Signature</div>
                     )}
-                    {item.isPopular && (
-                      <div className="popular-badge">Popular</div>
+                    {!item.available && (
+                      <div className="unavailable-badge">Unavailable</div>
                     )}
                   </div>
                   <div className="menu-card-content">
                     <div className="menu-card-header">
                       <h3 className="menu-card-title">
                         {item.name}
-                        <span className="menu-card-title-am">{item.nameAm}</span>
+                        {item.nameAm && <span className="menu-card-title-am">{item.nameAm}</span>}
                       </h3>
                       <div className="menu-card-rating">
                         {renderStars(item.rating)}
@@ -391,10 +494,14 @@ const Menu = () => {
                       <span className="prep-time">
                         <FaClock /> {item.prepTime}
                       </span>
-                      <span className="spice-level">{item.spiceLevel}</span>
                       {item.isVegetarian && (
                         <span className="veg-icon" title="Vegetarian">
                           <FaLeaf />
+                        </span>
+                      )}
+                      {item.isSpicy && (
+                        <span className="spicy-icon" title="Spicy">
+                          <FaPepperHot />
                         </span>
                       )}
                     </div>
@@ -404,7 +511,8 @@ const Menu = () => {
                       <button 
                         className="quick-add-btn"
                         onClick={(e) => quickAddToCart(item, e)}
-                        title="Add to cart"
+                        disabled={!item.available}
+                        title={item.available ? "Add to cart" : "Currently unavailable"}
                       >
                         <FaShoppingCart /> Add
                       </button>
@@ -428,9 +536,10 @@ const Menu = () => {
             <div className="modal-grid">
               <div className="modal-image">
                 <img 
-                  src={selectedItem.image ? `${UPLOADS_URL}/${selectedItem.image}` : '/default-food.jpg'}
+                  src={getImageUrl(selectedItem.image)}
                   alt={selectedItem.name}
                   onError={(e) => {
+                    e.target.onerror = null;
                     e.target.src = '/default-food.jpg';
                   }}
                 />
@@ -441,10 +550,8 @@ const Menu = () => {
               
               <div className="modal-details">
                 <h2 className="modal-title">{selectedItem.name}</h2>
-                <p className="modal-title-am">{selectedItem.nameAm}</p>
-                
-                {selectedItem.greekText && (
-                  <p className="modal-greek">{selectedItem.greekText}</p>
+                {selectedItem.nameAm && (
+                  <p className="modal-title-am">{selectedItem.nameAm}</p>
                 )}
                 
                 <div className="modal-rating">
@@ -452,7 +559,7 @@ const Menu = () => {
                   <span className="modal-rating-value">{selectedItem.rating} / 5</span>
                 </div>
                 
-                <p className="modal-description">{selectedItem.fullDescription}</p>
+                <p className="modal-description">{selectedItem.fullDescription || selectedItem.description}</p>
                 
                 <div className="modal-info-grid">
                   <div className="modal-info-item">
@@ -463,26 +570,31 @@ const Menu = () => {
                     <span className="info-label">Prep Time:</span>
                     <span className="info-value">{selectedItem.prepTime}</span>
                   </div>
-                  <div className="modal-info-item">
-                    <span className="info-label">Spice Level:</span>
-                    <span className="info-value spice">{selectedItem.spiceLevel}</span>
-                  </div>
+                  {selectedItem.spiceLevel && (
+                    <div className="modal-info-item">
+                      <span className="info-label">Spice Level:</span>
+                      <span className="info-value spice">{selectedItem.spiceLevel}</span>
+                    </div>
+                  )}
                 </div>
                 
-                <div className="modal-ingredients">
-                  <h4 className="ingredients-title">Ingredients:</h4>
-                  <ul className="ingredients-list">
-                    {selectedItem.ingredients?.map((ingredient, index) => (
-                      <li key={index}>{ingredient}</li>
-                    ))}
-                  </ul>
-                </div>
+                {selectedItem.ingredients && selectedItem.ingredients.length > 0 && (
+                  <div className="modal-ingredients">
+                    <h4 className="ingredients-title">Ingredients:</h4>
+                    <ul className="ingredients-list">
+                      {selectedItem.ingredients.map((ingredient, index) => (
+                        <li key={index}>{ingredient}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 
                 <div className="modal-footer">
                   <div className="quantity-selector">
                     <button 
                       className="quantity-btn"
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      disabled={!selectedItem.available}
                     >
                       <FaMinus />
                     </button>
@@ -490,6 +602,7 @@ const Menu = () => {
                     <button 
                       className="quantity-btn"
                       onClick={() => setQuantity(quantity + 1)}
+                      disabled={!selectedItem.available}
                     >
                       <FaPlus />
                     </button>
@@ -498,8 +611,9 @@ const Menu = () => {
                   <button 
                     className="add-to-cart-btn"
                     onClick={() => addToCart(selectedItem)}
+                    disabled={!selectedItem.available}
                   >
-                    <FaShoppingCart /> Add to Cart • ETB {selectedItem.price * quantity}
+                    <FaShoppingCart /> {selectedItem.available ? `Add to Cart • ETB ${selectedItem.price * quantity}` : 'Currently Unavailable'}
                   </button>
                 </div>
               </div>

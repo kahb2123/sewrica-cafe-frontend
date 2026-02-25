@@ -973,7 +973,9 @@ const MenuTab = () => {
   const [imagePreview, setImagePreview] = useState('');
   const [formData, setFormData] = useState({
     name: '',
+    nameAm: '', // ADDED: Amharic name field
     description: '',
+    fullDescription: '', // ADDED: Amharic description field
     price: '',
     category: '',
     image: '',
@@ -1017,7 +1019,9 @@ const MenuTab = () => {
     setEditingItem(null);
     setFormData({ 
       name: '', 
+      nameAm: '', // ADDED
       description: '', 
+      fullDescription: '', // ADDED
       price: '', 
       category: 'burgers', 
       image: '', 
@@ -1046,21 +1050,22 @@ const MenuTab = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Ensure required backend fields are present and names match schema
-      const payload = { ...formData };
-      // Provide Ethiopian name and full description defaults
-      if (!payload.nameAm) payload.nameAm = payload.name;
-      if (!payload.fullDescription) payload.fullDescription = payload.description;
-      // Convert price to number
-      payload.price = Number(payload.price) || 0;
-      // Map frontend checkbox keys to backend schema keys
-      payload.isVegetarian = !!payload.vegetarian;
-      payload.isSpicy = !!payload.spicy;
-      payload.isSignature = !!payload.signature;
-      // Remove frontend-only keys to avoid confusion
-      delete payload.vegetarian;
-      delete payload.spicy;
-      delete payload.signature;
+      // Prepare the payload with ALL required fields
+      const payload = {
+        name: formData.name,
+        nameAm: formData.nameAm || formData.name, // Use Amharic name or fallback to English
+        description: formData.description,
+        fullDescription: formData.fullDescription || formData.description, // Use Amharic description or fallback
+        price: Number(formData.price) || 0,
+        category: formData.category,
+        isVegetarian: formData.vegetarian,
+        isSpicy: formData.spicy,
+        isSignature: formData.signature,
+        available: formData.available
+      };
+
+      // Log the payload to verify
+      console.log('Submitting menu item:', payload);
 
       if (editingItem) {
         await menuService.updateItem(editingItem._id, payload, imageFile);
@@ -1074,7 +1079,7 @@ const MenuTab = () => {
       fetchMenuItems();
     } catch (error) {
       console.error('Error saving menu item:', error);
-      toast.error('Failed to save menu item');
+      toast.error(error.response?.data?.message || 'Failed to save menu item');
     }
   };
 
@@ -1159,7 +1164,7 @@ const MenuTab = () => {
             <h2>{editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}</h2>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Item Name *</label>
+                <label>Item Name (English) *</label>
                 <input
                   type="text"
                   value={formData.name}
@@ -1168,16 +1173,44 @@ const MenuTab = () => {
                   placeholder="e.g., Cheese Burger"
                 />
               </div>
+              
+              {/* ADDED: Amharic Name Field */}
               <div className="form-group">
-                <label>Description *</label>
+                <label>ስም (አማርኛ) *</label>
+                <input
+                  type="text"
+                  value={formData.nameAm}
+                  onChange={(e) => setFormData({...formData, nameAm: e.target.value})}
+                  required
+                  placeholder="ለምሳሌ፡ በርገር አይብ"
+                />
+                <small className="field-note">Amharic name is required</small>
+              </div>
+
+              <div className="form-group">
+                <label>Description (English) *</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
                   required
                   rows="3"
-                  placeholder="Describe the dish..."
+                  placeholder="Describe the dish in English..."
                 />
               </div>
+
+              {/* ADDED: Amharic Description Field */}
+              <div className="form-group">
+                <label>ሙሉ መግለጫ (አማርኛ) *</label>
+                <textarea
+                  value={formData.fullDescription}
+                  onChange={(e) => setFormData({...formData, fullDescription: e.target.value})}
+                  required
+                  rows="3"
+                  placeholder="በአማርኛ ዝርዝር መግለጫ ያስገቡ..."
+                />
+                <small className="field-note">Amharic description is required</small>
+              </div>
+
               <div className="form-row">
                 <div className="form-group">
                   <label>Price (ETB) *</label>
@@ -1329,22 +1362,35 @@ const MenuTab = () => {
               </div>
               <div className="menu-item-content">
                 <h3>{item.name}</h3>
+                {item.nameAm && <p className="amharic-name">አማርኛ: {item.nameAm}</p>}
                 <p className="description">{item.description}</p>
                 <div className="menu-item-footer">
                   <span className="price">{item.price} ETB</span>
                   <span className="category-badge">{item.category}</span>
                 </div>
                 <div className="menu-tags">
-                  {item.vegetarian && <span className="tag vegetarian">🌱 Veg</span>}
-                  {item.spicy && <span className="tag spicy">🌶️ Spicy</span>}
-                  {item.signature && <span className="tag signature">⭐ Signature</span>}
+                  {item.isVegetarian && <span className="tag vegetarian">🌱 Veg</span>}
+                  {item.isSpicy && <span className="tag spicy">🌶️ Spicy</span>}
+                  {item.isSignature && <span className="tag signature">⭐ Signature</span>}
                 </div>
                 <div className="menu-item-actions">
                   <button 
                     className="btn-edit"
                     onClick={() => {
                       setEditingItem(item);
-                      setFormData(item);
+                      setFormData({
+                        name: item.name || '',
+                        nameAm: item.nameAm || '',
+                        description: item.description || '',
+                        fullDescription: item.fullDescription || '',
+                        price: item.price || '',
+                        category: item.category || 'burgers',
+                        image: item.image || '',
+                        vegetarian: item.isVegetarian || false,
+                        spicy: item.isSpicy || false,
+                        signature: item.isSignature || false,
+                        available: item.available !== undefined ? item.available : true
+                      });
                       setImagePreview(item.image);
                       setShowForm(true);
                     }}

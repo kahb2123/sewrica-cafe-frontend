@@ -156,7 +156,16 @@ export const menuService = {
       if (imageFile) {
         formData.append('image', imageFile);
       }
-      
+
+      // Debug: log FormData entries to help diagnose missing fields
+      if (typeof window !== 'undefined' && window.console) {
+        const entries = [];
+        for (let pair of formData.entries()) {
+          entries.push({ key: pair[0], value: pair[1] });
+        }
+        console.log('DEBUG: createItem FormData entries:', entries);
+      }
+
       const response = await api.post('/menu', formData);
       return response.data;
     } catch (error) {
@@ -180,7 +189,16 @@ export const menuService = {
       if (imageFile) {
         formData.append('image', imageFile);
       }
-      
+
+      // Debug: log FormData entries to help diagnose missing fields
+      if (typeof window !== 'undefined' && window.console) {
+        const entries = [];
+        for (let pair of formData.entries()) {
+          entries.push({ key: pair[0], value: pair[1] });
+        }
+        console.log('DEBUG: updateItem FormData entries:', entries);
+      }
+
       const response = await api.put(`/menu/${id}`, formData);
       return response.data;
     } catch (error) {

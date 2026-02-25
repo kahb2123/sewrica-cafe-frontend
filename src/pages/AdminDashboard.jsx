@@ -962,7 +962,8 @@ const OrdersTab = () => {
     </div>
   );
 };
-// ==================== MENU TAB ====================
+
+// ==================== FIXED MENU TAB ====================
 const MenuTab = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -973,9 +974,9 @@ const MenuTab = () => {
   const [imagePreview, setImagePreview] = useState('');
   const [formData, setFormData] = useState({
     name: '',
-    nameAm: '', // ADDED: Amharic name field
+    nameAm: '',
     description: '',
-    fullDescription: '', // ADDED: Amharic description field
+    fullDescription: '',
     price: '',
     category: '',
     image: '',
@@ -995,16 +996,27 @@ const MenuTab = () => {
       setError(null);
       const response = await menuService.getAllItems();
       
+      let items = [];
       if (Array.isArray(response)) {
-        setMenuItems(response);
+        items = response;
       } else if (response && response.data && Array.isArray(response.data)) {
-        setMenuItems(response.data);
+        items = response.data;
       } else if (response && response.success && Array.isArray(response.data)) {
-        setMenuItems(response.data);
+        items = response.data;
       } else {
         console.warn('Unexpected data format:', response);
-        setMenuItems([]);
+        items = [];
       }
+
+      // Map backend field names to frontend expected field names
+      const mappedItems = items.map(item => ({
+        ...item,
+        vegetarian: item.isVegetarian || false,  // Map isVegetarian -> vegetarian
+        spicy: item.isSpicy || false,            // Map isSpicy -> spicy
+        signature: item.isSignature || false      // Map isSignature -> signature
+      }));
+      
+      setMenuItems(mappedItems);
     } catch (error) {
       console.error('Error fetching menu:', error);
       setError(error.message || 'Failed to load menu items');
@@ -1019,9 +1031,9 @@ const MenuTab = () => {
     setEditingItem(null);
     setFormData({ 
       name: '', 
-      nameAm: '', // ADDED
+      nameAm: '',
       description: '', 
-      fullDescription: '', // ADDED
+      fullDescription: '',
       price: '', 
       category: 'burgers', 
       image: '', 
@@ -1041,7 +1053,6 @@ const MenuTab = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
-        setFormData({ ...formData, image: reader.result });
       };
       reader.readAsDataURL(file);
     }
@@ -1050,21 +1061,19 @@ const MenuTab = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Prepare the payload with ALL required fields
       const payload = {
         name: formData.name,
-        nameAm: formData.nameAm || formData.name, // Use Amharic name or fallback to English
+        nameAm: formData.nameAm || formData.name,
         description: formData.description,
-        fullDescription: formData.fullDescription || formData.description, // Use Amharic description or fallback
+        fullDescription: formData.fullDescription || formData.description,
         price: Number(formData.price) || 0,
         category: formData.category,
-        isVegetarian: formData.vegetarian,
-        isSpicy: formData.spicy,
-        isSignature: formData.signature,
+        isVegetarian: formData.vegetarian,  // Send as isVegetarian for backend
+        isSpicy: formData.spicy,            // Send as isSpicy for backend
+        isSignature: formData.signature,     // Send as isSignature for backend
         available: formData.available
       };
 
-      // Log the payload to verify
       console.log('Submitting menu item:', payload);
 
       if (editingItem) {
@@ -1160,7 +1169,7 @@ const MenuTab = () => {
 
       {showForm && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content" style={{ maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
             <h2>{editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}</h2>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -1174,7 +1183,6 @@ const MenuTab = () => {
                 />
               </div>
               
-              {/* ADDED: Amharic Name Field */}
               <div className="form-group">
                 <label>ስም (አማርኛ) *</label>
                 <input
@@ -1198,7 +1206,6 @@ const MenuTab = () => {
                 />
               </div>
 
-              {/* ADDED: Amharic Description Field */}
               <div className="form-group">
                 <label>ሙሉ መግለጫ (አማርኛ) *</label>
                 <textarea
@@ -1211,8 +1218,8 @@ const MenuTab = () => {
                 <small className="field-note">Amharic description is required</small>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
+              <div className="form-row" style={{ display: 'flex', gap: '15px' }}>
+                <div className="form-group" style={{ flex: 1 }}>
                   <label>Price (ETB) *</label>
                   <input
                     type="number"
@@ -1224,7 +1231,7 @@ const MenuTab = () => {
                     placeholder="250"
                   />
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ flex: 1 }}>
                   <label>Category *</label>
                   <select
                     value={formData.category}
@@ -1245,7 +1252,7 @@ const MenuTab = () => {
                 </div>
               </div>
               
-              <div className="form-row checkbox-group">
+              <div className="form-row checkbox-group" style={{ display: 'flex', gap: '20px', margin: '15px 0' }}>
                 <div className="form-group checkbox">
                   <label>
                     <input
@@ -1285,10 +1292,10 @@ const MenuTab = () => {
                   accept="image/*"
                   onChange={handleImageChange}
                 />
-                {(imagePreview || formData.image) && (
+                {(imagePreview || (editingItem && editingItem.image)) && (
                   <div className="image-preview">
                     <img 
-                      src={imagePreview || formData.image} 
+                      src={imagePreview || (editingItem?.image?.startsWith('http') ? editingItem.image : `${UPLOADS_URL}/${editingItem?.image?.split('/').pop()}`)} 
                       alt="Preview" 
                       style={{ 
                         maxWidth: '100px', 
@@ -1301,11 +1308,11 @@ const MenuTab = () => {
                 )}
               </div>
 
-              <div className="modal-actions">
-                <button type="submit" className="btn-save">
+              <div className="modal-actions" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+                <button type="submit" className="btn-save" style={{ padding: '8px 16px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                   {editingItem ? 'Update' : 'Create'}
                 </button>
-                <button type="button" className="btn-cancel" onClick={() => {
+                <button type="button" className="btn-cancel" style={{ padding: '8px 16px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }} onClick={() => {
                   setShowForm(false);
                   resetForm();
                 }}>
@@ -1318,62 +1325,62 @@ const MenuTab = () => {
       )}
 
       {!hasItems ? (
-        <div className="empty-state">
-          <div className="empty-icon">🍽️</div>
+        <div className="empty-state" style={{ textAlign: 'center', padding: '40px' }}>
+          <div className="empty-icon" style={{ fontSize: '48px', marginBottom: '20px' }}>🍽️</div>
           <h3>No Menu Items Yet</h3>
           <p>Get started by adding your first menu item</p>
           <button className="btn-primary" onClick={() => {
             resetForm();
             setShowForm(true);
-          }}>
+          }} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
             + Add Your First Item
           </button>
         </div>
       ) : (
-        <div className="menu-items-grid">
+        <div className="menu-items-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px', padding: '20px' }}>
           {menuItems.map(item => (
-            <div key={item._id || Math.random()} className="menu-item-card">
-              <div className="menu-item-image">
+            <div key={item._id || Math.random()} className="menu-item-card" style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden', background: 'white' }}>
+              <div className="menu-item-image" style={{ height: '200px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
                 {item.image ? (
                   <img 
-                    src={(function() {
-                      if (!item.image) return null;
-                      if (item.image.startsWith('http')) return item.image;
-                      // If image already contains uploads/ strip to filename
-                      const parts = item.image.split('/');
-                      const filename = parts[parts.length - 1];
-                      return `${UPLOADS_URL}/${filename}`;
-                    })()} 
+                    src={item.image.startsWith('http') ? item.image : `${UPLOADS_URL}/${item.image.split('/').pop()}`}
                     alt={item.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.style.display = 'none';
-                      const emojiSpan = document.createElement('span');
-                      emojiSpan.style.fontSize = '48px';
-                      emojiSpan.textContent = getEmojiForCategory(item.category);
-                      e.target.parentNode.appendChild(emojiSpan);
+                      e.target.parentNode.innerHTML = `<span style="font-size: 48px;">${getEmojiForCategory(item.category)}</span>`;
                     }}
                   />
                 ) : (
-                  <div className="no-image">
-                    <span style={{ fontSize: '48px' }}>{getEmojiForCategory(item.category)}</span>
+                  <div className="no-image" style={{ fontSize: '48px' }}>
+                    {getEmojiForCategory(item.category)}
                   </div>
                 )}
               </div>
-              <div className="menu-item-content">
-                <h3>{item.name}</h3>
-                {item.nameAm && <p className="amharic-name">አማርኛ: {item.nameAm}</p>}
-                <p className="description">{item.description}</p>
-                <div className="menu-item-footer">
-                  <span className="price">{item.price} ETB</span>
-                  <span className="category-badge">{item.category}</span>
+              <div className="menu-item-content" style={{ padding: '15px' }}>
+                <h3 style={{ margin: '0 0 5px 0' }}>{item.name}</h3>
+                {item.nameAm && <p className="amharic-name" style={{ color: '#666', fontSize: '0.9em', margin: '0 0 10px 0' }}>አማርኛ: {item.nameAm}</p>}
+                <p className="description" style={{ color: '#666', margin: '0 0 10px 0' }}>{item.description}</p>
+                
+                <div className="menu-tags" style={{ marginBottom: '10px' }}>
+                  {item.vegetarian && <span className="tag vegetarian" style={{ display: 'inline-block', padding: '2px 8px', background: '#e8f5e8', borderRadius: '12px', marginRight: '5px', fontSize: '0.85em' }}>🌱 Veg</span>}
+                  {item.spicy && <span className="tag spicy" style={{ display: 'inline-block', padding: '2px 8px', background: '#fff3e0', borderRadius: '12px', marginRight: '5px', fontSize: '0.85em' }}>🌶️ Spicy</span>}
+                  {item.signature && <span className="tag signature" style={{ display: 'inline-block', padding: '2px 8px', background: '#fff9c4', borderRadius: '12px', marginRight: '5px', fontSize: '0.85em' }}>⭐ Signature</span>}
                 </div>
-                <div className="menu-tags">
-                  {item.isVegetarian && <span className="tag vegetarian">🌱 Veg</span>}
-                  {item.isSpicy && <span className="tag spicy">🌶️ Spicy</span>}
-                  {item.isSignature && <span className="tag signature">⭐ Signature</span>}
+
+                <div className="menu-item-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                  <span className="price" style={{ fontSize: '1.2em', fontWeight: 'bold', color: '#4CAF50' }}>{item.price} ETB</span>
+                  <span className="category-badge" style={{ padding: '2px 8px', background: '#e0e0e0', borderRadius: '12px', fontSize: '0.85em' }}>{item.category}</span>
                 </div>
-                <div className="menu-item-actions">
+
+                <div className="availability-badge" style={{ marginBottom: '10px' }}>
+                  <span style={{ padding: '4px 8px', background: item.available ? '#4CAF50' : '#f44336', color: 'white', borderRadius: '4px', fontSize: '0.85em' }}>
+                    {item.available ? '✓ In Stock' : '✗ Out of Stock'}
+                  </span>
+                </div>
+
+                <div className="menu-item-actions" style={{ display: 'flex', gap: '8px' }}>
                   <button 
                     className="btn-edit"
                     onClick={() => {
@@ -1386,32 +1393,32 @@ const MenuTab = () => {
                         price: item.price || '',
                         category: item.category || 'burgers',
                         image: item.image || '',
-                        vegetarian: item.isVegetarian || false,
-                        spicy: item.isSpicy || false,
-                        signature: item.isSignature || false,
+                        vegetarian: item.vegetarian || false,
+                        spicy: item.spicy || false,
+                        signature: item.signature || false,
                         available: item.available !== undefined ? item.available : true
                       });
                       setImagePreview(item.image);
                       setShowForm(true);
                     }}
+                    style={{ flex: 1, padding: '8px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                   >
                     Edit
                   </button>
                   <button 
                     className={`btn-toggle ${item.available ? 'available' : 'unavailable'}`}
                     onClick={() => handleToggleAvailability(item._id, item.available)}
+                    style={{ flex: 1, padding: '8px', background: item.available ? '#ff9800' : '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                   >
                     {item.available ? 'Set Unavailable' : 'Set Available'}
                   </button>
                   <button 
                     className="btn-delete"
                     onClick={() => handleDelete(item._id)}
+                    style={{ flex: 1, padding: '8px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                   >
                     Delete
                   </button>
-                </div>
-                <div className={`availability-badge ${item.available ? 'in-stock' : 'out-of-stock'}`}>
-                  {item.available ? '✓ In Stock' : '✗ Out of Stock'}
                 </div>
               </div>
             </div>

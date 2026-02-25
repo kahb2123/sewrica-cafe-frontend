@@ -1019,7 +1019,7 @@ const MenuTab = () => {
       name: '', 
       description: '', 
       price: '', 
-      category: '', 
+      category: 'burgers', 
       image: '', 
       vegetarian: false, 
       spicy: false, 

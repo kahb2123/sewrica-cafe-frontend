@@ -157,11 +157,7 @@ export const menuService = {
         formData.append('image', imageFile);
       }
       
-      const response = await api.post('/menu', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await api.post('/menu', formData);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to create menu item' };
@@ -185,11 +181,7 @@ export const menuService = {
         formData.append('image', imageFile);
       }
       
-      const response = await api.put(`/menu/${id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await api.put(`/menu/${id}`, formData);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to update menu item' };

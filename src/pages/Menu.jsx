@@ -45,8 +45,8 @@ const Menu = () => {
     setLoading(true);
     try {
       const response = await menuService.getAllItems();
-      setMenuItems(response.data);
-      setFilteredItems(response.data);
+      setMenuItems(response.data.data);
+      setFilteredItems(response.data.data);
     } catch (error) {
       toast.error('Failed to load menu items');
       console.error('Error fetching menu:', error);
@@ -58,7 +58,7 @@ const Menu = () => {
   const fetchCategories = async () => {
     try {
       const response = await menuService.getAllCategories();
-      setCategories(response.data);
+      setCategories(response.data.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }

@@ -1046,11 +1046,27 @@ const MenuTab = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Ensure required backend fields are present and names match schema
+      const payload = { ...formData };
+      // Provide Ethiopian name and full description defaults
+      if (!payload.nameAm) payload.nameAm = payload.name;
+      if (!payload.fullDescription) payload.fullDescription = payload.description;
+      // Convert price to number
+      payload.price = Number(payload.price) || 0;
+      // Map frontend checkbox keys to backend schema keys
+      payload.isVegetarian = !!payload.vegetarian;
+      payload.isSpicy = !!payload.spicy;
+      payload.isSignature = !!payload.signature;
+      // Remove frontend-only keys to avoid confusion
+      delete payload.vegetarian;
+      delete payload.spicy;
+      delete payload.signature;
+
       if (editingItem) {
-        await menuService.updateItem(editingItem._id, formData, imageFile);
+        await menuService.updateItem(editingItem._id, payload, imageFile);
         toast.success('Menu item updated successfully');
       } else {
-        await menuService.createItem(formData, imageFile);
+        await menuService.createItem(payload, imageFile);
         toast.success('Menu item created successfully');
       }
       setShowForm(false);

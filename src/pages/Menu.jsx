@@ -44,7 +44,13 @@ const Menu = () => {
   const fetchMenuItems = async () => {
     setLoading(true);
     try {
-      const response = await menuService.getAllItems();
+                           src={(function() {
+                             if (!item.image) return '/default-food.jpg';
+                             if (item.image.startsWith('http')) return item.image;
+                             const parts = item.image.split('/');
+                             const filename = parts[parts.length - 1];
+                             return `${UPLOADS_URL}/${filename}`;
+                           })()}
       setMenuItems(response.data.data);
       setFilteredItems(response.data.data);
     } catch (error) {
@@ -53,9 +59,6 @@ const Menu = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchCategories = async () => {
     try {
       const response = await menuService.getAllCategories();
       setCategories(response.data.data);

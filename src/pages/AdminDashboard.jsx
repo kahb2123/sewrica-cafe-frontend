@@ -1303,7 +1303,14 @@ const MenuTab = () => {
               <div className="menu-item-image">
                 {item.image ? (
                   <img 
-                    src={item.image.startsWith('http') ? item.image : `${UPLOADS_URL}/${item.image.replace(/^\//, '')}`} 
+                    src={(function() {
+                      if (!item.image) return null;
+                      if (item.image.startsWith('http')) return item.image;
+                      // If image already contains uploads/ strip to filename
+                      const parts = item.image.split('/');
+                      const filename = parts[parts.length - 1];
+                      return `${UPLOADS_URL}/${filename}`;
+                    })()} 
                     alt={item.name}
                     onError={(e) => {
                       e.target.onerror = null;

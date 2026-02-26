@@ -972,6 +972,10 @@ const MenuTab = () => {
   const [error, setError] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     nameAm: '',
@@ -986,9 +990,35 @@ const MenuTab = () => {
     available: true
   });
 
+  // Check authentication first
   useEffect(() => {
-    fetchMenuItems();
+    checkAuth();
   }, []);
+
+  const checkAuth = () => {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    
+    if (!token) {
+      toast.error('Please login first');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const user = JSON.parse(userStr);
+      if (user.role !== 'admin') {
+        toast.error('Admin access required');
+        navigate('/');
+        return;
+      }
+      setAuthChecked(true);
+      fetchMenuItems();
+    } catch (error) {
+      console.error('Auth check error:', error);
+      navigate('/login');
+    }
+  };
 
   const fetchMenuItems = async () => {
     try {
@@ -997,31 +1027,32 @@ const MenuTab = () => {
       const response = await menuService.getAllItems();
       
       let items = [];
-      if (Array.isArray(response)) {
+      if (response && response.success && response.data) {
+        items = response.data;
+      } else if (Array.isArray(response)) {
         items = response;
-      } else if (response && response.data && Array.isArray(response.data)) {
-        items = response.data;
-      } else if (response && response.success && Array.isArray(response.data)) {
-        items = response.data;
-      } else {
-        console.warn('Unexpected data format:', response);
-        items = [];
       }
 
-      // Map backend field names to frontend expected field names
       const mappedItems = items.map(item => ({
         ...item,
-        vegetarian: item.isVegetarian || false,  // Map isVegetarian -> vegetarian
-        spicy: item.isSpicy || false,            // Map isSpicy -> spicy
-        signature: item.isSignature || false      // Map isSignature -> signature
+        vegetarian: item.isVegetarian || false,
+        spicy: item.isSpicy || false,
+        signature: item.isSignature || false,
+        isAvailable: item.isAvailable !== undefined ? item.isAvailable : true
       }));
       
       setMenuItems(mappedItems);
     } catch (error) {
       console.error('Error fetching menu:', error);
-      setError(error.message || 'Failed to load menu items');
-      setMenuItems([]);
-      toast.error('Failed to load menu items');
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+      } else {
+        setError(error.message || 'Failed to load menu items');
+        toast.error('Failed to load menu items');
+      }
     } finally {
       setLoading(false);
     }
@@ -1044,11 +1075,22 @@ const MenuTab = () => {
     });
     setImageFile(null);
     setImagePreview('');
+    setUploadProgress(0);
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size should be less than 5MB');
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please upload an image file');
+        return;
+      }
+      
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -1058,37 +1100,66 @@ const MenuTab = () => {
     }
   };
 
+  // FIXED: handleSubmit function
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.name || !formData.description || !formData.price || !formData.category) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // For new items, image is required
+    if (!editingItem && !imageFile) {
+      toast.error('Please select an image');
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
+      // Prepare payload with correct field names
       const payload = {
         name: formData.name,
         nameAm: formData.nameAm || formData.name,
         description: formData.description,
         fullDescription: formData.fullDescription || formData.description,
-        price: Number(formData.price) || 0,
+        price: Number(formData.price),
         category: formData.category,
-        isVegetarian: formData.vegetarian,  // Send as isVegetarian for backend
-        isSpicy: formData.spicy,            // Send as isSpicy for backend
-        isSignature: formData.signature,     // Send as isSignature for backend
-        available: formData.available
+        // Send as strings for FormData
+        isVegetarian: formData.vegetarian ? 'true' : 'false',
+        isSpicy: formData.spicy ? 'true' : 'false',
+        isSignature: formData.signature ? 'true' : 'false',
+        isAvailable: formData.available ? 'true' : 'false'
       };
 
-      console.log('Submitting menu item:', payload);
+      console.log('Submitting payload:', payload);
+      console.log('Image file:', imageFile);
 
+      let response;
       if (editingItem) {
-        await menuService.updateItem(editingItem._id, payload, imageFile);
+        if (imageFile) {
+          response = await menuService.updateItem(editingItem._id, payload, imageFile);
+        } else {
+          response = await menuService.updateItem(editingItem._id, payload);
+        }
         toast.success('Menu item updated successfully');
       } else {
-        await menuService.createItem(payload, imageFile);
+        response = await menuService.createItem(payload, imageFile);
         toast.success('Menu item created successfully');
       }
+      
+      console.log('Backend response:', response);
+      
       setShowForm(false);
       resetForm();
       fetchMenuItems();
     } catch (error) {
       console.error('Error saving menu item:', error);
       toast.error(error.response?.data?.message || 'Failed to save menu item');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1100,7 +1171,12 @@ const MenuTab = () => {
         fetchMenuItems();
       } catch (error) {
         console.error('Error deleting item:', error);
-        toast.error('Failed to delete menu item');
+        if (error.response?.status === 401) {
+          toast.error('Session expired. Please login again');
+          navigate('/login');
+        } else {
+          toast.error('Failed to delete menu item');
+        }
       }
     }
   };
@@ -1112,8 +1188,29 @@ const MenuTab = () => {
       fetchMenuItems();
     } catch (error) {
       console.error('Error toggling availability:', error);
-      toast.error('Failed to toggle availability');
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again');
+        navigate('/login');
+      } else {
+        toast.error('Failed to toggle availability');
+      }
     }
+  };
+
+  // FIXED: Image URL helper
+  const getImageUrl = (image) => {
+    if (!image) return null;
+    
+    console.log('Original image path:', image);
+    
+    // If it's already a full URL
+    if (image.startsWith('http')) return image;
+    
+    // If it's default-food.jpg, return null to show fallback
+    if (image === 'default-food.jpg') return null;
+    
+    // Construct the full URL
+    return `${UPLOADS_URL}/${image}`;
   };
 
   const getEmojiForCategory = (category) => {
@@ -1140,29 +1237,17 @@ const MenuTab = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="error-state">
-        <div className="error-icon">⚠️</div>
-        <h3>Error Loading Menu</h3>
-        <p>{error}</p>
-        <button className="btn-retry" onClick={fetchMenuItems}>
-          Try Again
-        </button>
-      </div>
-    );
-  }
-
-  const hasItems = Array.isArray(menuItems) && menuItems.length > 0;
-
   return (
     <div className="menu-tab">
       <div className="tab-header">
         <h1 className="page-title">Menu Management</h1>
-        <button className="btn-primary" onClick={() => {
-          resetForm();
-          setShowForm(true);
-        }}>
+        <button 
+          className="btn-primary" 
+          onClick={() => {
+            resetForm();
+            setShowForm(true);
+          }}
+        >
           + Add New Item
         </button>
       </div>
@@ -1184,15 +1269,14 @@ const MenuTab = () => {
               </div>
               
               <div className="form-group">
-                <label>ስም (አማርኛ) *</label>
+                <label>ስም (አማርኛ)</label>
                 <input
                   type="text"
                   value={formData.nameAm}
                   onChange={(e) => setFormData({...formData, nameAm: e.target.value})}
-                  required
-                  placeholder="ለምሳሌ፡ በርገር አይብ"
+                  placeholder="ለምሳሌ፡ በርገር አይብ (አማራጭ)"
                 />
-                <small className="field-note">Amharic name is required</small>
+                <small className="field-note">Optional - Amharic name</small>
               </div>
 
               <div className="form-group">
@@ -1207,15 +1291,14 @@ const MenuTab = () => {
               </div>
 
               <div className="form-group">
-                <label>ሙሉ መግለጫ (አማርኛ) *</label>
+                <label>ሙሉ መግለጫ (አማርኛ)</label>
                 <textarea
                   value={formData.fullDescription}
                   onChange={(e) => setFormData({...formData, fullDescription: e.target.value})}
-                  required
                   rows="3"
-                  placeholder="በአማርኛ ዝርዝር መግለጫ ያስገቡ..."
+                  placeholder="በአማርኛ ዝርዝር መግለጫ ያስገቡ (አማራጭ)"
                 />
-                <small className="field-note">Amharic description is required</small>
+                <small className="field-note">Optional - Amharic description</small>
               </div>
 
               <div className="form-row" style={{ display: 'flex', gap: '15px' }}>
@@ -1252,7 +1335,7 @@ const MenuTab = () => {
                 </div>
               </div>
               
-              <div className="form-row checkbox-group" style={{ display: 'flex', gap: '20px', margin: '15px 0' }}>
+              <div className="form-row checkbox-group" style={{ display: 'flex', gap: '20px', margin: '15px 0', flexWrap: 'wrap' }}>
                 <div className="form-group checkbox">
                   <label>
                     <input
@@ -1286,36 +1369,65 @@ const MenuTab = () => {
               </div>
 
               <div className="form-group">
-                <label>Image Upload</label>
+                <label>Image Upload {!editingItem && '*'}</label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
+                  required={!editingItem}
                 />
                 {(imagePreview || (editingItem && editingItem.image)) && (
-                  <div className="image-preview">
+                  <div className="image-preview-container" style={{ marginTop: '10px' }}>
                     <img 
-                      src={imagePreview || (editingItem?.image?.startsWith('http') ? editingItem.image : `${UPLOADS_URL}/${editingItem?.image?.split('/').pop()}`)} 
+                      src={imagePreview || getImageUrl(editingItem?.image)} 
                       alt="Preview" 
                       style={{ 
-                        maxWidth: '100px', 
-                        maxHeight: '100px',
-                        marginTop: '10px',
-                        borderRadius: '4px'
+                        maxWidth: '150px', 
+                        maxHeight: '150px',
+                        borderRadius: '8px',
+                        border: '1px solid #ddd'
                       }} 
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://via.placeholder.com/150?text=No+Image';
+                      }}
                     />
                   </div>
                 )}
               </div>
 
               <div className="modal-actions" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-                <button type="submit" className="btn-save" style={{ padding: '8px 16px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                  {editingItem ? 'Update' : 'Create'}
+                <button 
+                  type="submit" 
+                  className="btn-save"
+                  disabled={isSubmitting}
+                  style={{
+                    padding: '10px 20px',
+                    background: isSubmitting ? '#ccc' : '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isSubmitting ? 'Saving...' : (editingItem ? 'Update' : 'Create')}
                 </button>
-                <button type="button" className="btn-cancel" style={{ padding: '8px 16px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }} onClick={() => {
-                  setShowForm(false);
-                  resetForm();
-                }}>
+                <button 
+                  type="button" 
+                  className="btn-cancel"
+                  onClick={() => {
+                    setShowForm(false);
+                    resetForm();
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#f44336',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
                   Cancel
                 </button>
               </div>
@@ -1324,29 +1436,33 @@ const MenuTab = () => {
         </div>
       )}
 
-      {!hasItems ? (
+      {!menuItems.length ? (
         <div className="empty-state" style={{ textAlign: 'center', padding: '40px' }}>
           <div className="empty-icon" style={{ fontSize: '48px', marginBottom: '20px' }}>🍽️</div>
           <h3>No Menu Items Yet</h3>
           <p>Get started by adding your first menu item</p>
-          <button className="btn-primary" onClick={() => {
-            resetForm();
-            setShowForm(true);
-          }} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+          <button 
+            className="btn-primary" 
+            onClick={() => {
+              resetForm();
+              setShowForm(true);
+            }}
+          >
             + Add Your First Item
           </button>
         </div>
       ) : (
         <div className="menu-items-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px', padding: '20px' }}>
           {menuItems.map(item => (
-            <div key={item._id || Math.random()} className="menu-item-card" style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden', background: 'white' }}>
+            <div key={item._id} className="menu-item-card" style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden', background: 'white' }}>
               <div className="menu-item-image" style={{ height: '200px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
-                {item.image ? (
+                {item.image && item.image !== 'default-food.jpg' ? (
                   <img 
-                    src={item.image.startsWith('http') ? item.image : `${UPLOADS_URL}/${item.image.split('/').pop()}`}
+                    src={getImageUrl(item.image)}
                     alt={item.name}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={(e) => {
+                      console.log('Image failed to load:', item.image);
                       e.target.onerror = null;
                       e.target.style.display = 'none';
                       e.target.parentNode.innerHTML = `<span style="font-size: 48px;">${getEmojiForCategory(item.category)}</span>`;
@@ -1364,9 +1480,9 @@ const MenuTab = () => {
                 <p className="description" style={{ color: '#666', margin: '0 0 10px 0' }}>{item.description}</p>
                 
                 <div className="menu-tags" style={{ marginBottom: '10px' }}>
-                  {item.vegetarian && <span className="tag vegetarian" style={{ display: 'inline-block', padding: '2px 8px', background: '#e8f5e8', borderRadius: '12px', marginRight: '5px', fontSize: '0.85em' }}>🌱 Veg</span>}
-                  {item.spicy && <span className="tag spicy" style={{ display: 'inline-block', padding: '2px 8px', background: '#fff3e0', borderRadius: '12px', marginRight: '5px', fontSize: '0.85em' }}>🌶️ Spicy</span>}
-                  {item.signature && <span className="tag signature" style={{ display: 'inline-block', padding: '2px 8px', background: '#fff9c4', borderRadius: '12px', marginRight: '5px', fontSize: '0.85em' }}>⭐ Signature</span>}
+                  {item.isVegetarian && <span className="tag vegetarian" style={{ display: 'inline-block', padding: '2px 8px', background: '#e8f5e8', borderRadius: '12px', marginRight: '5px', fontSize: '0.85em' }}>🌱 Veg</span>}
+                  {item.isSpicy && <span className="tag spicy" style={{ display: 'inline-block', padding: '2px 8px', background: '#fff3e0', borderRadius: '12px', marginRight: '5px', fontSize: '0.85em' }}>🌶️ Spicy</span>}
+                  {item.isSignature && <span className="tag signature" style={{ display: 'inline-block', padding: '2px 8px', background: '#fff9c4', borderRadius: '12px', marginRight: '5px', fontSize: '0.85em' }}>⭐ Signature</span>}
                 </div>
 
                 <div className="menu-item-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
@@ -1375,8 +1491,8 @@ const MenuTab = () => {
                 </div>
 
                 <div className="availability-badge" style={{ marginBottom: '10px' }}>
-                  <span style={{ padding: '4px 8px', background: item.available ? '#4CAF50' : '#f44336', color: 'white', borderRadius: '4px', fontSize: '0.85em' }}>
-                    {item.available ? '✓ In Stock' : '✗ Out of Stock'}
+                  <span style={{ padding: '4px 8px', background: item.isAvailable ? '#4CAF50' : '#f44336', color: 'white', borderRadius: '4px', fontSize: '0.85em' }}>
+                    {item.isAvailable ? '✓ In Stock' : '✗ Out of Stock'}
                   </span>
                 </div>
 
@@ -1393,12 +1509,12 @@ const MenuTab = () => {
                         price: item.price || '',
                         category: item.category || 'burgers',
                         image: item.image || '',
-                        vegetarian: item.vegetarian || false,
-                        spicy: item.spicy || false,
-                        signature: item.signature || false,
-                        available: item.available !== undefined ? item.available : true
+                        vegetarian: item.isVegetarian || false,
+                        spicy: item.isSpicy || false,
+                        signature: item.isSignature || false,
+                        available: item.isAvailable !== undefined ? item.isAvailable : true
                       });
-                      setImagePreview(item.image);
+                      setImagePreview(getImageUrl(item.image));
                       setShowForm(true);
                     }}
                     style={{ flex: 1, padding: '8px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
@@ -1406,11 +1522,11 @@ const MenuTab = () => {
                     Edit
                   </button>
                   <button 
-                    className={`btn-toggle ${item.available ? 'available' : 'unavailable'}`}
-                    onClick={() => handleToggleAvailability(item._id, item.available)}
-                    style={{ flex: 1, padding: '8px', background: item.available ? '#ff9800' : '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                    className={`btn-toggle ${item.isAvailable ? 'available' : 'unavailable'}`}
+                    onClick={() => handleToggleAvailability(item._id, item.isAvailable)}
+                    style={{ flex: 1, padding: '8px', background: item.isAvailable ? '#ff9800' : '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                   >
-                    {item.available ? 'Set Unavailable' : 'Set Available'}
+                    {item.isAvailable ? 'Set Unavailable' : 'Set Available'}
                   </button>
                   <button 
                     className="btn-delete"
@@ -1428,7 +1544,6 @@ const MenuTab = () => {
     </div>
   );
 };
-
 // ==================== REPORTS TAB ====================
 const ReportsTab = () => {
   const [reportType, setReportType] = useState('daily');

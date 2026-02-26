@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { 
   FaClock, FaStar, FaStarHalfAlt, FaRegStar, 
   FaLeaf, FaSearch, FaFilter, FaShoppingCart,
   FaTimes, FaPlus, FaMinus, FaHamburger, 
-  FaBreadSlice, FaPepperHot, FaUtensils
+  FaBreadSlice, FaPepperHot, FaUtensils, FaCoffee,
+  FaCheck, FaRegClock, FaExclamationTriangle
 } from 'react-icons/fa';
 import { GiMeat, GiBowlOfRice, GiChickenLeg } from 'react-icons/gi';
 import { MdLocalPizza, MdRestaurantMenu } from 'react-icons/md';
 import { IoFastFoodOutline } from 'react-icons/io5';
 import { RiTakeawayLine, RiRestaurantLine } from 'react-icons/ri';
-import { TbBread } from 'react-icons/tb';
 import { toast } from 'react-toastify';
 import { menuService, UPLOADS_URL } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -34,110 +33,80 @@ const Menu = () => {
     minPrice: '',
     maxPrice: ''
   });
+  const [imageErrors, setImageErrors] = useState({});
+  const [apiError, setApiError] = useState(false);
 
-  // Fetch menu items from API
   useEffect(() => {
     fetchMenuItems();
-  }, []);
-
-  // Fetch categories separately
-  useEffect(() => {
     fetchCategories();
   }, []);
 
   const fetchMenuItems = async () => {
     setLoading(true);
+    setApiError(false);
+    
     try {
-      const response = await menuService.getAllItems();
+      console.log('Fetching menu items...');
+      // Pass any active filters to the API
+      const response = await menuService.getAllItems(filters);
+      console.log('API Response:', response);
       
-      // Handle different response formats
+      // Handle the response structure from your API
       let items = [];
-      if (Array.isArray(response)) {
+      
+      // Your API returns { success: true, count: 6, data: [...] }
+      if (response && response.success && response.data) {
+        items = response.data;
+        console.log('Items from API:', items);
+      } else if (Array.isArray(response)) {
         items = response;
       } else if (response && response.data) {
         items = Array.isArray(response.data) ? response.data : 
                (response.data.data ? response.data.data : []);
-      } else if (response && response.success && response.data) {
-        items = response.data;
       }
 
-      // Map backend field names to frontend expected names
-      const mappedItems = items.map(item => ({
-        ...item,
-        vegetarian: item.isVegetarian || false,
-        spicy: item.isSpicy || false,
-        signature: item.isSignature || false,
-        rating: item.rating || 4.5, // Default rating if not provided
-        prepTime: item.prepTime || '15-20 min', // Default prep time
-        spiceLevel: item.spiceLevel || 'Mild', // Default spice level
-        ingredients: item.ingredients || ['Ingredients not specified']
-      }));
+      if (items && items.length > 0) {
+        // Process the items with proper defaults
+        const processedItems = items.map(item => ({
+          ...item,
+          _id: item._id || item.id,
+          name: item.name || 'Unknown Item',
+          // Make Amharic fields optional
+          nameAm: item.nameAm || '',
+          description: item.description || 'No description available',
+          fullDescription: item.fullDescription || item.description || 'No detailed description available',
+          price: item.price || 0,
+          category: item.category || 'other',
+          image: item.image || null,
+          rating: item.rating || 4.0,
+          spiceLevel: item.spiceLevel || 'Mild',
+          prepTime: item.prepTime || '15-20 min',
+          isVegetarian: item.isVegetarian || false,
+          isSpicy: item.isSpicy || false,
+          isSignature: item.isSignature || false,
+          isAvailable: item.isAvailable !== undefined ? item.isAvailable : true,
+          // Handle ingredients (might be stored as comma-separated string or array)
+          ingredients: item.ingredients ? (
+            Array.isArray(item.ingredients) ? item.ingredients : 
+            (typeof item.ingredients === 'string' ? item.ingredients.split(',').map(i => i.trim()) : ['Ingredients not specified'])
+          ) : ['Ingredients information coming soon'],
+          available: item.isAvailable !== undefined ? item.isAvailable : true
+        }));
 
-      setMenuItems(mappedItems);
-      setFilteredItems(mappedItems);
+        setMenuItems(processedItems);
+        setFilteredItems(processedItems);
+        
+        toast.success(`Loaded ${processedItems.length} menu items`);
+      } else {
+        console.log('No items found in API response');
+        setMenuItems([]);
+        setFilteredItems([]);
+        toast.info('No menu items available');
+      }
     } catch (error) {
       console.error('Error fetching menu:', error);
-      toast.error('Failed to load menu items');
-      
-      // Set mock data for testing if API fails
-      const mockItems = [
-        {
-          _id: '1',
-          name: 'Cheese Burger',
-          nameAm: 'በርገር አይብ',
-          description: 'Delicious beef patty with melted cheese, lettuce, tomato, and our special sauce',
-          fullDescription: 'A classic cheeseburger made with 100% beef patty, topped with melted cheddar cheese, fresh lettuce, ripe tomatoes, and our secret house sauce, served in a brioche bun.',
-          price: 450,
-          category: 'burgers',
-          isVegetarian: false,
-          isSpicy: false,
-          isSignature: true,
-          available: true,
-          rating: 4.8,
-          prepTime: '15-20 min',
-          spiceLevel: 'Mild',
-          ingredients: ['Beef patty', 'Cheddar cheese', 'Lettuce', 'Tomato', 'Special sauce', 'Brioche bun'],
-          image: '/images/burger.jpg'
-        },
-        {
-          _id: '2',
-          name: 'Doro Wat',
-          nameAm: 'ዶሮ ወጥ',
-          description: 'Spicy Ethiopian chicken stew with hard-boiled eggs',
-          fullDescription: 'Traditional Ethiopian spicy chicken stew simmered with berbere spice, served with a hard-boiled egg and injera.',
-          price: 380,
-          category: 'traditional',
-          isVegetarian: false,
-          isSpicy: true,
-          isSignature: true,
-          available: true,
-          rating: 4.9,
-          prepTime: '20-25 min',
-          spiceLevel: 'Spicy',
-          ingredients: ['Chicken', 'Berbere spice', 'Onions', 'Garlic', 'Hard-boiled eggs', 'Injera'],
-          image: '/images/doro-wat.jpg'
-        },
-        {
-          _id: '3',
-          name: 'Vegetarian Pizza',
-          nameAm: 'አትክልት ፒዛ',
-          description: 'Fresh vegetables on a crispy crust with mozzarella',
-          fullDescription: 'Thin crust pizza topped with fresh bell peppers, mushrooms, olives, onions, and generous mozzarella cheese.',
-          price: 520,
-          category: 'pizza',
-          isVegetarian: true,
-          isSpicy: false,
-          isSignature: false,
-          available: true,
-          rating: 4.6,
-          prepTime: '20-25 min',
-          spiceLevel: 'Mild',
-          ingredients: ['Pizza dough', 'Mozzarella', 'Bell peppers', 'Mushrooms', 'Olives', 'Tomato sauce'],
-          image: '/images/pizza.jpg'
-        }
-      ];
-      setMenuItems(mockItems);
-      setFilteredItems(mockItems);
+      setApiError(true);
+      toast.error(error.message || 'Failed to load menu items');
     } finally {
       setLoading(false);
     }
@@ -146,21 +115,25 @@ const Menu = () => {
   const fetchCategories = async () => {
     try {
       const response = await menuService.getAllCategories();
-      if (Array.isArray(response)) {
-        setCategories(response);
-      } else if (response && response.data) {
+      if (response && response.data) {
         setCategories(Array.isArray(response.data) ? response.data : []);
+      } else if (Array.isArray(response)) {
+        setCategories(response);
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
-      // Set default categories
-      setCategories(['burgers', 'pizza', 'sandwiches', 'traditional', 'fastfood', 'wraps', 'fetira']);
+      // Extract categories from menu items if API fails
+      if (menuItems.length > 0) {
+        const uniqueCategories = [...new Set(menuItems.map(item => item.category))];
+        setCategories(uniqueCategories.filter(Boolean));
+      }
     }
   };
 
-  // Apply filters whenever they change
   useEffect(() => {
-    filterItems();
+    if (menuItems.length > 0) {
+      filterItems();
+    }
   }, [activeCategory, searchTerm, filters, menuItems]);
 
   const filterItems = () => {
@@ -173,25 +146,30 @@ const Menu = () => {
 
     // Filter by search term
     if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
       filtered = filtered.filter(item => 
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.nameAm && item.nameAm.includes(searchTerm)) ||
-        (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        item.name.toLowerCase().includes(term) ||
+        (item.nameAm && item.nameAm.toLowerCase().includes(term)) ||
+        (item.description && item.description.toLowerCase().includes(term))
       );
     }
 
-    // Apply boolean filters
+    // Filter by vegetarian
     if (filters.vegetarian) {
       filtered = filtered.filter(item => item.isVegetarian);
     }
+
+    // Filter by spicy
     if (filters.spicy) {
       filtered = filtered.filter(item => item.isSpicy);
     }
+
+    // Filter by signature
     if (filters.signature) {
       filtered = filtered.filter(item => item.isSignature);
     }
 
-    // Apply price filters
+    // Filter by price range
     if (filters.minPrice) {
       filtered = filtered.filter(item => item.price >= Number(filters.minPrice));
     }
@@ -202,73 +180,99 @@ const Menu = () => {
     setFilteredItems(filtered);
   };
 
-  const getImageUrl = (image) => {
-    if (!image) return '/default-food.jpg';
-    if (image.startsWith('http')) return image;
-    if (image.startsWith('/uploads')) return `${UPLOADS_URL}${image}`;
-    return `${UPLOADS_URL}/${image.split('/').pop()}`;
-  };
+  // FIXED: Improved image URL handling
+  // FIXED: Improved image URL handling
+// FIXED: Image URL helper function
+const getImageUrl = (image) => {
+  if (!image) return null;
+  
+  console.log('Original image path:', image);
+  
+  // If it's already a full URL
+  if (image.startsWith('http')) return image;
+  
+  // If it's default-food.jpg, return null to show fallback
+  if (image === 'default-food.jpg') return null;
+  
+  // Construct the full URL
+  return `${UPLOADS_URL}/${image}`;
+};
 
   const handleItemClick = (item) => {
     setSelectedItem(item);
     setQuantity(1);
     setShowModal(true);
+    document.body.style.overflow = 'hidden';
   };
 
   const closeModal = () => {
     setShowModal(false);
     setSelectedItem(null);
+    setQuantity(1);
+    document.body.style.overflow = 'unset';
   };
 
   const addToCart = (item) => {
-    const cart = JSON.parse(localStorage.getItem('cart')) || [];
-    
-    const existingItemIndex = cart.findIndex(i => i.id === item._id);
-    
-    if (existingItemIndex >= 0) {
-      cart[existingItemIndex].quantity += quantity;
-    } else {
-      cart.push({
-        id: item._id,
-        name: item.name,
-        nameAm: item.nameAm,
-        price: item.price,
-        image: item.image,
-        quantity: quantity
-      });
+    try {
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      
+      const existingItemIndex = cart.findIndex(i => i.id === item._id);
+      
+      if (existingItemIndex >= 0) {
+        cart[existingItemIndex].quantity += quantity;
+        toast.info(`Updated ${item.name} quantity in cart!`);
+      } else {
+        cart.push({
+          id: item._id,
+          name: item.name,
+          nameAm: item.nameAm,
+          price: item.price,
+          image: item.image,
+          quantity: quantity
+        });
+        toast.success(`${item.name} added to cart!`);
+      }
+      
+      localStorage.setItem('cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('cartUpdated'));
+      closeModal();
+      
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error('Failed to add item to cart');
     }
-    
-    localStorage.setItem('cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('cartUpdated'));
-    
-    toast.success(`${item.name} added to cart!`);
-    closeModal();
   };
 
   const quickAddToCart = (item, e) => {
     e.stopPropagation();
     
-    const cart = JSON.parse(localStorage.getItem('cart')) || [];
-    
-    const existingItemIndex = cart.findIndex(i => i.id === item._id);
-    
-    if (existingItemIndex >= 0) {
-      cart[existingItemIndex].quantity += 1;
-    } else {
-      cart.push({
-        id: item._id,
-        name: item.name,
-        nameAm: item.nameAm,
-        price: item.price,
-        image: item.image,
-        quantity: 1
-      });
+    try {
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      
+      const existingItemIndex = cart.findIndex(i => i.id === item._id);
+      
+      if (existingItemIndex >= 0) {
+        cart[existingItemIndex].quantity += 1;
+        toast.info(`Updated ${item.name} quantity in cart!`);
+      } else {
+        cart.push({
+          id: item._id,
+          name: item.name,
+          nameAm: item.nameAm,
+          price: item.price,
+          image: item.image,
+          quantity: 1
+        });
+        toast.success(`${item.name} added to cart!`);
+      }
+      
+      localStorage.setItem('cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('cartUpdated'));
+      
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error('Failed to add item to cart');
     }
-    
-    localStorage.setItem('cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('cartUpdated'));
-    
-    toast.success(`${item.name} added to cart!`);
   };
 
   const renderStars = (rating) => {
@@ -295,29 +299,62 @@ const Menu = () => {
       case 'fastfood': return <IoFastFoodOutline />;
       case 'pizza': return <MdLocalPizza />;
       case 'wraps': return <RiTakeawayLine />;
-      case 'fetira': return <TbBread />;
+      case 'appetizers': return <GiMeat />;
+      case 'beverages': return <FaCoffee />;
       case 'traditional': return <GiBowlOfRice />;
+      case 'fetira': return <GiBowlOfRice />;
       default: return <RiRestaurantLine />;
     }
+  };
+
+  const getSpiceLevelIcon = (level) => {
+    switch(level?.toLowerCase()) {
+      case 'mild': return '🟢';
+      case 'medium': return '🟡';
+      case 'spicy': return '🔴';
+      default: return '⚪';
+    }
+  };
+
+  const handleImageError = (itemId) => {
+    setImageErrors(prev => ({
+      ...prev,
+      [itemId]: true
+    }));
   };
 
   if (loading) {
     return <LoadingSpinner message="Loading our delicious menu..." />;
   }
 
+  if (apiError) {
+    return (
+      <div className="menu-page">
+        <div className="container">
+          <div className="error-state">
+            <FaExclamationTriangle className="error-icon" />
+            <h2>Unable to load menu</h2>
+            <p>Please check your connection and try again</p>
+            <button onClick={fetchMenuItems} className="retry-btn">
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="menu-page">
-      {/* Hero Section */}
       <section className="menu-hero">
         <div className="container">
           <h1 className="menu-hero-title">Our Menu</h1>
           <p className="menu-hero-subtitle">
-            Discover our delicious selection of burgers, pizzas, sandwiches, and traditional Ethiopian dishes
+            Discover our delicious selection of Ethiopian and international dishes
           </p>
         </div>
       </section>
 
-      {/* Search and Filter Bar */}
       <section className="menu-controls">
         <div className="container">
           <div className="controls-wrapper">
@@ -340,7 +377,6 @@ const Menu = () => {
             </button>
           </div>
 
-          {/* Filter Panel */}
           {showFilters && (
             <div className="filter-panel">
               <h4 className="filter-title">Filter Options</h4>
@@ -412,7 +448,6 @@ const Menu = () => {
         </div>
       </section>
 
-      {/* Categories */}
       <section className="categories-section">
         <div className="container">
           <div className="categories-wrapper">
@@ -423,21 +458,34 @@ const Menu = () => {
               <MdRestaurantMenu className="category-icon" />
               <span>All Items</span>
             </button>
-            {categories.map(category => (
-              <button
-                key={category}
-                className={`category-btn ${activeCategory === category ? 'active' : ''}`}
-                onClick={() => setActiveCategory(category)}
-              >
-                <span className="category-icon">{getCategoryIcon(category)}</span>
-                <span>{category.charAt(0).toUpperCase() + category.slice(1)}</span>
-              </button>
-            ))}
+            {categories.length > 0 ? (
+              categories.map(category => (
+                <button
+                  key={category}
+                  className={`category-btn ${activeCategory === category ? 'active' : ''}`}
+                  onClick={() => setActiveCategory(category)}
+                >
+                  <span className="category-icon">{getCategoryIcon(category)}</span>
+                  <span>{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                </button>
+              ))
+            ) : (
+              // Extract categories from menu items if API fails
+              [...new Set(menuItems.map(item => item.category))].map(category => (
+                <button
+                  key={category}
+                  className={`category-btn ${activeCategory === category ? 'active' : ''}`}
+                  onClick={() => setActiveCategory(category)}
+                >
+                  <span className="category-icon">{getCategoryIcon(category)}</span>
+                  <span>{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                </button>
+              ))
+            )}
           </div>
         </div>
       </section>
 
-      {/* Menu Items Grid */}
       <section className="menu-items-section">
         <div className="container">
           <div className="section-header">
@@ -461,38 +509,45 @@ const Menu = () => {
               {filteredItems.map(item => (
                 <div key={item._id} className="menu-card" onClick={() => handleItemClick(item)}>
                   <div className="menu-card-image">
-                    <img 
-                      src={getImageUrl(item.image)}
-                      alt={item.name}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = `https://via.placeholder.com/400x300?text=${encodeURIComponent(item.name)}`;
-                      }}
-                    />
+                    {!imageErrors[item._id] && item.image ? (
+                      <img 
+                        src={getImageUrl(item.image)}
+                        alt={item.name}
+                        onError={() => handleImageError(item._id)}
+                      />
+                    ) : (
+                      <div className="image-fallback">
+                        {getCategoryIcon(item.category)}
+                      </div>
+                    )}
                     {item.isSignature && (
                       <div className="signature-badge">Signature</div>
-                    )}
-                    {!item.available && (
-                      <div className="unavailable-badge">Unavailable</div>
                     )}
                   </div>
                   <div className="menu-card-content">
                     <div className="menu-card-header">
-                      <h3 className="menu-card-title">
+                      <h3 className="menu-card-title" title={item.name}>
                         {item.name}
-                        {item.nameAm && <span className="menu-card-title-am">{item.nameAm}</span>}
                       </h3>
+                      {/* Only show Amharic name if it exists */}
+                      {item.nameAm && (
+                        <span className="menu-card-title-am" title={item.nameAm}>
+                          {item.nameAm}
+                        </span>
+                      )}
                       <div className="menu-card-rating">
                         {renderStars(item.rating)}
                         <span className="rating-value">{item.rating}</span>
                       </div>
                     </div>
                     
-                    <p className="menu-card-description">{item.description}</p>
+                    <p className="menu-card-description" title={item.description}>
+                      {item.description}
+                    </p>
                     
                     <div className="menu-card-meta">
                       <span className="prep-time">
-                        <FaClock /> {item.prepTime}
+                        <FaRegClock /> {item.prepTime}
                       </span>
                       {item.isVegetarian && (
                         <span className="veg-icon" title="Vegetarian">
@@ -511,8 +566,7 @@ const Menu = () => {
                       <button 
                         className="quick-add-btn"
                         onClick={(e) => quickAddToCart(item, e)}
-                        disabled={!item.available}
-                        title={item.available ? "Add to cart" : "Currently unavailable"}
+                        disabled={!item.isAvailable}
                       >
                         <FaShoppingCart /> Add
                       </button>
@@ -534,87 +588,110 @@ const Menu = () => {
             </button>
             
             <div className="modal-grid">
-              <div className="modal-image">
-                <img 
-                  src={getImageUrl(selectedItem.image)}
-                  alt={selectedItem.name}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = '/default-food.jpg';
-                  }}
-                />
+              {/* Left Side - Image */}
+              <div className="modal-image-section">
+                {!imageErrors[`modal-${selectedItem._id}`] && selectedItem.image ? (
+                  <img 
+                    src={getImageUrl(selectedItem.image)}
+                    alt={selectedItem.name}
+                    className="modal-image"
+                    onError={() => handleImageError(`modal-${selectedItem._id}`)}
+                  />
+                ) : (
+                  <div className="modal-image-fallback">
+                    {getCategoryIcon(selectedItem.category)}
+                  </div>
+                )}
                 {selectedItem.isSignature && (
-                  <div className="modal-signature-badge">Signature</div>
+                  <div className="modal-signature-badge">Signature Dish</div>
                 )}
               </div>
               
-              <div className="modal-details">
-                <h2 className="modal-title">{selectedItem.name}</h2>
-                {selectedItem.nameAm && (
-                  <p className="modal-title-am">{selectedItem.nameAm}</p>
-                )}
-                
-                <div className="modal-rating">
-                  {renderStars(selectedItem.rating)}
-                  <span className="modal-rating-value">{selectedItem.rating} / 5</span>
-                </div>
-                
-                <p className="modal-description">{selectedItem.fullDescription || selectedItem.description}</p>
-                
-                <div className="modal-info-grid">
-                  <div className="modal-info-item">
-                    <span className="info-label">Price:</span>
-                    <span className="info-value price">ETB {selectedItem.price}</span>
-                  </div>
-                  <div className="modal-info-item">
-                    <span className="info-label">Prep Time:</span>
-                    <span className="info-value">{selectedItem.prepTime}</span>
-                  </div>
-                  {selectedItem.spiceLevel && (
-                    <div className="modal-info-item">
-                      <span className="info-label">Spice Level:</span>
-                      <span className="info-value spice">{selectedItem.spiceLevel}</span>
-                    </div>
+              {/* Right Side - Details */}
+              <div className="modal-details-section">
+                <div className="modal-details-container">
+                  <h2 className="modal-title">{selectedItem.name}</h2>
+                  {/* Only show Amharic title if it exists */}
+                  {selectedItem.nameAm && (
+                    <p className="modal-title-am">{selectedItem.nameAm}</p>
                   )}
-                </div>
-                
-                {selectedItem.ingredients && selectedItem.ingredients.length > 0 && (
-                  <div className="modal-ingredients">
-                    <h4 className="ingredients-title">Ingredients:</h4>
-                    <ul className="ingredients-list">
-                      {selectedItem.ingredients.map((ingredient, index) => (
-                        <li key={index}>{ingredient}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                
-                <div className="modal-footer">
-                  <div className="quantity-selector">
-                    <button 
-                      className="quantity-btn"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      disabled={!selectedItem.available}
-                    >
-                      <FaMinus />
-                    </button>
-                    <span className="quantity-value">{quantity}</span>
-                    <button 
-                      className="quantity-btn"
-                      onClick={() => setQuantity(quantity + 1)}
-                      disabled={!selectedItem.available}
-                    >
-                      <FaPlus />
-                    </button>
+                  
+                  <div className="modal-rating">
+                    <div className="modal-stars">
+                      {renderStars(selectedItem.rating)}
+                    </div>
+                    <span className="modal-rating-value">{selectedItem.rating} / 5</span>
                   </div>
                   
-                  <button 
-                    className="add-to-cart-btn"
-                    onClick={() => addToCart(selectedItem)}
-                    disabled={!selectedItem.available}
-                  >
-                    <FaShoppingCart /> {selectedItem.available ? `Add to Cart • ETB ${selectedItem.price * quantity}` : 'Currently Unavailable'}
-                  </button>
+                  <p className="modal-description">
+                    {selectedItem.fullDescription || selectedItem.description}
+                  </p>
+                  
+                  {/* Info Cards */}
+                  <div className="modal-info-cards">
+                    <div className="info-card">
+                      <span className="info-card-label">Price</span>
+                      <span className="info-card-value price">ETB {selectedItem.price}</span>
+                    </div>
+                    
+                    <div className="info-card">
+                      <span className="info-card-label">Prep Time</span>
+                      <span className="info-card-value">
+                        <FaRegClock className="info-icon" /> {selectedItem.prepTime}
+                      </span>
+                    </div>
+                    
+                    <div className="info-card">
+                      <span className="info-card-label">Spice Level</span>
+                      <span className="info-card-value spice">
+                        {getSpiceLevelIcon(selectedItem.spiceLevel)} {selectedItem.spiceLevel}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Ingredients */}
+                  {selectedItem.ingredients && selectedItem.ingredients.length > 0 && (
+                    <div className="modal-ingredients">
+                      <h4 className="ingredients-title">Ingredients</h4>
+                      <div className="ingredients-grid">
+                        {selectedItem.ingredients.map((ingredient, index) => (
+                          <div key={index} className="ingredient-item">
+                            <FaCheck className="ingredient-check" />
+                            <span>{ingredient}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Add to Cart Section */}
+                  <div className="modal-cart-section">
+                    <div className="quantity-control">
+                      <button 
+                        className="quantity-control-btn"
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      >
+                        <FaMinus />
+                      </button>
+                      <span className="quantity-display">{quantity}</span>
+                      <button 
+                        className="quantity-control-btn"
+                        onClick={() => setQuantity(quantity + 1)}
+                      >
+                        <FaPlus />
+                      </button>
+                    </div>
+                    
+                    <button 
+                      className="modal-add-to-cart-btn"
+                      onClick={() => addToCart(selectedItem)}
+                      disabled={!selectedItem.isAvailable}
+                    >
+                      <FaShoppingCart className="btn-icon" />
+                      <span className="btn-text">Add to Cart</span>
+                      <span className="btn-total">ETB {selectedItem.price * quantity}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

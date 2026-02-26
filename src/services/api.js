@@ -90,6 +90,7 @@ export const authService = {
 };
 
 // Menu services
+// Menu services - UPDATED VERSION
 export const menuService = {
   // Get all menu items with optional filters
   getAllItems: async (filters = {}) => {
@@ -110,103 +111,93 @@ export const menuService = {
     }
   },
 
-  // Get single menu item by ID
-  getItemById: async (id) => {
-    try {
-      const response = await api.get(`/menu/${id}`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch menu item' };
-    }
-  },
-
-  // Get items by category
-  getItemsByCategory: async (category) => {
-    try {
-      const response = await api.get(`/menu/category/${category}`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch category items' };
-    }
-  },
-
-  // Get all categories
-  getAllCategories: async () => {
-    try {
-      const response = await api.get('/menu/categories');
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch categories' };
-    }
-  },
-
-  // Admin only: Create new menu item
+  // Admin only: Create new menu item - FIXED VERSION
   createItem: async (itemData, imageFile) => {
     try {
       const formData = new FormData();
       
+      // Append all text fields
       Object.keys(itemData).forEach(key => {
-        if (key === 'ingredients' && Array.isArray(itemData[key])) {
-          formData.append(key, itemData[key].join(','));
-        } else if (itemData[key] !== null && itemData[key] !== undefined) {
-          formData.append(key, itemData[key]);
+        if (itemData[key] !== null && itemData[key] !== undefined) {
+          // Convert booleans to strings for FormData
+          if (typeof itemData[key] === 'boolean') {
+            formData.append(key, itemData[key].toString());
+          } else {
+            formData.append(key, itemData[key]);
+          }
         }
       });
       
+      // IMPORTANT: Append the image file
       if (imageFile) {
         formData.append('image', imageFile);
+        console.log('📸 Uploading image:', imageFile.name);
       }
 
-      // Debug: log FormData entries to help diagnose missing fields
+      // Log FormData entries for debugging
       if (typeof window !== 'undefined' && window.console) {
         const entries = [];
         for (let pair of formData.entries()) {
-          entries.push({ key: pair[0], value: pair[1] });
+          if (pair[0] === 'image') {
+            entries.push({ key: pair[0], value: `[File: ${imageFile?.name}]` });
+          } else {
+            entries.push({ key: pair[0], value: pair[1] });
+          }
         }
         console.log('DEBUG: createItem FormData entries:', entries);
       }
 
-      const response = await api.post('/menu', formData);
+      const response = await api.post('/menu', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      console.log('✅ Create response:', response.data);
       return response.data;
     } catch (error) {
+      console.error('❌ Create item error:', error);
       throw error.response?.data || { message: 'Failed to create menu item' };
     }
   },
 
-  // Admin only: Update menu item
+  // Admin only: Update menu item - FIXED VERSION
   updateItem: async (id, itemData, imageFile) => {
     try {
       const formData = new FormData();
       
+      // Append all text fields
       Object.keys(itemData).forEach(key => {
-        if (key === 'ingredients' && Array.isArray(itemData[key])) {
-          formData.append(key, itemData[key].join(','));
-        } else if (itemData[key] !== null && itemData[key] !== undefined) {
-          formData.append(key, itemData[key]);
+        if (itemData[key] !== null && itemData[key] !== undefined) {
+          // Convert booleans to strings for FormData
+          if (typeof itemData[key] === 'boolean') {
+            formData.append(key, itemData[key].toString());
+          } else {
+            formData.append(key, itemData[key]);
+          }
         }
       });
       
+      // Append image file if provided
       if (imageFile) {
         formData.append('image', imageFile);
+        console.log('📸 Updating with image:', imageFile.name);
       }
 
-      // Debug: log FormData entries to help diagnose missing fields
-      if (typeof window !== 'undefined' && window.console) {
-        const entries = [];
-        for (let pair of formData.entries()) {
-          entries.push({ key: pair[0], value: pair[1] });
-        }
-        console.log('DEBUG: updateItem FormData entries:', entries);
-      }
-
-      const response = await api.put(`/menu/${id}`, formData);
+      const response = await api.put(`/menu/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      console.log('✅ Update response:', response.data);
       return response.data;
     } catch (error) {
+      console.error('❌ Update item error:', error);
       throw error.response?.data || { message: 'Failed to update menu item' };
     }
   },
 
-  // Admin only: Delete menu item
   deleteItem: async (id) => {
     try {
       const response = await api.delete(`/menu/${id}`);
@@ -216,13 +207,21 @@ export const menuService = {
     }
   },
 
-  // Admin only: Toggle availability
   toggleAvailability: async (id) => {
     try {
       const response = await api.patch(`/menu/${id}/toggle`);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to toggle availability' };
+    }
+  },
+
+  getAllCategories: async () => {
+    try {
+      const response = await api.get('/menu/categories');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch categories' };
     }
   }
 };

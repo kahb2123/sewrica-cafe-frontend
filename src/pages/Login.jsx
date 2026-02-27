@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   FaEnvelope, FaLock, FaUser, FaEye, 
@@ -9,10 +9,12 @@ import {
 import { MdRestaurantMenu } from 'react-icons/md';
 import { toast } from 'react-toastify';
 import { authService } from '../services/api';
+import { useAuth } from '../context/AuthContext'; // ✅ ADD THIS IMPORT
 import './Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth(); // ✅ GET USER FROM AUTH CONTEXT
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -30,6 +32,33 @@ const Login = () => {
 
   // Form errors state
   const [errors, setErrors] = useState({});
+
+  // ✅ EFFECT TO HANDLE REDIRECT WHEN USER STATE CHANGES
+  useEffect(() => {
+    // Only redirect if we have a user and not loading
+    if (user && !authLoading && !loading) {
+      console.log('User state updated, redirecting based on role:', user.role);
+      
+      // Redirect based on user role
+      if (user.role === 'admin') {
+        console.log('Redirecting to admin dashboard');
+        navigate('/admin', { replace: true });
+      } else if (user.role === 'cook') {
+        console.log('Redirecting to kitchen');
+        navigate('/staff/kitchen', { replace: true });
+      } else if (user.role === 'delivery') {
+        console.log('Redirecting to delivery dashboard');
+        navigate('/staff/delivery', { replace: true });
+      } else if (user.role === 'cashier') {
+        console.log('Redirecting to cashier dashboard');
+        navigate('/staff/cashier', { replace: true });
+      } else {
+        // Regular customer
+        console.log('Redirecting to home');
+        navigate('/', { replace: true });
+      }
+    }
+  }, [user, authLoading, loading, navigate]);
 
   // Handle input change
   const handleInputChange = (e) => {
@@ -113,27 +142,49 @@ const Login = () => {
     
     try {
       if (isLogin) {
-        // REAL LOGIN - using your backend API
-        const userData = await authService.login({
-          email: formData.email,
-          password: formData.password
-        });
+        // LOGIN - using your backend API
+        const result = await authService.login(formData.email, formData.password);
         
-        toast.success(`Welcome back, ${userData.name || 'User'}!`);
-        navigate('/');
+        if (result && result.success) {
+          toast.success(`Welcome back, ${result.user.name || 'User'}!`);
+          
+          // Don't redirect immediately - let the useEffect handle it
+          console.log('Login successful, waiting for auth context to update...');
+          
+          // FALLBACK: If still on login page after 3 seconds, force redirect
+          setTimeout(() => {
+            if (window.location.pathname.includes('login')) {
+              console.log('Fallback redirect triggered');
+              const role = result.user.role;
+              if (role === 'admin') window.location.href = '/admin';
+              else if (role === 'cook') window.location.href = '/staff/kitchen';
+              else if (role === 'delivery') window.location.href = '/staff/delivery';
+              else if (role === 'cashier') window.location.href = '/staff/cashier';
+              else window.location.href = '/';
+            }
+          }, 3000);
+        } else {
+          toast.error(result?.error || 'Login failed');
+        }
       } else {
-        // REAL REGISTRATION - using your backend API
-        await authService.register({
+        // REGISTRATION - using your backend API
+        const result = await authService.register({
           name: formData.name,
           email: formData.email,
           password: formData.password,
           phone: formData.phone
         });
         
-        toast.success('Account created successfully!');
-        navigate('/');
+        toast.success('Account created successfully! Please login.');
+        setIsLogin(true); // Switch to login mode
+        setFormData({
+          ...formData,
+          password: '',
+          confirmPassword: ''
+        });
       }
     } catch (error) {
+      console.error('Login error:', error);
       toast.error(error.message || 'Authentication failed');
     } finally {
       setLoading(false);

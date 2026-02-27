@@ -754,38 +754,8 @@ const Home = () => {
           </div>
         </div>
       </section>
-        // Add this button anywhere in your Home component
-<button 
-  onClick={() => {
-    // Create admin user
-    const adminUser = {
-      id: 'test123',
-      name: 'Test Admin',
-      email: 'admin@test.com',
-      role: 'admin'
-    };
-    localStorage.setItem('token', 'test-token');
-    localStorage.setItem('user', JSON.stringify(adminUser));
-    window.location.href = '/admin';
-  }}
-  style={{
-    position: 'fixed',
-    bottom: '20px',
-    right: '20px',
-    padding: '15px 30px',
-    background: '#27ae60',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    fontSize: '16px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    zIndex: 9999
-  }}
->
-  🚀 GO TO ADMIN DASHBOARD (TEST)
-</button>
-
+        
+ 
       {/* Why Choose Us Section */}
       <section className="features-section">
         <div className="container">

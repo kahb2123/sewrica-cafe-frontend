@@ -31,14 +31,30 @@ api.interceptors.request.use(
   }
 );
 
-// Auth services
+// ========== FIXED AUTH SERVICES ==========
 export const authService = {
   register: async (userData) => {
     try {
       const response = await api.post('/auth/register', userData);
       if (response.data.token) {
+        // Normalize user data
+        const userData = {
+          _id: response.data._id,
+          id: response.data._id,
+          name: response.data.name,
+          email: response.data.email,
+          phone: response.data.phone,
+          role: response.data.role || 'customer'
+        };
+        
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user || response.data));
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        return {
+          success: true,
+          user: userData,
+          token: response.data.token
+        };
       }
       return response.data;
     } catch (error) {
@@ -46,18 +62,87 @@ export const authService = {
     }
   },
 
-  login: async (credentials) => {
+  // ========== FIXED LOGIN METHOD ==========
+  login: async (email, password) => {
     try {
-      const response = await api.post('/auth/login', credentials);
-      if (response.data.token) {
+      const response = await api.post('/auth/login', { email, password });
+      
+      // Check if login was successful
+      if (response.data && response.data.token) {
+        // Normalize user data
+        const userData = {
+          _id: response.data._id,
+          id: response.data._id,
+          name: response.data.name,
+          email: response.data.email,
+          phone: response.data.phone,
+          role: response.data.role || 'customer'
+        };
+        
+        // Store in localStorage
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user || response.data));
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // Return success object
+        return {
+          success: true,
+          user: userData,
+          token: response.data.token
+        };
       }
-      return response.data;
+      
+      // If no token, login failed
+      return {
+        success: false,
+        error: 'Invalid response from server'
+      };
+      
     } catch (error) {
-      throw error.response?.data || { message: 'Login failed' };
+      console.error('Login error:', error);
+      
+      // Handle different error types
+      if (error.response) {
+        // Server responded with error
+        const status = error.response.status;
+        const data = error.response.data;
+        
+        if (status === 401) {
+          return {
+            success: false,
+            error: data.message || 'Invalid email or password'
+          };
+        } else if (status === 404) {
+          return {
+            success: false,
+            error: 'User not found'
+          };
+        } else if (status === 500) {
+          return {
+            success: false,
+            error: 'Server error. Please try again later.'
+          };
+        } else {
+          return {
+            success: false,
+            error: data.message || 'Login failed'
+          };
+        }
+      } else if (error.request) {
+        // Request made but no response
+        return {
+          success: false,
+          error: 'Network error. Please check your connection.'
+        };
+      } else {
+        // Something else happened
+        return {
+          success: false,
+          error: error.message || 'An unexpected error occurred'
+        };
+      }
     }
   },
+  // ========================================
 
   getProfile: async () => {
     try {
@@ -250,14 +335,16 @@ export const adminService = {
       throw error.response?.data || { message: 'Failed to fetch dashboard stats' };
     }
   },
-   createStaff: async (staffData) => {
-  try {
-    const response = await api.post('/admin/staff', staffData);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to create staff' };
-  }
-},
+  
+  createStaff: async (staffData) => {
+    try {
+      const response = await api.post('/admin/staff', staffData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to create staff' };
+    }
+  },
+  
   // Get recent orders
   getRecentOrders: async () => {
     try {
@@ -443,7 +530,6 @@ export const adminService = {
       throw error.response?.data || { message: 'Failed to export report' };
     }
   }
-  
 };
 
 // ============================================
@@ -568,7 +654,7 @@ export const orderService = {
 };
 
 // ============================================
-// STAFF MANAGEMENT SERVICES - NEW
+// STAFF MANAGEMENT SERVICES
 // ============================================
 export const staffService = {
   // Get staff by role (cook, delivery, cashier)
@@ -689,7 +775,7 @@ export const staffService = {
 };
 
 // ============================================
-// STAFF REPORTING SERVICES - NEW
+// STAFF REPORTING SERVICES
 // ============================================
 export const staffReportService = {
   // Get staff performance summary
@@ -783,7 +869,7 @@ export const staffReportService = {
 };
 
 // ============================================
-// IMAGE HELPER FUNCTION - NEW
+// IMAGE HELPER FUNCTION
 // ============================================
 export const getImageUrl = (image) => {
   if (!image) return null;
@@ -798,7 +884,9 @@ export const getImageUrl = (image) => {
   return `${UPLOADS_URL}/${image}`;
 };
 
-// Cart services
+// ============================================
+// CART SERVICES
+// ============================================
 export const cartService = {
   // Add to cart
   addToCart: (item, quantity = 1) => {
@@ -814,7 +902,7 @@ export const cartService = {
           name: item.name,
           nameAm: item.nameAm,
           price: item.price,
-          image: item.image, // Store full URL or path
+          image: item.image,
           category: item.category,
           quantity: quantity
         });

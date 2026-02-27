@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   FaShoppingCart, FaUser, FaBars, FaTimes, 
   FaUtensils, FaPhone, FaMapMarkerAlt, FaSignOutAlt,
-  FaTachometerAlt  // Added for Admin Dashboard
+  FaTachometerAlt, FaUsers // Added FaUsers for Staff Portal
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
@@ -41,23 +41,12 @@ const Navbar = () => {
       }
     };
 
-    // Check login status from AuthContext
-    const checkLoginStatus = () => {
-      if (user) {
-        // User is already available from useAuth
-      }
-    };
-
     updateCartCount();
-    checkLoginStatus();
 
     // Listen for storage events (for multi-tab support)
     const handleStorageChange = (e) => {
       if (e.key === 'cart') {
         updateCartCount();
-      }
-      if (e.key === 'user' || e.key === 'token') {
-        checkLoginStatus();
       }
     };
 
@@ -70,13 +59,6 @@ const Navbar = () => {
 
     window.addEventListener('cartUpdated', handleCartUpdate);
 
-    // Custom event for auth updates
-    const handleAuthUpdate = () => {
-      checkLoginStatus();
-    };
-
-    window.addEventListener('authUpdated', handleAuthUpdate);
-
     // Scroll effect
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
@@ -87,7 +69,6 @@ const Navbar = () => {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('cartUpdated', handleCartUpdate);
-      window.removeEventListener('authUpdated', handleAuthUpdate);
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
@@ -109,9 +90,6 @@ const Navbar = () => {
       setIsOpen(false);
       document.body.style.overflow = 'unset';
       
-      // Dispatch custom event for other components
-      window.dispatchEvent(new Event('authUpdated'));
-      
       toast.success('Logged out successfully!');
     } catch (error) {
       console.error('Error during logout:', error);
@@ -126,6 +104,22 @@ const Navbar = () => {
 
   const isActive = (path) => {
     return location.pathname === path ? 'active' : '';
+  };
+
+  // Helper to check if user is staff
+  const isStaff = () => {
+    return user && ['cook', 'delivery', 'cashier', 'admin'].includes(user.role);
+  };
+
+  // Get staff dashboard link based on role
+  const getStaffDashboardLink = () => {
+    switch(user?.role) {
+      case 'cook': return '/staff/kitchen';
+      case 'delivery': return '/staff/delivery';
+      case 'cashier': return '/staff/cashier';
+      case 'admin': return '/admin';
+      default: return '/staff/dashboard';
+    }
   };
 
   return (
@@ -197,7 +191,24 @@ const Navbar = () => {
                     <FaUser /> My Profile
                   </Link>
                   
-                  {/* Admin Dashboard Link - Updated with better styling */}
+                  {/* Staff Portal Link - For all staff members */}
+                  {isStaff() && (
+                    <Link 
+                      to={getStaffDashboardLink()} 
+                      className="dropdown-item staff-dropdown-item" 
+                      onClick={closeMenu}
+                      style={{
+                        background: '#f0f9ff',
+                        borderLeft: '4px solid #764ba2',
+                        fontWeight: '600'
+                      }}
+                    >
+                      <FaUsers style={{ color: '#764ba2' }} /> 
+                      {user.role === 'admin' ? 'Admin Dashboard' : 'My Staff Dashboard'}
+                    </Link>
+                  )}
+                  
+                  {/* Admin Dashboard Link - Specific for admin */}
                   {user?.role === 'admin' && (
                     <Link 
                       to="/admin" 
@@ -213,21 +224,6 @@ const Navbar = () => {
                     </Link>
                   )}
                   
-                  {user?.role === 'cashier' && (
-                    <Link to="/cashier" className="dropdown-item" onClick={closeMenu}>
-                      <FaUtensils /> Cashier Panel
-                    </Link>
-                  )}
-                  {user?.role === 'cook' && (
-                    <Link to="/kitchen" className="dropdown-item" onClick={closeMenu}>
-                      <FaUtensils /> Kitchen View
-                    </Link>
-                  )}
-                  {user?.role === 'delivery' && (
-                    <Link to="/delivery" className="dropdown-item" onClick={closeMenu}>
-                      <FaUtensils /> Delivery Dashboard
-                    </Link>
-                  )}
                   <Link to="/orders" className="dropdown-item" onClick={closeMenu}>
                     <FaShoppingCart /> My Orders
                   </Link>
@@ -237,9 +233,14 @@ const Navbar = () => {
                 </div>
               </div>
             ) : (
-              <Link to="/login" className="nav-icon user-icon-nav" title="Login">
-                <FaUser />
-              </Link>
+              <div className="auth-links">
+                <Link to="/login" className="nav-icon user-icon-nav" title="Customer Login">
+                  <FaUser />
+                </Link>
+                <Link to="/staff/login" className="nav-icon staff-icon-nav" title="Staff Login">
+                  <FaUsers />
+                </Link>
+              </div>
             )}
 
             {/* Mobile Menu Toggle */}
@@ -283,9 +284,31 @@ const Navbar = () => {
               </>
             )}
             
+            {/* Staff Portal Link in Mobile Menu */}
+            {isStaff() && (
+              <li className="mobile-nav-item" style={{ '--i': 6 }}>
+                <Link 
+                  to={getStaffDashboardLink()} 
+                  className="mobile-nav-link staff-mobile-link" 
+                  onClick={closeMenu}
+                  style={{
+                    background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                    color: 'white',
+                    borderRadius: '8px',
+                    margin: '5px 15px',
+                    padding: '12px 20px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  <FaUsers style={{ marginRight: '10px' }} /> 
+                  {user.role === 'admin' ? 'Admin Dashboard' : 'My Staff Dashboard'}
+                </Link>
+              </li>
+            )}
+            
             {/* Admin Dashboard in Mobile Menu */}
             {user?.role === 'admin' && (
-              <li className="mobile-nav-item" style={{ '--i': 6 }}>
+              <li className="mobile-nav-item" style={{ '--i': 7 }}>
                 <Link 
                   to="/admin" 
                   className="mobile-nav-link admin-mobile-link" 
@@ -304,46 +327,29 @@ const Navbar = () => {
               </li>
             )}
             
-            {user?.role === 'cashier' && (
-              <li className="mobile-nav-item" style={{ '--i': 6 }}>
-                <Link to="/cashier" className="mobile-nav-link" onClick={closeMenu}>
-                  Cashier Panel
-                </Link>
-              </li>
-            )}
-            
-            {user?.role === 'cook' && (
-              <li className="mobile-nav-item" style={{ '--i': 6 }}>
-                <Link to="/kitchen" className="mobile-nav-link" onClick={closeMenu}>
-                  Kitchen View
-                </Link>
-              </li>
-            )}
-            
-            {user?.role === 'delivery' && (
-              <li className="mobile-nav-item" style={{ '--i': 6 }}>
-                <Link to="/delivery" className="mobile-nav-link" onClick={closeMenu}>
-                  Delivery Dashboard
-                </Link>
-              </li>
-            )}
-            
-            <li className="mobile-nav-item" style={{ '--i': 7 }}>
+            <li className="mobile-nav-item" style={{ '--i': 8 }}>
               <Link to="/cart" className="mobile-nav-link" onClick={closeMenu}>
                 Cart {cartCount > 0 && `(${cartCount})`}
               </Link>
             </li>
             
             {!user && (
-              <li className="mobile-nav-item" style={{ '--i': 8 }}>
-                <Link to="/login" className="mobile-nav-link" onClick={closeMenu}>
-                  Login / Sign Up
-                </Link>
-              </li>
+              <>
+                <li className="mobile-nav-item" style={{ '--i': 9 }}>
+                  <Link to="/login" className="mobile-nav-link" onClick={closeMenu}>
+                    Customer Login
+                  </Link>
+                </li>
+                <li className="mobile-nav-item" style={{ '--i': 10 }}>
+                  <Link to="/staff/login" className="mobile-nav-link" onClick={closeMenu}>
+                    👨‍🍳 Staff Login
+                  </Link>
+                </li>
+              </>
             )}
             
             {user && (
-              <li className="mobile-nav-item" style={{ '--i': 9 }}>
+              <li className="mobile-nav-item" style={{ '--i': 11 }}>
                 <button onClick={handleLogout} className="mobile-nav-link logout-mobile">
                   Logout
                 </button>
@@ -364,7 +370,7 @@ const Navbar = () => {
             {user && (
               <div className="mobile-address-item user-info">
                 <FaUser className="mobile-address-icon" />
-                <span>Logged in as {user?.name}</span>
+                <span>Logged in as {user?.name} ({user?.role})</span>
               </div>
             )}
           </div>

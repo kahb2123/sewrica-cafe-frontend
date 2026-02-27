@@ -5,7 +5,8 @@ import axios from 'axios';
 // fall back to the deployed backend so the production site still works.
 const API_URL = import.meta.env.VITE_API_URL || 'https://sewrica-cafe-backend.onrender.com/api';
 
-// Base uploads URL (strip trailing /api if present)
+// Base uploads URL for LOCAL files ONLY (backward compatibility)
+// New Cloudinary images will be full URLs and don't need this
 export const UPLOADS_URL = API_URL.replace(/\/api\/?$/, '') + '/uploads';
 
 // Create axios instance
@@ -89,8 +90,7 @@ export const authService = {
   }
 };
 
-// Menu services
-// Menu services - UPDATED VERSION
+// Menu services - UPDATED FOR CLOUDINARY
 export const menuService = {
   // Get all menu items with optional filters
   getAllItems: async (filters = {}) => {
@@ -111,7 +111,7 @@ export const menuService = {
     }
   },
 
-  // Admin only: Create new menu item - FIXED VERSION
+  // Admin only: Create new menu item - WITH CLOUDINARY SUPPORT
   createItem: async (itemData, imageFile) => {
     try {
       const formData = new FormData();
@@ -131,7 +131,7 @@ export const menuService = {
       // IMPORTANT: Append the image file
       if (imageFile) {
         formData.append('image', imageFile);
-        console.log('📸 Uploading image:', imageFile.name);
+        console.log('📸 Uploading image to Cloudinary:', imageFile.name);
       }
 
       // Log FormData entries for debugging
@@ -154,6 +154,12 @@ export const menuService = {
       });
       
       console.log('✅ Create response:', response.data);
+      
+      // Log Cloudinary image URL if present
+      if (response.data.data?.image?.includes('cloudinary')) {
+        console.log('✅ Image uploaded to Cloudinary:', response.data.data.image);
+      }
+      
       return response.data;
     } catch (error) {
       console.error('❌ Create item error:', error);
@@ -161,7 +167,7 @@ export const menuService = {
     }
   },
 
-  // Admin only: Update menu item - FIXED VERSION
+  // Admin only: Update menu item - WITH CLOUDINARY SUPPORT
   updateItem: async (id, itemData, imageFile) => {
     try {
       const formData = new FormData();
@@ -181,7 +187,7 @@ export const menuService = {
       // Append image file if provided
       if (imageFile) {
         formData.append('image', imageFile);
-        console.log('📸 Updating with image:', imageFile.name);
+        console.log('📸 Updating with new image to Cloudinary:', imageFile.name);
       }
 
       const response = await api.put(`/menu/${id}`, formData, {
@@ -191,6 +197,12 @@ export const menuService = {
       });
       
       console.log('✅ Update response:', response.data);
+      
+      // Log Cloudinary image URL if present
+      if (response.data.data?.image?.includes('cloudinary')) {
+        console.log('✅ Image updated on Cloudinary:', response.data.data.image);
+      }
+      
       return response.data;
     } catch (error) {
       console.error('❌ Update item error:', error);
@@ -762,6 +774,22 @@ export const staffReportService = {
   }
 };
 
+// ============================================
+// IMAGE HELPER FUNCTION - NEW
+// ============================================
+export const getImageUrl = (image) => {
+  if (!image) return null;
+  
+  // If it's already a full URL (Cloudinary or other)
+  if (image.startsWith('http')) return image;
+  
+  // If it's default-food.jpg, return null
+  if (image === 'default-food.jpg') return null;
+  
+  // For backward compatibility - local uploads
+  return `${UPLOADS_URL}/${image}`;
+};
+
 // Cart services
 export const cartService = {
   // Add to cart
@@ -778,7 +806,7 @@ export const cartService = {
           name: item.name,
           nameAm: item.nameAm,
           price: item.price,
-          image: item.image,
+          image: item.image, // Store full URL or path
           category: item.category,
           quantity: quantity
         });

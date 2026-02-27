@@ -41,6 +41,11 @@ const Menu = () => {
     fetchCategories();
   }, []);
 
+  // Reset image errors when filters change
+  useEffect(() => {
+    setImageErrors({});
+  }, [activeCategory, searchTerm, filters]);
+
   const fetchMenuItems = async () => {
     setLoading(true);
     setApiError(false);
@@ -180,23 +185,37 @@ const Menu = () => {
     setFilteredItems(filtered);
   };
 
-  // FIXED: Improved image URL handling
-  // FIXED: Improved image URL handling
-// FIXED: Image URL helper function
-const getImageUrl = (image) => {
-  if (!image) return null;
-  
-  console.log('Original image path:', image);
-  
-  // If it's already a full URL
-  if (image.startsWith('http')) return image;
-  
-  // If it's default-food.jpg, return null to show fallback
-  if (image === 'default-food.jpg') return null;
-  
-  // Construct the full URL
-  return `${UPLOADS_URL}/${image}`;
-};
+  // UPDATED: Image URL helper function for Cloudinary + local fallback
+  const getImageUrl = (image) => {
+    if (!image) return null;
+    
+    console.log('Original image path:', image);
+    
+    // If it's already a full URL (Cloudinary or other)
+    if (image.startsWith('http')) {
+      console.log('Using full URL:', image);
+      return image;
+    }
+    
+    // If it's default-food.jpg, return null to show fallback
+    if (image === 'default-food.jpg') {
+      console.log('Default image, using fallback');
+      return null;
+    }
+    
+    // Check if it's a Cloudinary URL without protocol (rare case)
+    if (image.includes('res.cloudinary.com')) {
+      const fullUrl = `https:${image}`;
+      console.log('Converted to HTTPS URL:', fullUrl);
+      return fullUrl;
+    }
+    
+    // For backward compatibility - local uploads
+    // This is only for existing local images
+    const localUrl = `${UPLOADS_URL}/${image}`;
+    console.log('Using local URL:', localUrl);
+    return localUrl;
+  };
 
   const handleItemClick = (item) => {
     setSelectedItem(item);
@@ -317,10 +336,15 @@ const getImageUrl = (image) => {
   };
 
   const handleImageError = (itemId) => {
+    console.log(`Image failed to load for item: ${itemId}`);
     setImageErrors(prev => ({
       ...prev,
       [itemId]: true
     }));
+  };
+
+  const handleImageLoad = (itemId) => {
+    console.log(`Image loaded successfully for item: ${itemId}`);
   };
 
   if (loading) {
@@ -514,6 +538,7 @@ const getImageUrl = (image) => {
                         src={getImageUrl(item.image)}
                         alt={item.name}
                         onError={() => handleImageError(item._id)}
+                        onLoad={() => handleImageLoad(item._id)}
                       />
                     ) : (
                       <div className="image-fallback">
@@ -595,7 +620,11 @@ const getImageUrl = (image) => {
                     src={getImageUrl(selectedItem.image)}
                     alt={selectedItem.name}
                     className="modal-image"
-                    onError={() => handleImageError(`modal-${selectedItem._id}`)}
+                    onError={() => {
+                      console.log('Modal image failed to load:', selectedItem.image);
+                      handleImageError(`modal-${selectedItem._id}`);
+                    }}
+                    onLoad={() => console.log('Modal image loaded successfully:', selectedItem.image)}
                   />
                 ) : (
                   <div className="modal-image-fallback">

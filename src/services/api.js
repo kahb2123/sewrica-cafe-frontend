@@ -250,7 +250,14 @@ export const adminService = {
       throw error.response?.data || { message: 'Failed to fetch dashboard stats' };
     }
   },
-
+   createStaff: async (staffData) => {
+  try {
+    const response = await api.post('/admin/staff', staffData);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to create staff' };
+  }
+},
   // Get recent orders
   getRecentOrders: async () => {
     try {
@@ -436,6 +443,7 @@ export const adminService = {
       throw error.response?.data || { message: 'Failed to export report' };
     }
   }
+  
 };
 
 // ============================================

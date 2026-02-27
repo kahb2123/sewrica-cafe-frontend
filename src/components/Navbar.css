@@ -87,7 +87,7 @@
   height: 80px;
 }
 
-/* Logo Section - Left Aligned */
+/* Logo Section - Left Aligned with Image */
 .navbar-logo {
   display: flex;
   align-items: center;
@@ -96,7 +96,38 @@
   min-width: 200px;
 }
 
-.logo-circle {
+/* New styles for image logo */
+.logo-image-container {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  transition: all 0.3s ease;
+  border: 2px solid var(--ethiopian-gold);
+  background-color: var(--ethiopian-cream);
+}
+
+.navbar-logo:hover .logo-image-container {
+  transform: rotate(5deg) scale(1.05);
+  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
+  border-color: var(--ethiopian-brown);
+}
+
+.logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.navbar-logo:hover .logo-image {
+  transform: scale(1.1);
+}
+
+/* Old icon-based logo styles - removed/commented out */
+/* .logo-circle {
   width: 50px;
   height: 50px;
   background: linear-gradient(135deg, var(--ethiopian-gold), var(--ethiopian-brown));
@@ -115,7 +146,7 @@
 .logo-icon {
   color: var(--ethiopian-cream);
   font-size: 1.6rem;
-}
+} */
 
 .logo-text {
   display: flex;
@@ -432,14 +463,21 @@
     height: 70px;
   }
 
-  .logo-circle {
+  /* Updated for image logo */
+  .logo-image-container {
+    width: 40px;
+    height: 40px;
+    border-width: 1.5px;
+  }
+
+  /* .logo-circle {
     width: 40px;
     height: 40px;
   }
 
   .logo-icon {
     font-size: 1.3rem;
-  }
+  } */
 
   .restaurant-name {
     font-size: 1rem;
@@ -491,14 +529,20 @@
     gap: 8px;
   }
 
-  .logo-circle {
+  /* Updated for image logo */
+  .logo-image-container {
+    width: 35px;
+    height: 35px;
+  }
+
+  /* .logo-circle {
     width: 35px;
     height: 35px;
   }
 
   .logo-icon {
     font-size: 1.1rem;
-  }
+  } */
 
   .restaurant-name {
     font-size: 0.9rem;
@@ -574,6 +618,7 @@ body {
 body.menu-open {
   overflow: hidden;
 }
+
 /* User Menu Dropdown */
 .user-menu {
   position: relative;
@@ -680,6 +725,7 @@ body.menu-open {
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   color: var(--ethiopian-gold);
 }
+
 /* Admin Dropdown Item */
 .admin-dropdown-item {
   background: #f0f9ff !important;
@@ -728,4 +774,25 @@ body.menu-open {
   height: 2px;
   background: #27ae60;
   transform: scaleX(1);
+}
+
+/* New animation for logo */
+@keyframes logoPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) rotate(-5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+.logo-image-container {
+  animation: logoPopIn 0.5s ease-out;
+}
+
+/* Add a subtle glow effect when scrolled */
+.navbar.scrolled .logo-image-container {
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.5);
 }

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   FaShoppingCart, FaUser, FaBars, FaTimes, 
-  FaUtensils, FaPhone, FaMapMarkerAlt, FaSignOutAlt,
-  FaTachometerAlt, FaUsers // Added FaUsers for Staff Portal
+  FaPhone, FaMapMarkerAlt, FaSignOutAlt,
+  FaTachometerAlt, FaUsers
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
@@ -85,7 +85,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     try {
-      logout(); // Clear token and user from localStorage
+      logout();
       navigate('/');
       setIsOpen(false);
       document.body.style.overflow = 'unset';
@@ -141,10 +141,14 @@ const Navbar = () => {
       {/* Main Navigation */}
       <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
         <div className="navbar-container">
-          {/* Logo Section - Left Aligned */}
+          {/* Logo Section - Left Aligned with Image from Public Folder */}
           <Link to="/" className="navbar-logo" onClick={closeMenu}>
-            <div className="logo-circle">
-              <FaUtensils className="logo-icon" />
+            <div className="logo-image-container">
+              <img 
+                src="/images/sewrica-logo.jpg" 
+                alt="Sewrica Restaurant" 
+                className="logo-image"
+              />
             </div>
             <div className="logo-text">
               <span className="restaurant-name">SEWRICA</span>
@@ -191,36 +195,15 @@ const Navbar = () => {
                     <FaUser /> My Profile
                   </Link>
                   
-                  {/* Staff Portal Link - For all staff members */}
+                  {/* Staff Portal Link */}
                   {isStaff() && (
                     <Link 
                       to={getStaffDashboardLink()} 
                       className="dropdown-item staff-dropdown-item" 
                       onClick={closeMenu}
-                      style={{
-                        background: '#f0f9ff',
-                        borderLeft: '4px solid #764ba2',
-                        fontWeight: '600'
-                      }}
                     >
-                      <FaUsers style={{ color: '#764ba2' }} /> 
+                      <FaUsers /> 
                       {user.role === 'admin' ? 'Admin Dashboard' : 'My Staff Dashboard'}
-                    </Link>
-                  )}
-                  
-                  {/* Admin Dashboard Link - Specific for admin */}
-                  {user?.role === 'admin' && (
-                    <Link 
-                      to="/admin" 
-                      className="dropdown-item admin-dropdown-item" 
-                      onClick={closeMenu}
-                      style={{
-                        background: '#f0f9ff',
-                        borderLeft: '4px solid #27ae60',
-                        fontWeight: '600'
-                      }}
-                    >
-                      <FaTachometerAlt style={{ color: '#27ae60' }} /> Admin Dashboard
                     </Link>
                   )}
                   
@@ -291,43 +274,14 @@ const Navbar = () => {
                   to={getStaffDashboardLink()} 
                   className="mobile-nav-link staff-mobile-link" 
                   onClick={closeMenu}
-                  style={{
-                    background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
-                    color: 'white',
-                    borderRadius: '8px',
-                    margin: '5px 15px',
-                    padding: '12px 20px',
-                    fontWeight: 'bold'
-                  }}
                 >
-                  <FaUsers style={{ marginRight: '10px' }} /> 
+                  <FaUsers /> 
                   {user.role === 'admin' ? 'Admin Dashboard' : 'My Staff Dashboard'}
                 </Link>
               </li>
             )}
             
-            {/* Admin Dashboard in Mobile Menu */}
-            {user?.role === 'admin' && (
-              <li className="mobile-nav-item" style={{ '--i': 7 }}>
-                <Link 
-                  to="/admin" 
-                  className="mobile-nav-link admin-mobile-link" 
-                  onClick={closeMenu}
-                  style={{
-                    background: 'linear-gradient(135deg, #27ae60 0%, #229954 100%)',
-                    color: 'white',
-                    borderRadius: '8px',
-                    margin: '5px 15px',
-                    padding: '12px 20px',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  <FaTachometerAlt style={{ marginRight: '10px' }} /> Admin Dashboard
-                </Link>
-              </li>
-            )}
-            
-            <li className="mobile-nav-item" style={{ '--i': 8 }}>
+            <li className="mobile-nav-item" style={{ '--i': 7 }}>
               <Link to="/cart" className="mobile-nav-link" onClick={closeMenu}>
                 Cart {cartCount > 0 && `(${cartCount})`}
               </Link>
@@ -335,12 +289,12 @@ const Navbar = () => {
             
             {!user && (
               <>
-                <li className="mobile-nav-item" style={{ '--i': 9 }}>
+                <li className="mobile-nav-item" style={{ '--i': 8 }}>
                   <Link to="/login" className="mobile-nav-link" onClick={closeMenu}>
                     Customer Login
                   </Link>
                 </li>
-                <li className="mobile-nav-item" style={{ '--i': 10 }}>
+                <li className="mobile-nav-item" style={{ '--i': 9 }}>
                   <Link to="/staff/login" className="mobile-nav-link" onClick={closeMenu}>
                     👨‍🍳 Staff Login
                   </Link>
@@ -349,7 +303,7 @@ const Navbar = () => {
             )}
             
             {user && (
-              <li className="mobile-nav-item" style={{ '--i': 11 }}>
+              <li className="mobile-nav-item" style={{ '--i': 10 }}>
                 <button onClick={handleLogout} className="mobile-nav-link logout-mobile">
                   Logout
                 </button>

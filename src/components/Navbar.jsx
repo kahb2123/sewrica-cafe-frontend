@@ -133,7 +133,7 @@ const Navbar = () => {
           </div>
           <div className="top-bar-info">
             <FaPhone className="top-bar-icon" />
-            <span>+251 911 234 567</span>
+            <span>+251911060930</span>
           </div>
         </div>
       </div>

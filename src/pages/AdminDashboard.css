@@ -2471,3 +2471,111 @@
     padding: 6px 8px;
   }
 }
+
+/* Connection Status */
+.connection-status {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 1002;
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.connection-status.connected {
+  color: #4CAF50;
+}
+
+.connection-status.disconnected {
+  color: #f44336;
+}
+
+/* Accept/Reject Buttons */
+.accept-reject-buttons {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.btn-accept {
+  flex: 1;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-accept:hover {
+  background: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+}
+
+.btn-reject {
+  flex: 1;
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-reject:hover {
+  background: #da190b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(244, 67, 54, 0.3);
+}
+
+/* Rejection Modal */
+.reject-modal {
+  max-width: 500px;
+}
+
+.reject-modal .warning-text {
+  color: #f44336;
+  margin-bottom: 20px;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.reject-modal textarea {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  resize: vertical;
+  margin-top: 5px;
+}
+
+.reject-modal textarea:focus {
+  outline: none;
+  border-color: #f44336;
+}
+
+.btn-confirm-reject {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-confirm-reject:hover {
+  background: #da190b;
+}

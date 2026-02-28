@@ -9,24 +9,38 @@ import {
 import { MdRestaurantMenu } from 'react-icons/md';
 import { toast } from 'react-toastify';
 import { orderService } from '../services/api';
+import OrderTracker from '../components/OrderTracker'; // Add this import
+import { useSocket } from '../context/SocketContext'; // Add this import
 import './PaymentConfirmation.css';
 
 const PaymentConfirmation = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const { connected, registerOrder } = useSocket(); // Add socket
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [orderStatus, setOrderStatus] = useState('pending');
 
   useEffect(() => {
     fetchOrderDetails();
   }, [orderId]);
 
+  // Register order for real-time updates
+  useEffect(() => {
+    if (order && orderId && connected) {
+      registerOrder(orderId);
+      console.log('Registered order for updates:', orderId);
+    }
+  }, [order, orderId, connected]);
+
   const fetchOrderDetails = async () => {
     try {
       setLoading(true);
       const response = await orderService.getOrder(orderId);
-      setOrder(response.data || response.order || response);
+      const orderData = response.data || response.order || response;
+      setOrder(orderData);
+      setOrderStatus(orderData.status);
       setError(null);
     } catch (error) {
       console.error('Error fetching order:', error);
@@ -42,10 +56,7 @@ const PaymentConfirmation = () => {
   };
 
   const handleDownloadReceipt = () => {
-    // Create receipt content
     const receiptContent = generateReceiptText();
-    
-    // Create blob and download
     const blob = new Blob([receiptContent], { type: 'text/plain' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -55,15 +66,11 @@ const PaymentConfirmation = () => {
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-    
     toast.success('Receipt downloaded');
   };
 
   const handleEmailReceipt = () => {
-    // In a real app, this would trigger an email via backend
     toast.info('Receipt will be sent to your email');
-    // You can call an API endpoint to send email
-    // orderService.sendReceiptEmail(orderId);
   };
 
   const generateReceiptText = () => {
@@ -82,8 +89,9 @@ Order Receipt
 
 Order #: ${order.orderNumber || orderId}
 Date: ${date}
+Status: ${order.status}
 Payment: ${order.paymentMethod?.toUpperCase()}
-Status: ${order.paymentStatus?.toUpperCase()}
+Payment Status: ${order.paymentStatus?.toUpperCase()}
 
 ----------------------------------
 Items:
@@ -99,8 +107,6 @@ Phone: ${order.customerPhone || order.customer?.phone}
 Email: ${order.customerEmail || order.customer?.email}
 
 Thank you for choosing SEWRICA Cafe!
-Visit us again at Megenagna, Metebaber Building
-Tel: +251 911 234 567
 ==================================
     `;
   };
@@ -112,12 +118,6 @@ Tel: +251 911 234 567
       case 'tele_birr': return <FaMobile />;
       default: return <FaCreditCard />;
     }
-  };
-
-  const getEstimatedDeliveryTime = () => {
-    const orderTime = new Date(order?.createdAt || Date.now());
-    const deliveryTime = new Date(orderTime.getTime() + 45 * 60000); // Add 45 minutes
-    return deliveryTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   if (loading) {
@@ -158,9 +158,15 @@ Tel: +251 911 234 567
           <div className="success-icon">
             <FaCheckCircle />
           </div>
-          <h1>Payment Successful!</h1>
-          <p>Your order has been confirmed</p>
+          <h1>Order Placed Successfully!</h1>
+          <p>Your order has been received and is being processed</p>
         </div>
+
+        {/* Add Order Tracker Component */}
+        <OrderTracker 
+          orderId={orderId} 
+          initialStatus={order.status}
+        />
 
         {/* Order Info Bar */}
         <div className="order-info-bar">
@@ -175,12 +181,19 @@ Tel: +251 911 234 567
             </span>
           </div>
           <div className="info-item">
-            <span className="label">Est. Delivery</span>
-            <span className="value">
-              <FaClock /> {getEstimatedDeliveryTime()}
+            <span className="label">Status</span>
+            <span className={`value status-${order.status}`}>
+              {order.status.toUpperCase()}
             </span>
           </div>
         </div>
+
+        {/* Connection Status */}
+        {!connected && (
+          <div className="connection-warning">
+            <p>⚠️ Real-time updates disconnected. Reconnecting...</p>
+          </div>
+        )}
 
         {/* Main Content Grid */}
         <div className="confirmation-grid">
@@ -212,7 +225,7 @@ Tel: +251 911 234 567
                 <span className="free">FREE</span>
               </div>
               <div className="price-row total">
-                <span>Total Paid</span>
+                <span>Total</span>
                 <span>ETB {order.totalAmount?.toFixed(2)}</span>
               </div>
             </div>
@@ -233,11 +246,6 @@ Tel: +251 911 234 567
                   {order.paymentStatus}
                 </span>
               </div>
-              {order.paymentStatus === 'completed' && order.paidAt && (
-                <p className="paid-time">
-                  Paid at: {new Date(order.paidAt).toLocaleString()}
-                </p>
-              )}
             </div>
 
             {/* Action Buttons */}
@@ -296,49 +304,12 @@ Tel: +251 911 234 567
             </div>
 
             {/* Special Instructions */}
-            {order.specialInstructions && (
+            {order.specialRequests && (
               <div className="special-instructions">
                 <h3>Special Instructions</h3>
-                <p>{order.specialInstructions}</p>
+                <p>{order.specialRequests}</p>
               </div>
             )}
-
-            {/* Estimated Timeline */}
-            <div className="timeline">
-              <h3>Order Timeline</h3>
-              <div className="timeline-steps">
-                <div className="timeline-step completed">
-                  <span className="step-dot"></span>
-                  <div>
-                    <span className="step-name">Order Placed</span>
-                    <span className="step-time">
-                      {new Date(order.createdAt).toLocaleTimeString()}
-                    </span>
-                  </div>
-                </div>
-                <div className="timeline-step active">
-                  <span className="step-dot"></span>
-                  <div>
-                    <span className="step-name">Confirmed</span>
-                    <span className="step-time">Processing</span>
-                  </div>
-                </div>
-                <div className="timeline-step">
-                  <span className="step-dot"></span>
-                  <div>
-                    <span className="step-name">Prepared</span>
-                    <span className="step-time">Pending</span>
-                  </div>
-                </div>
-                <div className="timeline-step">
-                  <span className="step-dot"></span>
-                  <div>
-                    <span className="step-name">Delivered</span>
-                    <span className="step-time">Pending</span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 

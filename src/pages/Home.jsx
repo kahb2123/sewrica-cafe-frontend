@@ -22,7 +22,6 @@ const Home = () => {
     customers: 0,
     dishes: 0,
     years: 0,
-    awards: 0
   });
 
   
@@ -370,9 +369,8 @@ const Home = () => {
   useEffect(() => {
     const targetStats = {
       customers: 10000,
-      dishes: 75,
+      dishes: 25,
       years: 8,
-      awards: 12
     };
 
     const duration = 2000;
@@ -744,13 +742,13 @@ const Home = () => {
               <div className="stat-number">{Math.round(stats.years)}+</div>
               <div className="stat-label">Years Serving</div>
             </div>
-            <div className="stat-item">
+            {/* <div className="stat-item">
               <div className="stat-icon">
                 <FaTrophy />
               </div>
               <div className="stat-number">{Math.round(stats.awards)}+</div>
               <div className="stat-label">Awards Won</div>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
@@ -781,7 +779,7 @@ const Home = () => {
             <div className="feature-card">
               <div className="feature-icon-wrapper"><MdLocalPizza /></div>
               <h3 className="feature-title">Gourmet Pizza</h3>
-              <h4 className="feature-title-am">ጎርሜ ፒዛ</h4>
+              {/* <h4 className="feature-title-am">ጎርሜ ፒዛ</h4> */}
               <p className="feature-description">From classic to signature Sewrica Pizza, we have something for everyone.</p>
             </div>
             <div className="feature-card">
@@ -847,7 +845,7 @@ const Home = () => {
             </div>
             <div className="cta-contact">
               <FaPhone className="cta-phone-icon" />
-              <span className="cta-phone">+251 911 234 567</span>
+              <span className="cta-phone">+251 911060930</span>
             </div>
             <p className="cta-hours">
               <FaClock /> Open Daily: 8:00 AM - 10:00 PM

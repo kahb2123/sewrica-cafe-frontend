@@ -703,15 +703,34 @@
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;  /* This ensures vertical stacking */
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  padding: 30px 20px;
+  background: rgba(255, 255, 255, 0.05); /* Optional: subtle background */
+  border-radius: 10px;
+  transition: transform 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .stat-icon {
-  font-size: 3rem;
+  font-size: 3.5rem;
   color: var(--ethiopian-gold);
   margin-bottom: 20px;
+  line-height: 1;
 }
 
 .stat-number {
@@ -720,11 +739,45 @@
   font-family: 'Playfair Display', serif;
   margin-bottom: 10px;
   color: var(--ethiopian-gold);
+  line-height: 1.2;
 }
 
 .stat-label {
   font-size: 1.1rem;
   opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 500;
+}
+.stat-number, 
+.stat-label {
+  color: white !important;
+  background: transparent !important;
+  text-shadow: none !important;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr; /* Stack on mobile */
+    gap: 20px;
+  }
+  
+  .stat-item {
+    padding: 25px 15px;
+  }
+  
+  .stat-icon {
+    font-size: 3rem;
+  }
+  
+  .stat-number {
+    font-size: 2.5rem;
+  }
+  
+  .stat-label {
+    font-size: 1rem;
+  }
 }
 
 /* Features Section */
@@ -746,6 +799,9 @@
   background: #f9f9f9;
   border-radius: 15px;
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .feature-card:hover {
@@ -775,6 +831,19 @@
 .feature-description {
   color: #666;
   line-height: 1.6;
+}
+
+/* Responsive for features */
+@media (max-width: 992px) {
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Testimonials Section */

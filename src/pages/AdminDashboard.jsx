@@ -4,15 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { adminService, menuService, orderService, UPLOADS_URL } from '../services/api';
 import { toast } from 'react-toastify';
 import './AdminDashboard.css';
-import { staffService } from '../services/api'; // ✅ ADD THIS IMPORT
-import StaffReports from './StaffReports'; // ✅ ADD THIS IMPORT
+import { staffService } from '../services/api';
+import StaffReports from './StaffReports';
 import AddStaffModal from '../components/AddStaffModal';
-// import { orderService } from '../services/api';
+import { useSocket } from '../context/SocketContext'; // Add this import
+
 const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { onNewOrder, connected } = useSocket(); // Add socket
   const [activeTab, setActiveTab] = useState('overview');
-  // ========== ADD THIS FOR MOBILE MENU ==========
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const [stats, setStats] = useState({
@@ -25,6 +26,21 @@ const AdminDashboard = () => {
     todayRevenue: 0
   });
   const [loading, setLoading] = useState(true);
+
+  // Listen for new orders via socket
+  useEffect(() => {
+    if (connected) {
+      onNewOrder((data) => {
+        toast.info(`🆕 New order #${data.orderNumber} received!`);
+        // Refresh stats and orders if on overview or orders tab
+        if (activeTab === 'overview') {
+          fetchDashboardStats();
+        } else if (activeTab === 'orders') {
+          // You might want to refresh orders here
+        }
+      });
+    }
+  }, [connected, activeTab]);
 
   // Check if user is admin
   useEffect(() => {
@@ -55,7 +71,6 @@ const AdminDashboard = () => {
     fetchDashboardStats();
   }, []);
 
-  // ========== ADD THIS FUNCTION FOR MOBILE MENU ==========
   const handleMenuClick = (tab) => {
     setActiveTab(tab);
     if (window.innerWidth <= 768) {
@@ -71,7 +86,6 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Error fetching stats:', error);
       toast.error('Failed to load dashboard stats');
-      // Set mock data as fallback
       setStats({
         totalOrders: 156,
         totalRevenue: 45230,
@@ -86,27 +100,27 @@ const AdminDashboard = () => {
     }
   };
 
- 
-const renderContent = () => {
-  switch(activeTab) {
-    case 'overview':
-      return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
-    case 'orders':
-      return <OrdersTab />;
-    case 'staff':
-      return <StaffTab />;
-    case 'menu':
-      return <MenuTab />;
-    case 'reports':
-      return <ReportsTab />;
-    case 'users':
-      return <UsersTab />;
-    case 'staff-reports': // ✅ ADD THIS CASE
-      return <StaffReports />;
-    default:
-      return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
-  }
-};
+  const renderContent = () => {
+    switch(activeTab) {
+      case 'overview':
+        return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
+      case 'orders':
+        return <OrdersTab />;
+      case 'staff':
+        return <StaffTab />;
+      case 'menu':
+        return <MenuTab />;
+      case 'reports':
+        return <ReportsTab />;
+      case 'users':
+        return <UsersTab />;
+      case 'staff-reports':
+        return <StaffReports />;
+      default:
+        return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
+    }
+  };
+
   if (loading) return (
     <div className="loading-container">
       <div className="loading-spinner"></div>
@@ -116,7 +130,11 @@ const renderContent = () => {
 
   return (
     <div className="admin-dashboard">
-      {/* ========== MOBILE MENU TOGGLE BUTTON ========== */}
+      {/* Connection Status Indicator */}
+      <div className={`connection-status ${connected ? 'connected' : 'disconnected'}`}>
+        {connected ? '🟢 Live' : '🔴 Reconnecting...'}
+      </div>
+
       <button 
         className="mobile-menu-toggle"
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -124,14 +142,12 @@ const renderContent = () => {
         {mobileMenuOpen ? '✕' : '☰'}
       </button>
 
-      {/* ========== SIDEBAR WITH CONDITIONAL CLASS ========== */}
       <div className={`admin-sidebar ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <h2>Sewrica Cafe</h2>
           <p>Admin Panel</p>
         </div>
         
-        {/* ========== UPDATED MENU ITEMS WITH handleMenuClick ========== */}
         <ul className="sidebar-menu">
           <li className={activeTab === 'overview' ? 'active' : ''} 
               onClick={() => handleMenuClick('overview')}>
@@ -181,7 +197,6 @@ const renderContent = () => {
         </div>
       </div>
 
-      {/* ========== OVERLAY FOR MOBILE ========== */}
       {mobileMenuOpen && (
         <div 
           className="sidebar-overlay"
@@ -212,7 +227,6 @@ const OverviewTab = ({ stats, onRefresh }) => {
       setRecentOrders(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching recent orders:', error);
-      // Mock data
       setRecentOrders([
         { _id: 'ORD001', customer: { name: 'John Doe' }, items: [{ name: 'Burger' }], totalAmount: 450, status: 'pending', createdAt: new Date().toISOString() },
         { _id: 'ORD002', customer: { name: 'Jane Smith' }, items: [{ name: 'Pizza' }], totalAmount: 650, status: 'confirmed', createdAt: new Date().toISOString() },
@@ -340,8 +354,7 @@ const OverviewTab = ({ stats, onRefresh }) => {
   );
 };
 
-// ==================== UPDATED ORDERS TAB WITH ASSIGNMENT ====================
-// ==================== COMPLETE WORKING ORDERS TAB ====================
+// ==================== UPDATED ORDERS TAB WITH ACCEPT/REJECT ====================
 const OrdersTab = () => {
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState('all');
@@ -350,6 +363,10 @@ const OrdersTab = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [cashAmount, setCashAmount] = useState('');
   const [processingPayment, setProcessingPayment] = useState(false);
+  
+  // State for rejection modal
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
   
   // State for assignment modals
   const [showAssignChefModal, setShowAssignChefModal] = useState(false);
@@ -389,7 +406,6 @@ const OrdersTab = () => {
       setAvailableDelivery(delivery.staff || []);
     } catch (error) {
       console.error('Error fetching staff:', error);
-      // Set mock data for testing if API fails
       setAvailableChefs([
         { _id: 'chef1', name: 'Chef Berhanu' },
         { _id: 'chef2', name: 'Chef Tigist' },
@@ -400,6 +416,39 @@ const OrdersTab = () => {
         { _id: 'del2', name: 'Almaz Worku' },
         { _id: 'del3', name: 'Kebede Alemu' }
       ]);
+    }
+  };
+
+  // ========== ACCEPT ORDER FUNCTION ==========
+  const handleAcceptOrder = async (orderId) => {
+    try {
+      await adminService.updateOrderStatus(orderId, 'confirmed', 'Order accepted by admin');
+      toast.success('✅ Order accepted successfully');
+      fetchOrders(); // Refresh orders
+    } catch (error) {
+      console.error('Error accepting order:', error);
+      toast.error('Failed to accept order');
+    }
+  };
+
+  // ========== REJECT ORDER FUNCTION ==========
+  const handleRejectOrder = async () => {
+    if (!selectedOrder) return;
+    
+    try {
+      await adminService.updateOrderStatus(
+        selectedOrder._id, 
+        'cancelled', 
+        rejectionReason || 'Order rejected by admin'
+      );
+      toast.success('❌ Order rejected');
+      setShowRejectModal(false);
+      setSelectedOrder(null);
+      setRejectionReason('');
+      fetchOrders(); // Refresh orders
+    } catch (error) {
+      console.error('Error rejecting order:', error);
+      toast.error('Failed to reject order');
     }
   };
 
@@ -415,8 +464,8 @@ const OrdersTab = () => {
       setShowAssignChefModal(false);
       setSelectedChefId('');
       setAssignmentNotes('');
-      fetchOrders(); // Refresh orders
-      fetchAvailableStaff(); // Refresh staff list
+      fetchOrders();
+      fetchAvailableStaff();
     } catch (error) {
       console.error('Error assigning chef:', error);
       toast.error(error.message || 'Failed to assign chef');
@@ -435,8 +484,8 @@ const OrdersTab = () => {
       setShowAssignDeliveryModal(false);
       setSelectedDeliveryId('');
       setAssignmentNotes('');
-      fetchOrders(); // Refresh orders
-      fetchAvailableStaff(); // Refresh staff list
+      fetchOrders();
+      fetchAvailableStaff();
     } catch (error) {
       console.error('Error assigning delivery:', error);
       toast.error(error.message || 'Failed to assign delivery');
@@ -498,50 +547,6 @@ const OrdersTab = () => {
       hour: '2-digit', 
       minute: '2-digit' 
     });
-  };
-
-  const handleCashPaymentClick = (order) => {
-    setSelectedOrder(order);
-    setCashAmount(order.totalAmount.toString());
-    setShowPaymentModal(true);
-  };
-
-  const handleAssignChefClick = (order) => {
-    setSelectedOrder(order);
-    setSelectedChefId(order.assignedChef?._id || '');
-    setAssignmentNotes(order.chefNotes || '');
-    setShowAssignChefModal(true);
-  };
-
-  const handleAssignDeliveryClick = (order) => {
-    setSelectedOrder(order);
-    setSelectedDeliveryId(order.assignedDelivery?._id || '');
-    setAssignmentNotes(order.deliveryNotes || '');
-    setShowAssignDeliveryModal(true);
-  };
-
-  const handleQuickAssignChef = async (orderId, chefId) => {
-    try {
-      await staffService.assignChef(orderId, chefId);
-      toast.success('Chef assigned successfully');
-      fetchOrders(); // Refresh orders
-      fetchAvailableStaff(); // Refresh staff list
-    } catch (error) {
-      console.error('Error assigning chef:', error);
-      toast.error(error.message || 'Failed to assign chef');
-    }
-  };
-
-  const handleQuickAssignDelivery = async (orderId, deliveryId) => {
-    try {
-      await staffService.assignDelivery(orderId, deliveryId);
-      toast.success('Delivery person assigned successfully');
-      fetchOrders(); // Refresh orders
-      fetchAvailableStaff(); // Refresh staff list
-    } catch (error) {
-      console.error('Error assigning delivery:', error);
-      toast.error(error.message || 'Failed to assign delivery person');
-    }
   };
 
   if (loading) return (
@@ -689,6 +694,27 @@ const OrdersTab = () => {
               </div>
 
               <div className="order-card-footer">
+                {/* ========== ACCEPT/REJECT BUTTONS FOR PENDING ORDERS ========== */}
+                {order.status === 'pending' && (
+                  <div className="accept-reject-buttons">
+                    <button 
+                      onClick={() => handleAcceptOrder(order._id)}
+                      className="btn-accept"
+                    >
+                      ✓ Accept Order
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setSelectedOrder(order);
+                        setShowRejectModal(true);
+                      }}
+                      className="btn-reject"
+                    >
+                      ✗ Reject Order
+                    </button>
+                  </div>
+                )}
+
                 {/* Status Update Section */}
                 <div className="status-update-section">
                   <div className="current-status">
@@ -700,23 +726,6 @@ const OrdersTab = () => {
                   
                   <div className="status-actions">
                     {/* Status Update Buttons */}
-                    {order.status === 'pending' && (
-                      <div className="status-buttons">
-                        <button 
-                          className="btn-status-confirm"
-                          onClick={() => updateOrderStatus(order._id, 'confirmed')}
-                        >
-                          ✅ Confirm
-                        </button>
-                        <button 
-                          className="btn-status-cancel"
-                          onClick={() => updateOrderStatus(order._id, 'cancelled')}
-                        >
-                          ❌ Cancel
-                        </button>
-                      </div>
-                    )}
-
                     {order.status === 'confirmed' && (
                       <button 
                         className="btn-status-preparing"
@@ -762,7 +771,7 @@ const OrdersTab = () => {
                   </div>
                 </div>
 
-                {/* Assignment Buttons - THESE ARE THE ONES YOU SEE */}
+                {/* Assignment Buttons */}
                 <div className="assignment-buttons">
                   <button 
                     className="btn-assign-chef"
@@ -796,6 +805,46 @@ const OrdersTab = () => {
           <div className="no-orders">No orders found</div>
         )}
       </div>
+
+      {/* ========== REJECTION MODAL ========== */}
+      {showRejectModal && (
+        <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
+          <div className="modal-content reject-modal" onClick={e => e.stopPropagation()}>
+            <h2>Reject Order #{selectedOrder?.orderNumber || selectedOrder?._id.slice(-6)}</h2>
+            <p className="warning-text">Are you sure you want to reject this order?</p>
+            
+            <div className="form-group">
+              <label>Reason for rejection (optional):</label>
+              <textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder="e.g., Out of stock, Too busy, etc."
+                rows="3"
+                className="form-control"
+              />
+            </div>
+            
+            <div className="modal-actions">
+              <button 
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setSelectedOrder(null);
+                  setRejectionReason('');
+                }}
+                className="btn-cancel"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleRejectOrder}
+                className="btn-confirm-reject"
+              >
+                Yes, Reject Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Cash Payment Modal */}
       {showPaymentModal && selectedOrder && (
@@ -964,7 +1013,7 @@ const OrdersTab = () => {
   );
 };
 
-// ==================== FIXED MENU TAB ====================
+// ==================== MENU TAB ====================
 const MenuTab = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -1101,17 +1150,14 @@ const MenuTab = () => {
     }
   };
 
-  // FIXED: handleSubmit function
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate required fields
     if (!formData.name || !formData.description || !formData.price || !formData.category) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    // For new items, image is required
     if (!editingItem && !imageFile) {
       toast.error('Please select an image');
       return;
@@ -1120,7 +1166,6 @@ const MenuTab = () => {
     setIsSubmitting(true);
 
     try {
-      // Prepare payload with correct field names
       const payload = {
         name: formData.name,
         nameAm: formData.nameAm || formData.name,
@@ -1128,15 +1173,11 @@ const MenuTab = () => {
         fullDescription: formData.fullDescription || formData.description,
         price: Number(formData.price),
         category: formData.category,
-        // Send as strings for FormData
         isVegetarian: formData.vegetarian ? 'true' : 'false',
         isSpicy: formData.spicy ? 'true' : 'false',
         isSignature: formData.signature ? 'true' : 'false',
         isAvailable: formData.available ? 'true' : 'false'
       };
-
-      console.log('Submitting payload:', payload);
-      console.log('Image file:', imageFile);
 
       let response;
       if (editingItem) {
@@ -1150,8 +1191,6 @@ const MenuTab = () => {
         response = await menuService.createItem(payload, imageFile);
         toast.success('Menu item created successfully');
       }
-      
-      console.log('Backend response:', response);
       
       setShowForm(false);
       resetForm();
@@ -1198,19 +1237,10 @@ const MenuTab = () => {
     }
   };
 
-  // FIXED: Image URL helper
   const getImageUrl = (image) => {
     if (!image) return null;
-    
-    console.log('Original image path:', image);
-    
-    // If it's already a full URL
     if (image.startsWith('http')) return image;
-    
-    // If it's default-food.jpg, return null to show fallback
     if (image === 'default-food.jpg') return null;
-    
-    // Construct the full URL
     return `${UPLOADS_URL}/${image}`;
   };
 
@@ -1545,6 +1575,7 @@ const MenuTab = () => {
     </div>
   );
 };
+
 // ==================== REPORTS TAB ====================
 const ReportsTab = () => {
   const [reportType, setReportType] = useState('daily');
@@ -1899,7 +1930,6 @@ const UsersTab = () => {
 };
 
 // ==================== STAFF TAB ====================
-// ==================== ENHANCED STAFF TAB ====================
 const StaffTab = () => {
   const [staff, setStaff] = useState({ cooks: [], delivery: [], cashiers: [] });
   const [loading, setLoading] = useState(true);
@@ -1933,7 +1963,6 @@ const StaffTab = () => {
       console.error('Error fetching staff:', error);
       toast.error('Failed to load staff data');
       
-      // Mock data for testing
       setStaff({
         cooks: [
           { _id: 'chef1', name: 'Chef Berhanu', email: 'berhanu@sewrica.com', phone: '0923456789', status: 'active', assignedOrders: 5, completedOrders: 45, rating: 4.8 },
@@ -1975,7 +2004,6 @@ const StaffTab = () => {
     } catch (error) {
       console.error('Error fetching performance:', error);
       
-      // Mock performance data for testing
       const mockData = role === 'cook' ? {
         summary: {
           totalOrders: 45,
@@ -2017,7 +2045,6 @@ const StaffTab = () => {
     if (!window.confirm('Are you sure you want to remove this staff member?')) return;
     
     try {
-      // You'll need to add this endpoint
       const response = await fetch(`/api/admin/staff/${staffId}`, {
         method: 'DELETE',
         headers: {
@@ -2038,7 +2065,6 @@ const StaffTab = () => {
   };
 
   const handleEditStaff = (staffMember) => {
-    // Implement edit functionality
     toast.info('Edit functionality coming soon');
   };
 

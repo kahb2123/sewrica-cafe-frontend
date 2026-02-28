@@ -25,7 +25,7 @@ const Footer = () => {
 
   const contactInfo = [
     { icon: <FaMapMarkerAlt />, text: 'Megenagna, Metebaber Building, 2nd Floor', link: 'https://maps.google.com/?q=Megenagna+Addis+Ababa' },
-    { icon: <FaPhone />, text: '+251 911 234 567', link: 'tel:+251911234567' },
+    { icon: <FaPhone />, text: '+251 911060930', link: 'tel:+251911060930' },
     { icon: <FaEnvelope />, text: 'info@megenagnarestaurant.com', link: 'mailto:info@megenagnarestaurant.com' },
   ];
 

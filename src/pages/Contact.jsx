@@ -28,12 +28,11 @@ const Contact = () => {
     address: 'Megenagna, Metebaber Building, 2nd Floor',
     city: 'Addis Ababa, Ethiopia',
     phone: '+251 910339744',
-    phone2: '+251 922 345 678',
+    phone2: '+251 911060930',
     email: 'info@sewricacafe.com',
     email2: 'reservations@sewricacafe.com',
     hours: [
-      { day: 'Monday - Friday', hours: '8:00 AM - 10:00 PM' },
-      { day: 'Saturday', hours: '9:00 AM - 11:00 PM' },
+      { day: 'Monday - Saturday', hours: '8:00 AM - 10:00 PM' },
       { day: 'Sunday', hours: '9:00 AM - 9:00 PM' },
       { day: 'Holidays', hours: '10:00 AM - 8:00 PM' }
     ]
@@ -46,7 +45,7 @@ const Contact = () => {
     { icon: <FaTelegram />, name: 'Telegram', link: 'https://t.me/sewricacafe', color: '#0088cc', username: '@sewricacafe' },
     { icon: <FaTiktok />, name: 'TikTok', link: 'https://tiktok.com/@sewricacafe', color: '#000000', username: '@sewricacafe' },
     { icon: <FaLinkedin />, name: 'LinkedIn', link: 'https://linkedin.com/company/sewricacafe', color: '#0077b5', username: 'SEWRICA Cafe' },
-    { icon: <FaWhatsapp />, name: 'WhatsApp', link: 'https://wa.me/251911234567', color: '#25D366', username: '+251 911 234 567' }
+    { icon: <FaWhatsapp />, name: 'WhatsApp', link: 'https://wa.me/251911234567', color: '#25D366', username: '+251 911060930' }
   ];
 
   // FAQ Questions

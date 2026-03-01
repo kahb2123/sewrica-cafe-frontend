@@ -343,7 +343,7 @@ const Home = () => {
       rating: 5,
       comment: 'Best view in Addis! The Sewrica Burger is absolutely amazing. Love the atmosphere and food.',
       date: 'March 2024',
-      platform: 'Google'
+      // platform: 'Google'
     },
     {
       id: 2,
@@ -352,7 +352,7 @@ const Home = () => {
       rating: 5,
       comment: 'The city view from this cafe is breathtaking. Their pizza and traditional dishes are delicious!',
       date: 'February 2024',
-      platform: 'TripAdvisor'
+      // platform: 'TripAdvisor'
     },
     {
       id: 3,
@@ -361,7 +361,7 @@ const Home = () => {
       rating: 5,
       comment: 'Great food, amazing view, excellent service. The Chechebsa is my favorite breakfast now.',
       date: 'January 2024',
-      platform: 'Facebook'
+      // platform: 'Facebook'
     }
   ];
 
@@ -778,7 +778,7 @@ const Home = () => {
             </div>
             <div className="feature-card">
               <div className="feature-icon-wrapper"><MdLocalPizza /></div>
-              <h3 className="feature-title">Gourmet Pizza</h3>
+              <h3 className="feature-title">Sewrica Pizza</h3>
               {/* <h4 className="feature-title-am">ጎርሜ ፒዛ</h4> */}
               <p className="feature-description">From classic to signature Sewrica Pizza, we have something for everyone.</p>
             </div>

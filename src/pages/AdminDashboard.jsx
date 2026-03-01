@@ -527,6 +527,52 @@ const OrdersTab = () => {
     }
   };
 
+    // ========== ADD THESE MISSING FUNCTIONS HERE ==========
+  const handleAssignChefClick = (order) => {
+    setSelectedOrder(order);
+    setSelectedChefId(order.assignedChef?._id || '');
+    setAssignmentNotes(order.chefNotes || '');
+    setShowAssignChefModal(true);
+  };
+
+  const handleAssignDeliveryClick = (order) => {
+    setSelectedOrder(order);
+    setSelectedDeliveryId(order.assignedDelivery?._id || '');
+    setAssignmentNotes(order.deliveryNotes || '');
+    setShowAssignDeliveryModal(true);
+  };
+
+  const handleQuickAssignChef = async (orderId, chefId) => {
+    try {
+      await staffService.assignChef(orderId, chefId);
+      toast.success('Chef assigned successfully');
+      fetchOrders();
+      fetchAvailableStaff();
+    } catch (error) {
+      console.error('Error assigning chef:', error);
+      toast.error(error.message || 'Failed to assign chef');
+    }
+  };
+
+  const handleQuickAssignDelivery = async (orderId, deliveryId) => {
+    try {
+      await staffService.assignDelivery(orderId, deliveryId);
+      toast.success('Delivery person assigned successfully');
+      fetchOrders();
+      fetchAvailableStaff();
+    } catch (error) {
+      console.error('Error assigning delivery:', error);
+      toast.error(error.message || 'Failed to assign delivery');
+    }
+  };
+
+  const handleCashPaymentClick = (order) => {
+    setSelectedOrder(order);
+    setCashAmount(order.totalAmount.toString());
+    setShowPaymentModal(true);
+  };
+  // ========== END OF MISSING FUNCTIONS ==========
+
   const getStatusColor = (status) => {
     const colors = {
       pending: '#f39c12',

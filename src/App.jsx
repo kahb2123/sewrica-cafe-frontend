@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom'; // Remove BrowserRouter from here
+import { Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -36,14 +36,18 @@ function App() {
           <div className="App">
             <Navbar />
             <main className="main-content">
-              <Routes> {/* Just Routes, no Router */}
+              <Routes>
+                {/* Public Routes */}
                 <Route path="/" element={<Home />} />
                 <Route path="/menu" element={<Menu />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/order-confirmation/:orderId" element={<PaymentConfirmation />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/contact" element={<Contact />} />
+                
+                {/* Staff Login - Supporting both URLs for compatibility */}
                 <Route path="/staff-login" element={<StaffLogin />} />
+                <Route path="/staff/login" element={<StaffLogin />} /> {/* Added this line */}
                 
                 {/* Protected Routes */}
                 <Route path="/profile" element={
@@ -63,6 +67,9 @@ function App() {
                     <StaffDashboard />
                   </StaffPrivateRoute>
                 } />
+                
+                {/* Catch-all route for 404 - Optional */}
+                <Route path="*" element={<div className="not-found">Page Not Found</div>} />
               </Routes>
             </main>
             <Footer />

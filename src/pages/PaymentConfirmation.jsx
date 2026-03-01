@@ -9,14 +9,14 @@ import {
 import { MdRestaurantMenu } from 'react-icons/md';
 import { toast } from 'react-toastify';
 import { orderService } from '../services/api';
-import OrderTracker from '../components/OrderTracker'; // Add this import
-import { useSocket } from '../context/SocketContext'; // Add this import
+import OrderTracker from '../components/OrderTracker';
+import { useSocket } from '../context/SocketContext';
 import './PaymentConfirmation.css';
 
 const PaymentConfirmation = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { connected, registerOrder } = useSocket(); // Add socket
+  const { connected, registerOrder, onOrderStatusUpdate } = useSocket(); // Added onOrderStatusUpdate
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,13 +26,43 @@ const PaymentConfirmation = () => {
     fetchOrderDetails();
   }, [orderId]);
 
-  // Register order for real-time updates
+  // Register order for real-time updates and listen for changes
   useEffect(() => {
     if (order && orderId && connected) {
+      // Register this order for updates
       registerOrder(orderId);
-      console.log('Registered order for updates:', orderId);
+      console.log('📦 Registered for order updates:', orderId);
+
+      // Listen for status updates
+      onOrderStatusUpdate((data) => {
+        console.log('📢 Real-time order update received:', data);
+        
+        // Update the order status
+        setOrderStatus(data.status);
+        
+        // Show toast notifications based on status
+        if (data.status === 'confirmed') {
+          toast.success('✅ Your order has been accepted and is being prepared!');
+        } else if (data.status === 'cancelled') {
+          toast.error('❌ Your order has been rejected');
+          if (data.notes) {
+            toast.info(`Reason: ${data.notes}`);
+          }
+        } else if (data.status === 'preparing') {
+          toast.info('👨‍🍳 Your food is now being prepared');
+        } else if (data.status === 'ready') {
+          toast.success('🍽️ Your order is ready for pickup/delivery!');
+        } else if (data.status === 'delivered') {
+          toast.success('🚚 Your order has been delivered! Enjoy your meal!');
+        }
+      });
     }
-  }, [order, orderId, connected]);
+
+    // Cleanup function
+    return () => {
+      // Optional: remove listeners if needed
+    };
+  }, [order, orderId, connected, registerOrder, onOrderStatusUpdate]);
 
   const fetchOrderDetails = async () => {
     try {
@@ -89,7 +119,7 @@ Order Receipt
 
 Order #: ${order.orderNumber || orderId}
 Date: ${date}
-Status: ${order.status}
+Status: ${orderStatus}
 Payment: ${order.paymentMethod?.toUpperCase()}
 Payment Status: ${order.paymentStatus?.toUpperCase()}
 
@@ -162,10 +192,10 @@ Thank you for choosing SEWRICA Cafe!
           <p>Your order has been received and is being processed</p>
         </div>
 
-        {/* Add Order Tracker Component */}
+        {/* Order Tracker Component - Shows real-time status */}
         <OrderTracker 
           orderId={orderId} 
-          initialStatus={order.status}
+          initialStatus={orderStatus}
         />
 
         {/* Order Info Bar */}
@@ -182,8 +212,8 @@ Thank you for choosing SEWRICA Cafe!
           </div>
           <div className="info-item">
             <span className="label">Status</span>
-            <span className={`value status-${order.status}`}>
-              {order.status.toUpperCase()}
+            <span className={`value status-${orderStatus}`}>
+              {orderStatus.toUpperCase()}
             </span>
           </div>
         </div>

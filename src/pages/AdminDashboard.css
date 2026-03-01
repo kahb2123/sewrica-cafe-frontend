@@ -2579,3 +2579,32 @@
 .btn-confirm-reject:hover {
   background: #da190b;
 }
+
+/* Force stats numbers to be visible */
+.stat-number {
+  color: #333 !important;
+  font-size: 28px !important;
+  font-weight: bold !important;
+  display: block !important;
+  background: transparent !important;
+  margin: 10px 0 !important;
+}
+
+.stat-card {
+  background: white !important;
+  border: 1px solid #ddd !important;
+  border-radius: 8px !important;
+  padding: 20px !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+.stat-details h3 {
+  color: #666 !important;
+  font-size: 14px !important;
+  margin-bottom: 5px !important;
+}
+
+.stat-icon {
+  color: #4CAF50 !important;
+  font-size: 32px !important;
+}

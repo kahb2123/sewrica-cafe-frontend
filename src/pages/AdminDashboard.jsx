@@ -79,27 +79,32 @@ const AdminDashboard = () => {
   };
 
   const fetchDashboardStats = async () => {
-    try {
-      setLoading(true);
-      const data = await adminService.getStats();
-      setStats(data);
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-      toast.error('Failed to load dashboard stats');
-      setStats({
-        totalOrders: 156,
-        totalRevenue: 45230,
-        pendingOrders: 8,
-        totalMenuItems: 42,
-        totalUsers: 124,
-        todayOrders: 12,
-        todayRevenue: 3450
-      });
-    } finally {
-      setLoading(false);
+  try {
+    setLoading(true);
+    console.log('🔍 Fetching stats from API...');
+    const data = await adminService.getStats();
+    console.log('✅ Stats received from API:', data);
+    setStats(data);
+  } catch (error) {
+    console.error('❌ API Error:', error);
+    console.log('📊 Using fallback mock data');
+    // Log the error details
+    if (error.response) {
+      console.log('Error response:', error.response.status, error.response.data);
     }
-  };
-
+    setStats({
+      totalOrders: 156,
+      totalRevenue: 45230,
+      pendingOrders: 8,
+      totalMenuItems: 42,
+      totalUsers: 124,
+      todayOrders: 12,
+      todayRevenue: 3450
+    });
+  } finally {
+    setLoading(false);
+  }
+};
   const renderContent = () => {
     switch(activeTab) {
       case 'overview':
@@ -212,7 +217,23 @@ const AdminDashboard = () => {
 };
 
 // ==================== OVERVIEW TAB ====================
+// ==================== OVERVIEW TAB ====================
 const OverviewTab = ({ stats, onRefresh }) => {
+  // ===== DEBUG LOGS =====
+  console.log('📊 OverviewTab received stats:', stats);
+  console.log('📊 Stats type:', typeof stats);
+  console.log('📊 Stats keys:', Object.keys(stats));
+  console.log('📊 Stats values:', {
+    totalOrders: stats?.totalOrders,
+    totalRevenue: stats?.totalRevenue,
+    pendingOrders: stats?.pendingOrders,
+    totalMenuItems: stats?.totalMenuItems,
+    totalUsers: stats?.totalUsers,
+    todayOrders: stats?.todayOrders,
+    todayRevenue: stats?.todayRevenue
+  });
+  // ===== END DEBUG LOGS =====
+
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -244,6 +265,17 @@ const OverviewTab = ({ stats, onRefresh }) => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
+  // Safely access stats with fallback values
+  const safeStats = stats || {
+    totalOrders: 0,
+    totalRevenue: 0,
+    pendingOrders: 0,
+    totalMenuItems: 0,
+    totalUsers: 0,
+    todayOrders: 0,
+    todayRevenue: 0
+  };
+
   return (
     <div className="overview-tab">
       <div className="tab-header">
@@ -258,42 +290,42 @@ const OverviewTab = ({ stats, onRefresh }) => {
           <div className="stat-icon">📊</div>
           <div className="stat-details">
             <h3>Total Orders</h3>
-            <p className="stat-number">{stats.totalOrders}</p>
+            <p className="stat-number">{safeStats.totalOrders}</p>
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">💰</div>
           <div className="stat-details">
             <h3>Total Revenue</h3>
-            <p className="stat-number">{stats.totalRevenue.toLocaleString()} ETB</p>
+            <p className="stat-number">{safeStats.totalRevenue?.toLocaleString() || 0} ETB</p>
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">⏳</div>
           <div className="stat-details">
             <h3>Pending Orders</h3>
-            <p className="stat-number">{stats.pendingOrders}</p>
+            <p className="stat-number">{safeStats.pendingOrders}</p>
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">🍔</div>
           <div className="stat-details">
             <h3>Menu Items</h3>
-            <p className="stat-number">{stats.totalMenuItems}</p>
+            <p className="stat-number">{safeStats.totalMenuItems}</p>
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">👥</div>
           <div className="stat-details">
             <h3>Total Users</h3>
-            <p className="stat-number">{stats.totalUsers}</p>
+            <p className="stat-number">{safeStats.totalUsers}</p>
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">📅</div>
           <div className="stat-details">
             <h3>Today's Orders</h3>
-            <p className="stat-number">{stats.todayOrders}</p>
+            <p className="stat-number">{safeStats.todayOrders}</p>
           </div>
         </div>
       </div>
@@ -353,7 +385,6 @@ const OverviewTab = ({ stats, onRefresh }) => {
     </div>
   );
 };
-
 // ==================== ORDERS TAB WITH ACCEPT/REJECT AND ASSIGNMENTS ====================
 const OrdersTab = () => {
   const [orders, setOrders] = useState([]);

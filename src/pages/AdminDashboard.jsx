@@ -354,7 +354,7 @@ const OverviewTab = ({ stats, onRefresh }) => {
   );
 };
 
-// ==================== UPDATED ORDERS TAB WITH ACCEPT/REJECT ====================
+// ==================== ORDERS TAB WITH ACCEPT/REJECT AND ASSIGNMENTS ====================
 const OrdersTab = () => {
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState('all');
@@ -406,6 +406,7 @@ const OrdersTab = () => {
       setAvailableDelivery(delivery.staff || []);
     } catch (error) {
       console.error('Error fetching staff:', error);
+      // Set mock data for testing
       setAvailableChefs([
         { _id: 'chef1', name: 'Chef Berhanu' },
         { _id: 'chef2', name: 'Chef Tigist' },
@@ -527,8 +528,9 @@ const OrdersTab = () => {
     }
   };
 
-    // ========== ADD THESE MISSING FUNCTIONS HERE ==========
+  // ========== MISSING FUNCTIONS ADDED HERE ==========
   const handleAssignChefClick = (order) => {
+    console.log('Assign chef clicked for order:', order._id);
     setSelectedOrder(order);
     setSelectedChefId(order.assignedChef?._id || '');
     setAssignmentNotes(order.chefNotes || '');
@@ -536,6 +538,7 @@ const OrdersTab = () => {
   };
 
   const handleAssignDeliveryClick = (order) => {
+    console.log('Assign delivery clicked for order:', order._id);
     setSelectedOrder(order);
     setSelectedDeliveryId(order.assignedDelivery?._id || '');
     setAssignmentNotes(order.deliveryNotes || '');
@@ -544,6 +547,7 @@ const OrdersTab = () => {
 
   const handleQuickAssignChef = async (orderId, chefId) => {
     try {
+      console.log('Quick assigning chef:', orderId, chefId);
       await staffService.assignChef(orderId, chefId);
       toast.success('Chef assigned successfully');
       fetchOrders();
@@ -556,6 +560,7 @@ const OrdersTab = () => {
 
   const handleQuickAssignDelivery = async (orderId, deliveryId) => {
     try {
+      console.log('Quick assigning delivery:', orderId, deliveryId);
       await staffService.assignDelivery(orderId, deliveryId);
       toast.success('Delivery person assigned successfully');
       fetchOrders();
@@ -567,6 +572,7 @@ const OrdersTab = () => {
   };
 
   const handleCashPaymentClick = (order) => {
+    console.log('Cash payment clicked for order:', order._id);
     setSelectedOrder(order);
     setCashAmount(order.totalAmount.toString());
     setShowPaymentModal(true);

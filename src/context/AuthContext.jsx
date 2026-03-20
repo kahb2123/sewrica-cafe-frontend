@@ -1,3 +1,4 @@
+// src/context/AuthContext.jsx
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { authService } from '../services/api';
@@ -23,7 +24,9 @@ export const AuthProvider = ({ children }) => {
 
       if (token && storedUser) {
         try {
-          setUser(JSON.parse(storedUser));
+          const userData = JSON.parse(storedUser);
+          console.log('Loaded user from storage:', userData);
+          setUser(userData);
         } catch (error) {
           console.error('Error parsing stored user:', error);
           localStorage.removeItem('user');
@@ -41,15 +44,17 @@ export const AuthProvider = ({ children }) => {
       if (data && data.token) {
         const userData = data.user || data;
         const normalized = {
+          _id: userData.id || userData._id,
           id: userData.id || userData._id,
           name: userData.name,
           email: userData.email,
+          phone: userData.phone,
           role: userData.role || 'customer'
         };
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(normalized));
         setUser(normalized);
-        return { success: true };
+        return { success: true, user: normalized };
       }
       return { success: false, error: data.message || 'Login failed' };
     } catch (error) {
@@ -68,7 +73,13 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
-    loading
+    loading,
+    isAuthenticated: !!localStorage.getItem('token'),
+    isAdmin: user?.role === 'admin',
+    isStaff: ['cook', 'chef', 'delivery', 'cashier'].includes(user?.role?.toLowerCase()),
+    isChef: user?.role?.toLowerCase() === 'cook' || user?.role?.toLowerCase() === 'chef',
+    isDelivery: user?.role?.toLowerCase() === 'delivery',
+    isCashier: user?.role?.toLowerCase() === 'cashier'
   };
 
   return (

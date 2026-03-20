@@ -1,2510 +1,2510 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { adminService, menuService, orderService, UPLOADS_URL } from '../services/api';
-import { toast } from 'react-toastify';
-import './AdminDashboard.css';
-import { staffService } from '../services/api';
-import StaffReports from './StaffReports';
-import AddStaffModal from '../components/AddStaffModal';
-import { useSocket } from '../context/SocketContext'; // Add this import
+// import React, { useState, useEffect } from 'react';
+// import { useAuth } from '../context/AuthContext';
+// import { useNavigate } from 'react-router-dom';
+// import { adminService, menuService, orderService, UPLOADS_URL } from '../services/api';
+// import { toast } from 'react-toastify';
+// import './AdminDashboard.css';
+// import { staffService } from '../services/api';
+// import StaffReports from './StaffReports';
+// import AddStaffModal from '../components/AddStaffModal';
+// import { useSocket } from '../context/SocketContext'; // Add this import
 
-const AdminDashboard = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const { onNewOrder, connected } = useSocket(); // Add socket
-  const [activeTab, setActiveTab] = useState('overview');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+// const AdminDashboard = () => {
+//   const { user } = useAuth();
+//   const navigate = useNavigate();
+//   const { onNewOrder, connected } = useSocket(); // Add socket
+//   const [activeTab, setActiveTab] = useState('overview');
+//   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  const [stats, setStats] = useState({
-    totalOrders: 0,
-    totalRevenue: 0,
-    pendingOrders: 0,
-    totalMenuItems: 0,
-    totalUsers: 0,
-    todayOrders: 0,
-    todayRevenue: 0
-  });
-  const [loading, setLoading] = useState(true);
+//   const [stats, setStats] = useState({
+//     totalOrders: 0,
+//     totalRevenue: 0,
+//     pendingOrders: 0,
+//     totalMenuItems: 0,
+//     totalUsers: 0,
+//     todayOrders: 0,
+//     todayRevenue: 0
+//   });
+//   const [loading, setLoading] = useState(true);
 
-  // Listen for new orders via socket
-  useEffect(() => {
-    if (connected) {
-      onNewOrder((data) => {
-        toast.info(`🆕 New order #${data.orderNumber} received!`);
-        // Refresh stats and orders if on overview or orders tab
-        if (activeTab === 'overview') {
-          fetchDashboardStats();
-        } else if (activeTab === 'orders') {
-          // You might want to refresh orders here
-        }
-      });
-    }
-  }, [connected, activeTab]);
+//   // Listen for new orders via socket
+//   useEffect(() => {
+//     if (connected) {
+//       onNewOrder((data) => {
+//         toast.info(`🆕 New order #${data.orderNumber} received!`);
+//         // Refresh stats and orders if on overview or orders tab
+//         if (activeTab === 'overview') {
+//           fetchDashboardStats();
+//         } else if (activeTab === 'orders') {
+//           // You might want to refresh orders here
+//         }
+//       });
+//     }
+//   }, [connected, activeTab]);
 
-  // Check if user is admin
-  useEffect(() => {
-    const checkAdmin = () => {
-      const userStr = localStorage.getItem('user');
-      if (!userStr) {
-        navigate('/login');
-        return;
-      }
+//   // Check if user is admin
+//   useEffect(() => {
+//     const checkAdmin = () => {
+//       const userStr = localStorage.getItem('user');
+//       if (!userStr) {
+//         navigate('/login');
+//         return;
+//       }
       
-      try {
-        const userData = JSON.parse(userStr);
-        if (userData.role !== 'admin') {
-          toast.error('Admin access required');
-          navigate('/');
-        }
-      } catch (error) {
-        console.error('Error parsing user:', error);
-        navigate('/login');
-      }
-    };
+//       try {
+//         const userData = JSON.parse(userStr);
+//         if (userData.role !== 'admin') {
+//           toast.error('Admin access required');
+//           navigate('/');
+//         }
+//       } catch (error) {
+//         console.error('Error parsing user:', error);
+//         navigate('/login');
+//       }
+//     };
     
-    checkAdmin();
-  }, [navigate]);
+//     checkAdmin();
+//   }, [navigate]);
 
-  // Fetch dashboard stats
-  useEffect(() => {
-    fetchDashboardStats();
-  }, []);
+//   // Fetch dashboard stats
+//   useEffect(() => {
+//     fetchDashboardStats();
+//   }, []);
 
-  const handleMenuClick = (tab) => {
-    setActiveTab(tab);
-    if (window.innerWidth <= 768) {
-      setMobileMenuOpen(false);
-    }
-  };
+//   const handleMenuClick = (tab) => {
+//     setActiveTab(tab);
+//     if (window.innerWidth <= 768) {
+//       setMobileMenuOpen(false);
+//     }
+//   };
 
-  const fetchDashboardStats = async () => {
-  try {
-    setLoading(true);
-    console.log('🔍 Fetching stats from API...');
-    const data = await adminService.getStats();
-    console.log('✅ Stats received from API:', data);
-    setStats(data);
-  } catch (error) {
-    console.error('❌ API Error:', error);
-    console.log('📊 Using fallback mock data');
-    // Log the error details
-    if (error.response) {
-      console.log('Error response:', error.response.status, error.response.data);
-    }
-    setStats({
-      totalOrders: 156,
-      totalRevenue: 45230,
-      pendingOrders: 8,
-      totalMenuItems: 42,
-      totalUsers: 124,
-      todayOrders: 12,
-      todayRevenue: 3450
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-  const renderContent = () => {
-    switch(activeTab) {
-      case 'overview':
-        return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
-      case 'orders':
-        return <OrdersTab />;
-      case 'staff':
-        return <StaffTab />;
-      case 'menu':
-        return <MenuTab />;
-      case 'reports':
-        return <ReportsTab />;
-      case 'users':
-        return <UsersTab />;
-      case 'staff-reports':
-        return <StaffReports />;
-      default:
-        return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
-    }
-  };
+//   const fetchDashboardStats = async () => {
+//   try {
+//     setLoading(true);
+//     console.log('🔍 Fetching stats from API...');
+//     const data = await adminService.getStats();
+//     console.log('✅ Stats received from API:', data);
+//     setStats(data);
+//   } catch (error) {
+//     console.error('❌ API Error:', error);
+//     console.log('📊 Using fallback mock data');
+//     // Log the error details
+//     if (error.response) {
+//       console.log('Error response:', error.response.status, error.response.data);
+//     }
+//     setStats({
+//       totalOrders: 156,
+//       totalRevenue: 45230,
+//       pendingOrders: 8,
+//       totalMenuItems: 42,
+//       totalUsers: 124,
+//       todayOrders: 12,
+//       todayRevenue: 3450
+//     });
+//   } finally {
+//     setLoading(false);
+//   }
+// };
+//   const renderContent = () => {
+//     switch(activeTab) {
+//       case 'overview':
+//         return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
+//       case 'orders':
+//         return <OrdersTab />;
+//       case 'staff':
+//         return <StaffTab />;
+//       case 'menu':
+//         return <MenuTab />;
+//       case 'reports':
+//         return <ReportsTab />;
+//       case 'users':
+//         return <UsersTab />;
+//       case 'staff-reports':
+//         return <StaffReports />;
+//       default:
+//         return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
+//     }
+//   };
 
-  if (loading) return (
-    <div className="loading-container">
-      <div className="loading-spinner"></div>
-      <p>Loading Dashboard...</p>
-    </div>
-  );
+//   if (loading) return (
+//     <div className="loading-container">
+//       <div className="loading-spinner"></div>
+//       <p>Loading Dashboard...</p>
+//     </div>
+//   );
 
-  return (
-    <div className="admin-dashboard">
-      {/* Connection Status Indicator */}
-      <div className={`connection-status ${connected ? 'connected' : 'disconnected'}`}>
-        {connected ? '🟢 Live' : '🔴 Reconnecting...'}
-      </div>
+//   return (
+//     <div className="admin-dashboard">
+//       {/* Connection Status Indicator */}
+//       <div className={`connection-status ${connected ? 'connected' : 'disconnected'}`}>
+//         {connected ? '🟢 Live' : '🔴 Reconnecting...'}
+//       </div>
 
-      <button 
-        className="mobile-menu-toggle"
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-      >
-        {mobileMenuOpen ? '✕' : '☰'}
-      </button>
+//       <button 
+//         className="mobile-menu-toggle"
+//         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+//       >
+//         {mobileMenuOpen ? '✕' : '☰'}
+//       </button>
 
-      <div className={`admin-sidebar ${mobileMenuOpen ? 'open' : ''}`}>
-        <div className="sidebar-header">
-          <h2>Sewrica Cafe</h2>
-          <p>Admin Panel</p>
-        </div>
+//       <div className={`admin-sidebar ${mobileMenuOpen ? 'open' : ''}`}>
+//         <div className="sidebar-header">
+//           <h2>Sewrica Cafe</h2>
+//           <p>Admin Panel</p>
+//         </div>
         
-        <ul className="sidebar-menu">
-          <li className={activeTab === 'overview' ? 'active' : ''} 
-              onClick={() => handleMenuClick('overview')}>
-            <span className="menu-icon">📊</span>
-            <span className="menu-text">Overview</span>
-          </li>
-          <li className={activeTab === 'orders' ? 'active' : ''} 
-              onClick={() => handleMenuClick('orders')}>
-            <span className="menu-icon">📦</span>
-            <span className="menu-text">Orders</span>
-          </li>
-          <li className={activeTab === 'staff' ? 'active' : ''} 
-              onClick={() => handleMenuClick('staff')}>
-            <span className="menu-icon">👨‍🍳</span>
-            <span className="menu-text">Staff</span>
-          </li>
-          <li className={activeTab === 'menu' ? 'active' : ''} 
-              onClick={() => handleMenuClick('menu')}>
-            <span className="menu-icon">🍽️</span>
-            <span className="menu-text">Menu Items</span>
-          </li>
-          <li className={activeTab === 'reports' ? 'active' : ''} 
-              onClick={() => handleMenuClick('reports')}>
-            <span className="menu-icon">📈</span>
-            <span className="menu-text">Reports</span>
-          </li>
-          <li className={activeTab === 'users' ? 'active' : ''} 
-              onClick={() => handleMenuClick('users')}>
-            <span className="menu-icon">👥</span>
-            <span className="menu-text">Users</span>
-          </li>
-          <li className={activeTab === 'staff-reports' ? 'active' : ''} 
-            onClick={() => handleMenuClick('staff-reports')}>
-            <span className="menu-icon">📋</span>
-            <span className="menu-text">Staff Reports</span>
-          </li>
-        </ul>
+//         <ul className="sidebar-menu">
+//           <li className={activeTab === 'overview' ? 'active' : ''} 
+//               onClick={() => handleMenuClick('overview')}>
+//             <span className="menu-icon">📊</span>
+//             <span className="menu-text">Overview</span>
+//           </li>
+//           <li className={activeTab === 'orders' ? 'active' : ''} 
+//               onClick={() => handleMenuClick('orders')}>
+//             <span className="menu-icon">📦</span>
+//             <span className="menu-text">Orders</span>
+//           </li>
+//           <li className={activeTab === 'staff' ? 'active' : ''} 
+//               onClick={() => handleMenuClick('staff')}>
+//             <span className="menu-icon">👨‍🍳</span>
+//             <span className="menu-text">Staff</span>
+//           </li>
+//           <li className={activeTab === 'menu' ? 'active' : ''} 
+//               onClick={() => handleMenuClick('menu')}>
+//             <span className="menu-icon">🍽️</span>
+//             <span className="menu-text">Menu Items</span>
+//           </li>
+//           <li className={activeTab === 'reports' ? 'active' : ''} 
+//               onClick={() => handleMenuClick('reports')}>
+//             <span className="menu-icon">📈</span>
+//             <span className="menu-text">Reports</span>
+//           </li>
+//           <li className={activeTab === 'users' ? 'active' : ''} 
+//               onClick={() => handleMenuClick('users')}>
+//             <span className="menu-icon">👥</span>
+//             <span className="menu-text">Users</span>
+//           </li>
+//           <li className={activeTab === 'staff-reports' ? 'active' : ''} 
+//             onClick={() => handleMenuClick('staff-reports')}>
+//             <span className="menu-icon">📋</span>
+//             <span className="menu-text">Staff Reports</span>
+//           </li>
+//         </ul>
 
-        <div className="sidebar-footer">
-          <div className="user-info">
-            <span className="user-name">{user?.name || 'Admin'}</span>
-            <span className="user-role">{user?.role || 'admin'}</span>
-          </div>
-          <button className="logout-btn" onClick={() => navigate('/')}>
-            ← Back to Site
-          </button>
-        </div>
-      </div>
+//         <div className="sidebar-footer">
+//           <div className="user-info">
+//             <span className="user-name">{user?.name || 'Admin'}</span>
+//             <span className="user-role">{user?.role || 'admin'}</span>
+//           </div>
+//           <button className="logout-btn" onClick={() => navigate('/')}>
+//             ← Back to Site
+//           </button>
+//         </div>
+//       </div>
 
-      {mobileMenuOpen && (
-        <div 
-          className="sidebar-overlay"
-          onClick={() => setMobileMenuOpen(false)}
-        ></div>
-      )}
+//       {mobileMenuOpen && (
+//         <div 
+//           className="sidebar-overlay"
+//           onClick={() => setMobileMenuOpen(false)}
+//         ></div>
+//       )}
 
-      <div className="admin-content">
-        {renderContent()}
-      </div>
-    </div>
-  );
-};
+//       <div className="admin-content">
+//         {renderContent()}
+//       </div>
+//     </div>
+//   );
+// };
 
-// ==================== OVERVIEW TAB ====================
-// ==================== OVERVIEW TAB ====================
-const OverviewTab = ({ stats, onRefresh }) => {
-  // ===== DEBUG LOGS =====
-  console.log('📊 OverviewTab received stats:', stats);
-  console.log('📊 Stats type:', typeof stats);
-  console.log('📊 Stats keys:', Object.keys(stats));
-  console.log('📊 Stats values:', {
-    totalOrders: stats?.totalOrders,
-    totalRevenue: stats?.totalRevenue,
-    pendingOrders: stats?.pendingOrders,
-    totalMenuItems: stats?.totalMenuItems,
-    totalUsers: stats?.totalUsers,
-    todayOrders: stats?.todayOrders,
-    todayRevenue: stats?.todayRevenue
-  });
-  // ===== END DEBUG LOGS =====
+// // ==================== OVERVIEW TAB ====================
+// // ==================== OVERVIEW TAB ====================
+// const OverviewTab = ({ stats, onRefresh }) => {
+//   // ===== DEBUG LOGS =====
+//   console.log('📊 OverviewTab received stats:', stats);
+//   console.log('📊 Stats type:', typeof stats);
+//   console.log('📊 Stats keys:', Object.keys(stats));
+//   console.log('📊 Stats values:', {
+//     totalOrders: stats?.totalOrders,
+//     totalRevenue: stats?.totalRevenue,
+//     pendingOrders: stats?.pendingOrders,
+//     totalMenuItems: stats?.totalMenuItems,
+//     totalUsers: stats?.totalUsers,
+//     todayOrders: stats?.todayOrders,
+//     todayRevenue: stats?.todayRevenue
+//   });
+//   // ===== END DEBUG LOGS =====
 
-  const [recentOrders, setRecentOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+//   const [recentOrders, setRecentOrders] = useState([]);
+//   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchRecentOrders();
-  }, []);
+//   useEffect(() => {
+//     fetchRecentOrders();
+//   }, []);
 
-  const fetchRecentOrders = async () => {
-    try {
-      setLoading(true);
-      const data = await adminService.getRecentOrders();
-      setRecentOrders(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Error fetching recent orders:', error);
-      setRecentOrders([
-        { _id: 'ORD001', customer: { name: 'John Doe' }, items: [{ name: 'Burger' }], totalAmount: 450, status: 'pending', createdAt: new Date().toISOString() },
-        { _id: 'ORD002', customer: { name: 'Jane Smith' }, items: [{ name: 'Pizza' }], totalAmount: 650, status: 'confirmed', createdAt: new Date().toISOString() },
-        { _id: 'ORD003', customer: { name: 'Bob Johnson' }, items: [{ name: 'Pasta' }], totalAmount: 380, status: 'delivered', createdAt: new Date().toISOString() },
-        { _id: 'ORD004', customer: { name: 'Alice Brown' }, items: [{ name: 'Salad' }], totalAmount: 220, status: 'preparing', createdAt: new Date().toISOString() },
-        { _id: 'ORD005', customer: { name: 'Charlie Wilson' }, items: [{ name: 'Steak' }], totalAmount: 890, status: 'ready', createdAt: new Date().toISOString() },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+//   const fetchRecentOrders = async () => {
+//     try {
+//       setLoading(true);
+//       const data = await adminService.getRecentOrders();
+//       setRecentOrders(Array.isArray(data) ? data : []);
+//     } catch (error) {
+//       console.error('Error fetching recent orders:', error);
+//       setRecentOrders([
+//         { _id: 'ORD001', customer: { name: 'John Doe' }, items: [{ name: 'Burger' }], totalAmount: 450, status: 'pending', createdAt: new Date().toISOString() },
+//         { _id: 'ORD002', customer: { name: 'Jane Smith' }, items: [{ name: 'Pizza' }], totalAmount: 650, status: 'confirmed', createdAt: new Date().toISOString() },
+//         { _id: 'ORD003', customer: { name: 'Bob Johnson' }, items: [{ name: 'Pasta' }], totalAmount: 380, status: 'delivered', createdAt: new Date().toISOString() },
+//         { _id: 'ORD004', customer: { name: 'Alice Brown' }, items: [{ name: 'Salad' }], totalAmount: 220, status: 'preparing', createdAt: new Date().toISOString() },
+//         { _id: 'ORD005', customer: { name: 'Charlie Wilson' }, items: [{ name: 'Steak' }], totalAmount: 890, status: 'ready', createdAt: new Date().toISOString() },
+//       ]);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  };
+//   const formatDate = (dateString) => {
+//     const date = new Date(dateString);
+//     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+//   };
 
-  // Safely access stats with fallback values
-  const safeStats = stats || {
-    totalOrders: 0,
-    totalRevenue: 0,
-    pendingOrders: 0,
-    totalMenuItems: 0,
-    totalUsers: 0,
-    todayOrders: 0,
-    todayRevenue: 0
-  };
+//   // Safely access stats with fallback values
+//   const safeStats = stats || {
+//     totalOrders: 0,
+//     totalRevenue: 0,
+//     pendingOrders: 0,
+//     totalMenuItems: 0,
+//     totalUsers: 0,
+//     todayOrders: 0,
+//     todayRevenue: 0
+//   };
 
-  return (
-    <div className="overview-tab">
-      <div className="tab-header">
-        <h1 className="page-title">Dashboard Overview</h1>
-        <button className="btn-refresh" onClick={onRefresh} title="Refresh Data">
-          🔄 Refresh
-        </button>
-      </div>
+//   return (
+//     <div className="overview-tab">
+//       <div className="tab-header">
+//         <h1 className="page-title">Dashboard Overview</h1>
+//         <button className="btn-refresh" onClick={onRefresh} title="Refresh Data">
+//           🔄 Refresh
+//         </button>
+//       </div>
       
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon">📊</div>
-          <div className="stat-details">
-            <h3>Total Orders</h3>
-            <p className="stat-number">{safeStats.totalOrders}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">💰</div>
-          <div className="stat-details">
-            <h3>Total Revenue</h3>
-            <p className="stat-number">{safeStats.totalRevenue?.toLocaleString() || 0} ETB</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">⏳</div>
-          <div className="stat-details">
-            <h3>Pending Orders</h3>
-            <p className="stat-number">{safeStats.pendingOrders}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">🍔</div>
-          <div className="stat-details">
-            <h3>Menu Items</h3>
-            <p className="stat-number">{safeStats.totalMenuItems}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">👥</div>
-          <div className="stat-details">
-            <h3>Total Users</h3>
-            <p className="stat-number">{safeStats.totalUsers}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">📅</div>
-          <div className="stat-details">
-            <h3>Today's Orders</h3>
-            <p className="stat-number">{safeStats.todayOrders}</p>
-          </div>
-        </div>
-      </div>
+//       <div className="stats-grid">
+//         <div className="stat-card">
+//           <div className="stat-icon">📊</div>
+//           <div className="stat-details">
+//             <h3>Total Orders</h3>
+//             <p className="stat-number">{safeStats.totalOrders}</p>
+//           </div>
+//         </div>
+//         <div className="stat-card">
+//           <div className="stat-icon">💰</div>
+//           <div className="stat-details">
+//             <h3>Total Revenue</h3>
+//             <p className="stat-number">{safeStats.totalRevenue?.toLocaleString() || 0} ETB</p>
+//           </div>
+//         </div>
+//         <div className="stat-card">
+//           <div className="stat-icon">⏳</div>
+//           <div className="stat-details">
+//             <h3>Pending Orders</h3>
+//             <p className="stat-number">{safeStats.pendingOrders}</p>
+//           </div>
+//         </div>
+//         <div className="stat-card">
+//           <div className="stat-icon">🍔</div>
+//           <div className="stat-details">
+//             <h3>Menu Items</h3>
+//             <p className="stat-number">{safeStats.totalMenuItems}</p>
+//           </div>
+//         </div>
+//         <div className="stat-card">
+//           <div className="stat-icon">👥</div>
+//           <div className="stat-details">
+//             <h3>Total Users</h3>
+//             <p className="stat-number">{safeStats.totalUsers}</p>
+//           </div>
+//         </div>
+//         <div className="stat-card">
+//           <div className="stat-icon">📅</div>
+//           <div className="stat-details">
+//             <h3>Today's Orders</h3>
+//             <p className="stat-number">{safeStats.todayOrders}</p>
+//           </div>
+//         </div>
+//       </div>
 
-      <div className="recent-orders-section">
-        <h2>Recent Orders</h2>
-        {loading ? (
-          <div className="table-loading">Loading recent orders...</div>
-        ) : (
-          <div className="table-responsive">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th>Items</th>
-                  <th>Total</th>
-                  <th>Status</th>
-                  <th>Time</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentOrders.length > 0 ? (
-                  recentOrders.map(order => (
-                    <tr key={order._id}>
-                      <td>#{order._id.slice(-6)}</td>
-                      <td>{order.customer?.name || 'Guest'}</td>
-                      <td>{order.items?.length || 0} items</td>
-                      <td>{order.totalAmount} ETB</td>
-                      <td>
-                        <span className={`status-badge ${order.status}`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td>{formatDate(order.createdAt)}</td>
-                      <td>
-                        <button 
-                          className="action-btn view-btn"
-                          onClick={() => console.log('View order', order._id)}
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="7" className="no-data">No recent orders</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-// ==================== ORDERS TAB WITH ACCEPT/REJECT AND ASSIGNMENTS ====================
-const OrdersTab = () => {
-  const [orders, setOrders] = useState([]);
-  const [filter, setFilter] = useState('all');
-  const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [cashAmount, setCashAmount] = useState('');
-  const [processingPayment, setProcessingPayment] = useState(false);
+//       <div className="recent-orders-section">
+//         <h2>Recent Orders</h2>
+//         {loading ? (
+//           <div className="table-loading">Loading recent orders...</div>
+//         ) : (
+//           <div className="table-responsive">
+//             <table className="data-table">
+//               <thead>
+//                 <tr>
+//                   <th>Order ID</th>
+//                   <th>Customer</th>
+//                   <th>Items</th>
+//                   <th>Total</th>
+//                   <th>Status</th>
+//                   <th>Time</th>
+//                   <th>Action</th>
+//                 </tr>
+//               </thead>
+//               <tbody>
+//                 {recentOrders.length > 0 ? (
+//                   recentOrders.map(order => (
+//                     <tr key={order._id}>
+//                       <td>#{order._id.slice(-6)}</td>
+//                       <td>{order.customer?.name || 'Guest'}</td>
+//                       <td>{order.items?.length || 0} items</td>
+//                       <td>{order.totalAmount} ETB</td>
+//                       <td>
+//                         <span className={`status-badge ${order.status}`}>
+//                           {order.status}
+//                         </span>
+//                       </td>
+//                       <td>{formatDate(order.createdAt)}</td>
+//                       <td>
+//                         <button 
+//                           className="action-btn view-btn"
+//                           onClick={() => console.log('View order', order._id)}
+//                         >
+//                           View
+//                         </button>
+//                       </td>
+//                     </tr>
+//                   ))
+//                 ) : (
+//                   <tr>
+//                     <td colSpan="7" className="no-data">No recent orders</td>
+//                   </tr>
+//                 )}
+//               </tbody>
+//             </table>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+// // ==================== ORDERS TAB WITH ACCEPT/REJECT AND ASSIGNMENTS ====================
+// const OrdersTab = () => {
+//   const [orders, setOrders] = useState([]);
+//   const [filter, setFilter] = useState('all');
+//   const [loading, setLoading] = useState(true);
+//   const [selectedOrder, setSelectedOrder] = useState(null);
+//   const [showPaymentModal, setShowPaymentModal] = useState(false);
+//   const [cashAmount, setCashAmount] = useState('');
+//   const [processingPayment, setProcessingPayment] = useState(false);
   
-  // State for rejection modal
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState('');
+//   // State for rejection modal
+//   const [showRejectModal, setShowRejectModal] = useState(false);
+//   const [rejectionReason, setRejectionReason] = useState('');
   
-  // State for assignment modals
-  const [showAssignChefModal, setShowAssignChefModal] = useState(false);
-  const [showAssignDeliveryModal, setShowAssignDeliveryModal] = useState(false);
-  const [availableChefs, setAvailableChefs] = useState([]);
-  const [availableDelivery, setAvailableDelivery] = useState([]);
-  const [selectedChefId, setSelectedChefId] = useState('');
-  const [selectedDeliveryId, setSelectedDeliveryId] = useState('');
-  const [assignmentNotes, setAssignmentNotes] = useState('');
+//   // State for assignment modals
+//   const [showAssignChefModal, setShowAssignChefModal] = useState(false);
+//   const [showAssignDeliveryModal, setShowAssignDeliveryModal] = useState(false);
+//   const [availableChefs, setAvailableChefs] = useState([]);
+//   const [availableDelivery, setAvailableDelivery] = useState([]);
+//   const [selectedChefId, setSelectedChefId] = useState('');
+//   const [selectedDeliveryId, setSelectedDeliveryId] = useState('');
+//   const [assignmentNotes, setAssignmentNotes] = useState('');
 
-  useEffect(() => {
-    fetchOrders();
-    fetchAvailableStaff();
-  }, [filter]);
+//   useEffect(() => {
+//     fetchOrders();
+//     fetchAvailableStaff();
+//   }, [filter]);
 
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      const response = await adminService.getAllOrders(filter);
-      setOrders(Array.isArray(response) ? response : response?.orders || []);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      toast.error('Failed to fetch orders');
-    } finally {
-      setLoading(false);
-    }
-  };
+//   const fetchOrders = async () => {
+//     try {
+//       setLoading(true);
+//       const response = await adminService.getAllOrders(filter);
+//       setOrders(Array.isArray(response) ? response : response?.orders || []);
+//     } catch (error) {
+//       console.error('Error fetching orders:', error);
+//       toast.error('Failed to fetch orders');
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
 
-  const fetchAvailableStaff = async () => {
-    try {
-      const [chefs, delivery] = await Promise.all([
-        staffService.getStaffByRole('cook'),
-        staffService.getStaffByRole('delivery')
-      ]);
+//   const fetchAvailableStaff = async () => {
+//     try {
+//       const [chefs, delivery] = await Promise.all([
+//         staffService.getStaffByRole('cook'),
+//         staffService.getStaffByRole('delivery')
+//       ]);
       
-      setAvailableChefs(chefs.staff || []);
-      setAvailableDelivery(delivery.staff || []);
-    } catch (error) {
-      console.error('Error fetching staff:', error);
-      // Set mock data for testing
-      setAvailableChefs([
-        { _id: 'chef1', name: 'Chef Berhanu' },
-        { _id: 'chef2', name: 'Chef Tigist' },
-        { _id: 'chef3', name: 'Chef Solomon' }
-      ]);
-      setAvailableDelivery([
-        { _id: 'del1', name: 'Abebe Kebede' },
-        { _id: 'del2', name: 'Almaz Worku' },
-        { _id: 'del3', name: 'Kebede Alemu' }
-      ]);
-    }
-  };
+//       setAvailableChefs(chefs.staff || []);
+//       setAvailableDelivery(delivery.staff || []);
+//     } catch (error) {
+//       console.error('Error fetching staff:', error);
+//       // Set mock data for testing
+//       setAvailableChefs([
+//         { _id: 'chef1', name: 'Chef Berhanu' },
+//         { _id: 'chef2', name: 'Chef Tigist' },
+//         { _id: 'chef3', name: 'Chef Solomon' }
+//       ]);
+//       setAvailableDelivery([
+//         { _id: 'del1', name: 'Abebe Kebede' },
+//         { _id: 'del2', name: 'Almaz Worku' },
+//         { _id: 'del3', name: 'Kebede Alemu' }
+//       ]);
+//     }
+//   };
 
-  // ========== ACCEPT ORDER FUNCTION ==========
-  const handleAcceptOrder = async (orderId) => {
-    try {
-      await adminService.updateOrderStatus(orderId, 'confirmed', 'Order accepted by admin');
-      toast.success('✅ Order accepted successfully');
-      fetchOrders(); // Refresh orders
-    } catch (error) {
-      console.error('Error accepting order:', error);
-      toast.error('Failed to accept order');
-    }
-  };
+//   // ========== ACCEPT ORDER FUNCTION ==========
+//   const handleAcceptOrder = async (orderId) => {
+//     try {
+//       await adminService.updateOrderStatus(orderId, 'confirmed', 'Order accepted by admin');
+//       toast.success('✅ Order accepted successfully');
+//       fetchOrders(); // Refresh orders
+//     } catch (error) {
+//       console.error('Error accepting order:', error);
+//       toast.error('Failed to accept order');
+//     }
+//   };
 
-  // ========== REJECT ORDER FUNCTION ==========
-  const handleRejectOrder = async () => {
-    if (!selectedOrder) return;
+//   // ========== REJECT ORDER FUNCTION ==========
+//   const handleRejectOrder = async () => {
+//     if (!selectedOrder) return;
     
-    try {
-      await adminService.updateOrderStatus(
-        selectedOrder._id, 
-        'cancelled', 
-        rejectionReason || 'Order rejected by admin'
-      );
-      toast.success('❌ Order rejected');
-      setShowRejectModal(false);
-      setSelectedOrder(null);
-      setRejectionReason('');
-      fetchOrders(); // Refresh orders
-    } catch (error) {
-      console.error('Error rejecting order:', error);
-      toast.error('Failed to reject order');
-    }
-  };
+//     try {
+//       await adminService.updateOrderStatus(
+//         selectedOrder._id, 
+//         'cancelled', 
+//         rejectionReason || 'Order rejected by admin'
+//       );
+//       toast.success('❌ Order rejected');
+//       setShowRejectModal(false);
+//       setSelectedOrder(null);
+//       setRejectionReason('');
+//       fetchOrders(); // Refresh orders
+//     } catch (error) {
+//       console.error('Error rejecting order:', error);
+//       toast.error('Failed to reject order');
+//     }
+//   };
 
-  const handleAssignChef = async () => {
-    if (!selectedOrder || !selectedChefId) {
-      toast.error('Please select a chef');
-      return;
-    }
+//   const handleAssignChef = async () => {
+//     if (!selectedOrder || !selectedChefId) {
+//       toast.error('Please select a chef');
+//       return;
+//     }
 
-    try {
-      await staffService.assignChef(selectedOrder._id, selectedChefId, assignmentNotes);
-      toast.success('Chef assigned successfully');
-      setShowAssignChefModal(false);
-      setSelectedChefId('');
-      setAssignmentNotes('');
-      fetchOrders();
-      fetchAvailableStaff();
-    } catch (error) {
-      console.error('Error assigning chef:', error);
-      toast.error(error.message || 'Failed to assign chef');
-    }
-  };
+//     try {
+//       await staffService.assignChef(selectedOrder._id, selectedChefId, assignmentNotes);
+//       toast.success('Chef assigned successfully');
+//       setShowAssignChefModal(false);
+//       setSelectedChefId('');
+//       setAssignmentNotes('');
+//       fetchOrders();
+//       fetchAvailableStaff();
+//     } catch (error) {
+//       console.error('Error assigning chef:', error);
+//       toast.error(error.message || 'Failed to assign chef');
+//     }
+//   };
 
-  const handleAssignDelivery = async () => {
-    if (!selectedOrder || !selectedDeliveryId) {
-      toast.error('Please select a delivery person');
-      return;
-    }
+//   const handleAssignDelivery = async () => {
+//     if (!selectedOrder || !selectedDeliveryId) {
+//       toast.error('Please select a delivery person');
+//       return;
+//     }
 
-    try {
-      await staffService.assignDelivery(selectedOrder._id, selectedDeliveryId, assignmentNotes);
-      toast.success('Delivery person assigned successfully');
-      setShowAssignDeliveryModal(false);
-      setSelectedDeliveryId('');
-      setAssignmentNotes('');
-      fetchOrders();
-      fetchAvailableStaff();
-    } catch (error) {
-      console.error('Error assigning delivery:', error);
-      toast.error(error.message || 'Failed to assign delivery');
-    }
-  };
+//     try {
+//       await staffService.assignDelivery(selectedOrder._id, selectedDeliveryId, assignmentNotes);
+//       toast.success('Delivery person assigned successfully');
+//       setShowAssignDeliveryModal(false);
+//       setSelectedDeliveryId('');
+//       setAssignmentNotes('');
+//       fetchOrders();
+//       fetchAvailableStaff();
+//     } catch (error) {
+//       console.error('Error assigning delivery:', error);
+//       toast.error(error.message || 'Failed to assign delivery');
+//     }
+//   };
 
-  const updateOrderStatus = async (orderId, newStatus) => {
-    try {
-      await adminService.updateOrderStatus(orderId, newStatus);
-      toast.success(`Order status updated to ${newStatus}`);
-      fetchOrders();
-    } catch (error) {
-      console.error('Error updating order:', error);
-      toast.error('Failed to update order status');
-    }
-  };
+//   const updateOrderStatus = async (orderId, newStatus) => {
+//     try {
+//       await adminService.updateOrderStatus(orderId, newStatus);
+//       toast.success(`Order status updated to ${newStatus}`);
+//       fetchOrders();
+//     } catch (error) {
+//       console.error('Error updating order:', error);
+//       toast.error('Failed to update order status');
+//     }
+//   };
 
-  const processCashPayment = async () => {
-    if (!selectedOrder) return;
+//   const processCashPayment = async () => {
+//     if (!selectedOrder) return;
     
-    if (!cashAmount || parseFloat(cashAmount) < selectedOrder.totalAmount) {
-      toast.error(`Amount must be at least ETB ${selectedOrder.totalAmount}`);
-      return;
-    }
+//     if (!cashAmount || parseFloat(cashAmount) < selectedOrder.totalAmount) {
+//       toast.error(`Amount must be at least ETB ${selectedOrder.totalAmount}`);
+//       return;
+//     }
 
-    try {
-      setProcessingPayment(true);
-      await orderService.processCashPayment(selectedOrder._id, parseFloat(cashAmount));
-      toast.success('Cash payment processed successfully');
-      setShowPaymentModal(false);
-      setSelectedOrder(null);
-      setCashAmount('');
-      fetchOrders();
-    } catch (error) {
-      console.error('Error processing payment:', error);
-      toast.error(error.message || 'Failed to process payment');
-    } finally {
-      setProcessingPayment(false);
-    }
-  };
+//     try {
+//       setProcessingPayment(true);
+//       await orderService.processCashPayment(selectedOrder._id, parseFloat(cashAmount));
+//       toast.success('Cash payment processed successfully');
+//       setShowPaymentModal(false);
+//       setSelectedOrder(null);
+//       setCashAmount('');
+//       fetchOrders();
+//     } catch (error) {
+//       console.error('Error processing payment:', error);
+//       toast.error(error.message || 'Failed to process payment');
+//     } finally {
+//       setProcessingPayment(false);
+//     }
+//   };
 
-  // ========== MISSING FUNCTIONS ADDED HERE ==========
-  const handleAssignChefClick = (order) => {
-    console.log('Assign chef clicked for order:', order._id);
-    setSelectedOrder(order);
-    setSelectedChefId(order.assignedChef?._id || '');
-    setAssignmentNotes(order.chefNotes || '');
-    setShowAssignChefModal(true);
-  };
+//   // ========== MISSING FUNCTIONS ADDED HERE ==========
+//   const handleAssignChefClick = (order) => {
+//     console.log('Assign chef clicked for order:', order._id);
+//     setSelectedOrder(order);
+//     setSelectedChefId(order.assignedChef?._id || '');
+//     setAssignmentNotes(order.chefNotes || '');
+//     setShowAssignChefModal(true);
+//   };
 
-  const handleAssignDeliveryClick = (order) => {
-    console.log('Assign delivery clicked for order:', order._id);
-    setSelectedOrder(order);
-    setSelectedDeliveryId(order.assignedDelivery?._id || '');
-    setAssignmentNotes(order.deliveryNotes || '');
-    setShowAssignDeliveryModal(true);
-  };
+//   const handleAssignDeliveryClick = (order) => {
+//     console.log('Assign delivery clicked for order:', order._id);
+//     setSelectedOrder(order);
+//     setSelectedDeliveryId(order.assignedDelivery?._id || '');
+//     setAssignmentNotes(order.deliveryNotes || '');
+//     setShowAssignDeliveryModal(true);
+//   };
 
-  const handleQuickAssignChef = async (orderId, chefId) => {
-    try {
-      console.log('Quick assigning chef:', orderId, chefId);
-      await staffService.assignChef(orderId, chefId);
-      toast.success('Chef assigned successfully');
-      fetchOrders();
-      fetchAvailableStaff();
-    } catch (error) {
-      console.error('Error assigning chef:', error);
-      toast.error(error.message || 'Failed to assign chef');
-    }
-  };
+//   const handleQuickAssignChef = async (orderId, chefId) => {
+//     try {
+//       console.log('Quick assigning chef:', orderId, chefId);
+//       await staffService.assignChef(orderId, chefId);
+//       toast.success('Chef assigned successfully');
+//       fetchOrders();
+//       fetchAvailableStaff();
+//     } catch (error) {
+//       console.error('Error assigning chef:', error);
+//       toast.error(error.message || 'Failed to assign chef');
+//     }
+//   };
 
-  const handleQuickAssignDelivery = async (orderId, deliveryId) => {
-    try {
-      console.log('Quick assigning delivery:', orderId, deliveryId);
-      await staffService.assignDelivery(orderId, deliveryId);
-      toast.success('Delivery person assigned successfully');
-      fetchOrders();
-      fetchAvailableStaff();
-    } catch (error) {
-      console.error('Error assigning delivery:', error);
-      toast.error(error.message || 'Failed to assign delivery');
-    }
-  };
+//   const handleQuickAssignDelivery = async (orderId, deliveryId) => {
+//     try {
+//       console.log('Quick assigning delivery:', orderId, deliveryId);
+//       await staffService.assignDelivery(orderId, deliveryId);
+//       toast.success('Delivery person assigned successfully');
+//       fetchOrders();
+//       fetchAvailableStaff();
+//     } catch (error) {
+//       console.error('Error assigning delivery:', error);
+//       toast.error(error.message || 'Failed to assign delivery');
+//     }
+//   };
 
-  const handleCashPaymentClick = (order) => {
-    console.log('Cash payment clicked for order:', order._id);
-    setSelectedOrder(order);
-    setCashAmount(order.totalAmount.toString());
-    setShowPaymentModal(true);
-  };
-  // ========== END OF MISSING FUNCTIONS ==========
+//   const handleCashPaymentClick = (order) => {
+//     console.log('Cash payment clicked for order:', order._id);
+//     setSelectedOrder(order);
+//     setCashAmount(order.totalAmount.toString());
+//     setShowPaymentModal(true);
+//   };
+//   // ========== END OF MISSING FUNCTIONS ==========
 
-  const getStatusColor = (status) => {
-    const colors = {
-      pending: '#f39c12',
-      confirmed: '#3498db',
-      preparing: '#9b59b6',
-      ready: '#2ecc71',
-      delivered: '#27ae60',
-      cancelled: '#e74c3c'
-    };
-    return colors[status] || '#95a5a6';
-  };
+//   const getStatusColor = (status) => {
+//     const colors = {
+//       pending: '#f39c12',
+//       confirmed: '#3498db',
+//       preparing: '#9b59b6',
+//       ready: '#2ecc71',
+//       delivered: '#27ae60',
+//       cancelled: '#e74c3c'
+//     };
+//     return colors[status] || '#95a5a6';
+//   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-  };
+//   const formatDate = (dateString) => {
+//     const date = new Date(dateString);
+//     return date.toLocaleDateString('en-US', { 
+//       month: 'short', 
+//       day: 'numeric', 
+//       hour: '2-digit', 
+//       minute: '2-digit' 
+//     });
+//   };
 
-  if (loading) return (
-    <div className="loading-container">
-      <div className="loading-spinner"></div>
-      <p>Loading orders...</p>
-    </div>
-  );
+//   if (loading) return (
+//     <div className="loading-container">
+//       <div className="loading-spinner"></div>
+//       <p>Loading orders...</p>
+//     </div>
+//   );
 
-  return (
-    <div className="orders-tab">
-      <h1 className="page-title">Order Management</h1>
+//   return (
+//     <div className="orders-tab">
+//       <h1 className="page-title">Order Management</h1>
       
-      {/* Filter Buttons */}
-      <div className="filter-section">
-        <div className="filter-buttons">
-          <button 
-            className={filter === 'all' ? 'active' : ''} 
-            onClick={() => setFilter('all')}
-          >
-            All Orders ({orders.length})
-          </button>
-          <button 
-            className={filter === 'pending' ? 'active' : ''} 
-            onClick={() => setFilter('pending')}
-          >
-            Pending
-          </button>
-          <button 
-            className={filter === 'confirmed' ? 'active' : ''} 
-            onClick={() => setFilter('confirmed')}
-          >
-            Confirmed
-          </button>
-          <button 
-            className={filter === 'preparing' ? 'active' : ''} 
-            onClick={() => setFilter('preparing')}
-          >
-            Preparing
-          </button>
-          <button 
-            className={filter === 'ready' ? 'active' : ''} 
-            onClick={() => setFilter('ready')}
-          >
-            Ready
-          </button>
-          <button 
-            className={filter === 'delivered' ? 'active' : ''} 
-            onClick={() => setFilter('delivered')}
-          >
-            Delivered
-          </button>
-        </div>
-      </div>
+//       {/* Filter Buttons */}
+//       <div className="filter-section">
+//         <div className="filter-buttons">
+//           <button 
+//             className={filter === 'all' ? 'active' : ''} 
+//             onClick={() => setFilter('all')}
+//           >
+//             All Orders ({orders.length})
+//           </button>
+//           <button 
+//             className={filter === 'pending' ? 'active' : ''} 
+//             onClick={() => setFilter('pending')}
+//           >
+//             Pending
+//           </button>
+//           <button 
+//             className={filter === 'confirmed' ? 'active' : ''} 
+//             onClick={() => setFilter('confirmed')}
+//           >
+//             Confirmed
+//           </button>
+//           <button 
+//             className={filter === 'preparing' ? 'active' : ''} 
+//             onClick={() => setFilter('preparing')}
+//           >
+//             Preparing
+//           </button>
+//           <button 
+//             className={filter === 'ready' ? 'active' : ''} 
+//             onClick={() => setFilter('ready')}
+//           >
+//             Ready
+//           </button>
+//           <button 
+//             className={filter === 'delivered' ? 'active' : ''} 
+//             onClick={() => setFilter('delivered')}
+//           >
+//             Delivered
+//           </button>
+//         </div>
+//       </div>
 
-      {/* Orders Grid */}
-      <div className="orders-grid">
-        {orders.length > 0 ? (
-          orders.map(order => (
-            <div key={order._id} className="order-card">
-              <div className="order-card-header">
-                <div>
-                  <h3>Order #{order.orderNumber || order._id.slice(-6)}</h3>
-                  <span className="order-date">{formatDate(order.createdAt)}</span>
-                </div>
-                <span className="status-badge" style={{backgroundColor: getStatusColor(order.status)}}>
-                  {order.status}
-                </span>
-              </div>
+//       {/* Orders Grid */}
+//       <div className="orders-grid">
+//         {orders.length > 0 ? (
+//           orders.map(order => (
+//             <div key={order._id} className="order-card">
+//               <div className="order-card-header">
+//                 <div>
+//                   <h3>Order #{order.orderNumber || order._id.slice(-6)}</h3>
+//                   <span className="order-date">{formatDate(order.createdAt)}</span>
+//                 </div>
+//                 <span className="status-badge" style={{backgroundColor: getStatusColor(order.status)}}>
+//                   {order.status}
+//                 </span>
+//               </div>
               
-              <div className="order-card-body">
-                <div className="customer-info">
-                  <p><strong>👤 Customer:</strong> {order.customerName || order.customer?.name || 'Guest'}</p>
-                  <p><strong>📞 Phone:</strong> {order.customerPhone || order.customer?.phone || 'N/A'}</p>
-                  <p><strong>💰 Total:</strong> ETB {order.totalAmount}</p>
-                </div>
+//               <div className="order-card-body">
+//                 <div className="customer-info">
+//                   <p><strong>👤 Customer:</strong> {order.customerName || order.customer?.name || 'Guest'}</p>
+//                   <p><strong>📞 Phone:</strong> {order.customerPhone || order.customer?.phone || 'N/A'}</p>
+//                   <p><strong>💰 Total:</strong> ETB {order.totalAmount}</p>
+//                 </div>
 
-                {/* Assignment Info */}
-                <div className="assignment-info">
-                  <h4>👨‍🍳 Staff Assignments</h4>
-                  <div className="assignment-details">
-                    <div className="assignment-row">
-                      <div className="assignment-current">
-                        <strong>Chef:</strong> {order.assignedChef?.name || 'Not assigned'}
-                        {order.assignedAt?.chef && (
-                          <span className="assignment-time">
-                            {' '}({formatDate(order.assignedAt.chef)})
-                          </span>
-                        )}
-                      </div>
-                      <div className="assignment-select">
-                        <select
-                          value=""
-                          onChange={(e) => e.target.value && handleQuickAssignChef(order._id, e.target.value)}
-                          disabled={order.status === 'delivered' || order.status === 'cancelled'}
-                          className="quick-assign-select"
-                        >
-                          <option value="">👨‍🍳 Assign Chef</option>
-                          {availableChefs.map(chef => (
-                            <option key={chef._id} value={chef._id}>
-                              {chef.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+//                 {/* Assignment Info */}
+//                 <div className="assignment-info">
+//                   <h4>👨‍🍳 Staff Assignments</h4>
+//                   <div className="assignment-details">
+//                     <div className="assignment-row">
+//                       <div className="assignment-current">
+//                         <strong>Chef:</strong> {order.assignedChef?.name || 'Not assigned'}
+//                         {order.assignedAt?.chef && (
+//                           <span className="assignment-time">
+//                             {' '}({formatDate(order.assignedAt.chef)})
+//                           </span>
+//                         )}
+//                       </div>
+//                       <div className="assignment-select">
+//                         <select
+//                           value=""
+//                           onChange={(e) => e.target.value && handleQuickAssignChef(order._id, e.target.value)}
+//                           disabled={order.status === 'delivered' || order.status === 'cancelled'}
+//                           className="quick-assign-select"
+//                         >
+//                           <option value="">👨‍🍳 Assign Chef</option>
+//                           {availableChefs.map(chef => (
+//                             <option key={chef._id} value={chef._id}>
+//                               {chef.name}
+//                             </option>
+//                           ))}
+//                         </select>
+//                       </div>
+//                     </div>
                     
-                    <div className="assignment-row">
-                      <div className="assignment-current">
-                        <strong>Delivery:</strong> {order.assignedDelivery?.name || 'Not assigned'}
-                        {order.assignedAt?.delivery && (
-                          <span className="assignment-time">
-                            {' '}({formatDate(order.assignedAt.delivery)})
-                          </span>
-                        )}
-                      </div>
-                      <div className="assignment-select">
-                        <select
-                          value=""
-                          onChange={(e) => e.target.value && handleQuickAssignDelivery(order._id, e.target.value)}
-                          disabled={order.status === 'delivered' || order.status === 'cancelled'}
-                          className="quick-assign-select"
-                        >
-                          <option value="">🚚 Assign Delivery</option>
-                          {availableDelivery.map(delivery => (
-                            <option key={delivery._id} value={delivery._id}>
-                              {delivery.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+//                     <div className="assignment-row">
+//                       <div className="assignment-current">
+//                         <strong>Delivery:</strong> {order.assignedDelivery?.name || 'Not assigned'}
+//                         {order.assignedAt?.delivery && (
+//                           <span className="assignment-time">
+//                             {' '}({formatDate(order.assignedAt.delivery)})
+//                           </span>
+//                         )}
+//                       </div>
+//                       <div className="assignment-select">
+//                         <select
+//                           value=""
+//                           onChange={(e) => e.target.value && handleQuickAssignDelivery(order._id, e.target.value)}
+//                           disabled={order.status === 'delivered' || order.status === 'cancelled'}
+//                           className="quick-assign-select"
+//                         >
+//                           <option value="">🚚 Assign Delivery</option>
+//                           {availableDelivery.map(delivery => (
+//                             <option key={delivery._id} value={delivery._id}>
+//                               {delivery.name}
+//                             </option>
+//                           ))}
+//                         </select>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
                 
-                <div className="order-items">
-                  <h4>Items:</h4>
-                  {order.items?.map((item, idx) => (
-                    <div key={idx} className="order-item">
-                      <span>{item.name} x{item.quantity}</span>
-                      <span>ETB {item.price * item.quantity}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+//                 <div className="order-items">
+//                   <h4>Items:</h4>
+//                   {order.items?.map((item, idx) => (
+//                     <div key={idx} className="order-item">
+//                       <span>{item.name} x{item.quantity}</span>
+//                       <span>ETB {item.price * item.quantity}</span>
+//                     </div>
+//                   ))}
+//                 </div>
+//               </div>
 
-              <div className="order-card-footer">
-                {/* ========== ACCEPT/REJECT BUTTONS FOR PENDING ORDERS ========== */}
-                {order.status === 'pending' && (
-                  <div className="accept-reject-buttons">
-                    <button 
-                      onClick={() => handleAcceptOrder(order._id)}
-                      className="btn-accept"
-                    >
-                      ✓ Accept Order
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setSelectedOrder(order);
-                        setShowRejectModal(true);
-                      }}
-                      className="btn-reject"
-                    >
-                      ✗ Reject Order
-                    </button>
-                  </div>
-                )}
+//               <div className="order-card-footer">
+//                 {/* ========== ACCEPT/REJECT BUTTONS FOR PENDING ORDERS ========== */}
+//                 {order.status === 'pending' && (
+//                   <div className="accept-reject-buttons">
+//                     <button 
+//                       onClick={() => handleAcceptOrder(order._id)}
+//                       className="btn-accept"
+//                     >
+//                       ✓ Accept Order
+//                     </button>
+//                     <button 
+//                       onClick={() => {
+//                         setSelectedOrder(order);
+//                         setShowRejectModal(true);
+//                       }}
+//                       className="btn-reject"
+//                     >
+//                       ✗ Reject Order
+//                     </button>
+//                   </div>
+//                 )}
 
-                {/* Status Update Section */}
-                <div className="status-update-section">
-                  <div className="current-status">
-                    <span className="status-label">Status:</span>
-                    <span className="status-value" style={{color: getStatusColor(order.status)}}>
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                    </span>
-                  </div>
+//                 {/* Status Update Section */}
+//                 <div className="status-update-section">
+//                   <div className="current-status">
+//                     <span className="status-label">Status:</span>
+//                     <span className="status-value" style={{color: getStatusColor(order.status)}}>
+//                       {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+//                     </span>
+//                   </div>
                   
-                  <div className="status-actions">
-                    {/* Status Update Buttons */}
-                    {order.status === 'confirmed' && (
-                      <button 
-                        className="btn-status-preparing"
-                        onClick={() => updateOrderStatus(order._id, 'preparing')}
-                      >
-                        👨‍🍳 Start Preparing
-                      </button>
-                    )}
+//                   <div className="status-actions">
+//                     {/* Status Update Buttons */}
+//                     {order.status === 'confirmed' && (
+//                       <button 
+//                         className="btn-status-preparing"
+//                         onClick={() => updateOrderStatus(order._id, 'preparing')}
+//                       >
+//                         👨‍🍳 Start Preparing
+//                       </button>
+//                     )}
 
-                    {order.status === 'preparing' && (
-                      <button 
-                        className="btn-status-ready"
-                        onClick={() => updateOrderStatus(order._id, 'ready')}
-                      >
-                        ✅ Mark Ready
-                      </button>
-                    )}
+//                     {order.status === 'preparing' && (
+//                       <button 
+//                         className="btn-status-ready"
+//                         onClick={() => updateOrderStatus(order._id, 'ready')}
+//                       >
+//                         ✅ Mark Ready
+//                       </button>
+//                     )}
 
-                    {order.status === 'ready' && (
-                      <button 
-                        className="btn-status-delivered"
-                        onClick={() => updateOrderStatus(order._id, 'delivered')}
-                      >
-                        🚚 Mark Delivered
-                      </button>
-                    )}
+//                     {order.status === 'ready' && (
+//                       <button 
+//                         className="btn-status-delivered"
+//                         onClick={() => updateOrderStatus(order._id, 'delivered')}
+//                       >
+//                         🚚 Mark Delivered
+//                       </button>
+//                     )}
 
-                    {/* Quick Status Dropdown for Advanced Control */}
-                    <div className="quick-status-control">
-                      <select
-                        value={order.status}
-                        onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                        className="status-dropdown"
-                      >
-                        <option value="pending">⏳ Pending</option>
-                        <option value="confirmed">✅ Confirmed</option>
-                        <option value="preparing">👨‍🍳 Preparing</option>
-                        <option value="ready">🍽️ Ready</option>
-                        <option value="delivered">🚚 Delivered</option>
-                        <option value="cancelled">❌ Cancelled</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
+//                     {/* Quick Status Dropdown for Advanced Control */}
+//                     <div className="quick-status-control">
+//                       <select
+//                         value={order.status}
+//                         onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+//                         className="status-dropdown"
+//                       >
+//                         <option value="pending">⏳ Pending</option>
+//                         <option value="confirmed">✅ Confirmed</option>
+//                         <option value="preparing">👨‍🍳 Preparing</option>
+//                         <option value="ready">🍽️ Ready</option>
+//                         <option value="delivered">🚚 Delivered</option>
+//                         <option value="cancelled">❌ Cancelled</option>
+//                       </select>
+//                     </div>
+//                   </div>
+//                 </div>
 
-                {/* Assignment Buttons */}
-                <div className="assignment-buttons">
-                  <button 
-                    className="btn-assign-chef"
-                    onClick={() => handleAssignChefClick(order)}
-                    disabled={order.status === 'delivered' || order.status === 'cancelled'}
-                  >
-                    {order.assignedChef ? '🔄 Reassign Chef' : '👨‍🍳 Assign Chef'}
-                  </button>
-                  <button 
-                    className="btn-assign-delivery"
-                    onClick={() => handleAssignDeliveryClick(order)}
-                    disabled={order.status === 'delivered' || order.status === 'cancelled'}
-                  >
-                    {order.assignedDelivery ? '🔄 Reassign Delivery' : '🚚 Assign Delivery'}
-                  </button>
-                </div>
+//                 {/* Assignment Buttons */}
+//                 <div className="assignment-buttons">
+//                   <button 
+//                     className="btn-assign-chef"
+//                     onClick={() => handleAssignChefClick(order)}
+//                     disabled={order.status === 'delivered' || order.status === 'cancelled'}
+//                   >
+//                     {order.assignedChef ? '🔄 Reassign Chef' : '👨‍🍳 Assign Chef'}
+//                   </button>
+//                   <button 
+//                     className="btn-assign-delivery"
+//                     onClick={() => handleAssignDeliveryClick(order)}
+//                     disabled={order.status === 'delivered' || order.status === 'cancelled'}
+//                   >
+//                     {order.assignedDelivery ? '🔄 Reassign Delivery' : '🚚 Assign Delivery'}
+//                   </button>
+//                 </div>
 
-                {/* Cash Payment Button */}
-                {order.paymentMethod === 'cash' && order.paymentStatus !== 'completed' && (
-                  <button 
-                    className="btn-cash-payment"
-                    onClick={() => handleCashPaymentClick(order)}
-                  >
-                    💵 Process Cash Payment
-                  </button>
-                )}
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="no-orders">No orders found</div>
-        )}
-      </div>
+//                 {/* Cash Payment Button */}
+//                 {order.paymentMethod === 'cash' && order.paymentStatus !== 'completed' && (
+//                   <button 
+//                     className="btn-cash-payment"
+//                     onClick={() => handleCashPaymentClick(order)}
+//                   >
+//                     💵 Process Cash Payment
+//                   </button>
+//                 )}
+//               </div>
+//             </div>
+//           ))
+//         ) : (
+//           <div className="no-orders">No orders found</div>
+//         )}
+//       </div>
 
-      {/* ========== REJECTION MODAL ========== */}
-      {showRejectModal && (
-        <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
-          <div className="modal-content reject-modal" onClick={e => e.stopPropagation()}>
-            <h2>Reject Order #{selectedOrder?.orderNumber || selectedOrder?._id.slice(-6)}</h2>
-            <p className="warning-text">Are you sure you want to reject this order?</p>
+//       {/* ========== REJECTION MODAL ========== */}
+//       {showRejectModal && (
+//         <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
+//           <div className="modal-content reject-modal" onClick={e => e.stopPropagation()}>
+//             <h2>Reject Order #{selectedOrder?.orderNumber || selectedOrder?._id.slice(-6)}</h2>
+//             <p className="warning-text">Are you sure you want to reject this order?</p>
             
-            <div className="form-group">
-              <label>Reason for rejection (optional):</label>
-              <textarea
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="e.g., Out of stock, Too busy, etc."
-                rows="3"
-                className="form-control"
-              />
-            </div>
+//             <div className="form-group">
+//               <label>Reason for rejection (optional):</label>
+//               <textarea
+//                 value={rejectionReason}
+//                 onChange={(e) => setRejectionReason(e.target.value)}
+//                 placeholder="e.g., Out of stock, Too busy, etc."
+//                 rows="3"
+//                 className="form-control"
+//               />
+//             </div>
             
-            <div className="modal-actions">
-              <button 
-                onClick={() => {
-                  setShowRejectModal(false);
-                  setSelectedOrder(null);
-                  setRejectionReason('');
-                }}
-                className="btn-cancel"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleRejectOrder}
-                className="btn-confirm-reject"
-              >
-                Yes, Reject Order
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+//             <div className="modal-actions">
+//               <button 
+//                 onClick={() => {
+//                   setShowRejectModal(false);
+//                   setSelectedOrder(null);
+//                   setRejectionReason('');
+//                 }}
+//                 className="btn-cancel"
+//               >
+//                 Cancel
+//               </button>
+//               <button 
+//                 onClick={handleRejectOrder}
+//                 className="btn-confirm-reject"
+//               >
+//                 Yes, Reject Order
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
 
-      {/* Cash Payment Modal */}
-      {showPaymentModal && selectedOrder && (
-        <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
-          <div className="modal-content payment-modal" onClick={e => e.stopPropagation()}>
-            <h2>Process Cash Payment</h2>
-            <p>Order #{selectedOrder.orderNumber || selectedOrder._id.slice(-6)}</p>
-            <p className="total-amount">Total: ETB {selectedOrder.totalAmount}</p>
+//       {/* Cash Payment Modal */}
+//       {showPaymentModal && selectedOrder && (
+//         <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
+//           <div className="modal-content payment-modal" onClick={e => e.stopPropagation()}>
+//             <h2>Process Cash Payment</h2>
+//             <p>Order #{selectedOrder.orderNumber || selectedOrder._id.slice(-6)}</p>
+//             <p className="total-amount">Total: ETB {selectedOrder.totalAmount}</p>
             
-            <div className="form-group">
-              <label>Amount Received:</label>
-              <input
-                type="number"
-                step="0.01"
-                min={selectedOrder.totalAmount}
-                value={cashAmount}
-                onChange={(e) => setCashAmount(e.target.value)}
-                placeholder="Enter amount received"
-                className="cash-input"
-              />
-            </div>
+//             <div className="form-group">
+//               <label>Amount Received:</label>
+//               <input
+//                 type="number"
+//                 step="0.01"
+//                 min={selectedOrder.totalAmount}
+//                 value={cashAmount}
+//                 onChange={(e) => setCashAmount(e.target.value)}
+//                 placeholder="Enter amount received"
+//                 className="cash-input"
+//               />
+//             </div>
 
-            {parseFloat(cashAmount) > selectedOrder.totalAmount && (
-              <div className="change-amount">
-                Change: ETB {(parseFloat(cashAmount) - selectedOrder.totalAmount).toFixed(2)}
-              </div>
-            )}
+//             {parseFloat(cashAmount) > selectedOrder.totalAmount && (
+//               <div className="change-amount">
+//                 Change: ETB {(parseFloat(cashAmount) - selectedOrder.totalAmount).toFixed(2)}
+//               </div>
+//             )}
 
-            <div className="modal-actions">
-              <button 
-                className="btn-confirm"
-                onClick={processCashPayment}
-                disabled={processingPayment}
-              >
-                {processingPayment ? 'Processing...' : 'Confirm Payment'}
-              </button>
-              <button 
-                className="btn-cancel"
-                onClick={() => {
-                  setShowPaymentModal(false);
-                  setSelectedOrder(null);
-                  setCashAmount('');
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+//             <div className="modal-actions">
+//               <button 
+//                 className="btn-confirm"
+//                 onClick={processCashPayment}
+//                 disabled={processingPayment}
+//               >
+//                 {processingPayment ? 'Processing...' : 'Confirm Payment'}
+//               </button>
+//               <button 
+//                 className="btn-cancel"
+//                 onClick={() => {
+//                   setShowPaymentModal(false);
+//                   setSelectedOrder(null);
+//                   setCashAmount('');
+//                 }}
+//               >
+//                 Cancel
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
 
-      {/* Assign Chef Modal */}
-      {showAssignChefModal && selectedOrder && (
-        <div className="modal-overlay" onClick={() => setShowAssignChefModal(false)}>
-          <div className="modal-content assign-modal" onClick={e => e.stopPropagation()}>
-            <h2>👨‍🍳 Assign Chef</h2>
-            <p>Order #{selectedOrder.orderNumber || selectedOrder._id.slice(-6)}</p>
+//       {/* Assign Chef Modal */}
+//       {showAssignChefModal && selectedOrder && (
+//         <div className="modal-overlay" onClick={() => setShowAssignChefModal(false)}>
+//           <div className="modal-content assign-modal" onClick={e => e.stopPropagation()}>
+//             <h2>👨‍🍳 Assign Chef</h2>
+//             <p>Order #{selectedOrder.orderNumber || selectedOrder._id.slice(-6)}</p>
             
-            <div className="form-group">
-              <label>Select Chef:</label>
-              <select
-                value={selectedChefId}
-                onChange={(e) => setSelectedChefId(e.target.value)}
-                className="form-control"
-              >
-                <option value="">Choose a chef...</option>
-                {availableChefs.map(chef => (
-                  <option key={chef._id} value={chef._id}>
-                    {chef.name} {selectedOrder.assignedChef?._id === chef._id ? '(Current)' : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
+//             <div className="form-group">
+//               <label>Select Chef:</label>
+//               <select
+//                 value={selectedChefId}
+//                 onChange={(e) => setSelectedChefId(e.target.value)}
+//                 className="form-control"
+//               >
+//                 <option value="">Choose a chef...</option>
+//                 {availableChefs.map(chef => (
+//                   <option key={chef._id} value={chef._id}>
+//                     {chef.name} {selectedOrder.assignedChef?._id === chef._id ? '(Current)' : ''}
+//                   </option>
+//                 ))}
+//               </select>
+//             </div>
 
-            <div className="form-group">
-              <label>Notes (optional):</label>
-              <textarea
-                value={assignmentNotes}
-                onChange={(e) => setAssignmentNotes(e.target.value)}
-                placeholder="Special instructions for the chef..."
-                rows="3"
-                className="form-control"
-              />
-            </div>
+//             <div className="form-group">
+//               <label>Notes (optional):</label>
+//               <textarea
+//                 value={assignmentNotes}
+//                 onChange={(e) => setAssignmentNotes(e.target.value)}
+//                 placeholder="Special instructions for the chef..."
+//                 rows="3"
+//                 className="form-control"
+//               />
+//             </div>
 
-            <div className="modal-actions">
-              <button 
-                className="btn-confirm"
-                onClick={handleAssignChef}
-              >
-                Assign Chef
-              </button>
-              <button 
-                className="btn-cancel"
-                onClick={() => {
-                  setShowAssignChefModal(false);
-                  setSelectedOrder(null);
-                  setSelectedChefId('');
-                  setAssignmentNotes('');
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+//             <div className="modal-actions">
+//               <button 
+//                 className="btn-confirm"
+//                 onClick={handleAssignChef}
+//               >
+//                 Assign Chef
+//               </button>
+//               <button 
+//                 className="btn-cancel"
+//                 onClick={() => {
+//                   setShowAssignChefModal(false);
+//                   setSelectedOrder(null);
+//                   setSelectedChefId('');
+//                   setAssignmentNotes('');
+//                 }}
+//               >
+//                 Cancel
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
 
-      {/* Assign Delivery Modal */}
-      {showAssignDeliveryModal && selectedOrder && (
-        <div className="modal-overlay" onClick={() => setShowAssignDeliveryModal(false)}>
-          <div className="modal-content assign-modal" onClick={e => e.stopPropagation()}>
-            <h2>🚚 Assign Delivery Person</h2>
-            <p>Order #{selectedOrder.orderNumber || selectedOrder._id.slice(-6)}</p>
+//       {/* Assign Delivery Modal */}
+//       {showAssignDeliveryModal && selectedOrder && (
+//         <div className="modal-overlay" onClick={() => setShowAssignDeliveryModal(false)}>
+//           <div className="modal-content assign-modal" onClick={e => e.stopPropagation()}>
+//             <h2>🚚 Assign Delivery Person</h2>
+//             <p>Order #{selectedOrder.orderNumber || selectedOrder._id.slice(-6)}</p>
             
-            <div className="form-group">
-              <label>Select Delivery Person:</label>
-              <select
-                value={selectedDeliveryId}
-                onChange={(e) => setSelectedDeliveryId(e.target.value)}
-                className="form-control"
-              >
-                <option value="">Choose a delivery person...</option>
-                {availableDelivery.map(person => (
-                  <option key={person._id} value={person._id}>
-                    {person.name} {selectedOrder.assignedDelivery?._id === person._id ? '(Current)' : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
+//             <div className="form-group">
+//               <label>Select Delivery Person:</label>
+//               <select
+//                 value={selectedDeliveryId}
+//                 onChange={(e) => setSelectedDeliveryId(e.target.value)}
+//                 className="form-control"
+//               >
+//                 <option value="">Choose a delivery person...</option>
+//                 {availableDelivery.map(person => (
+//                   <option key={person._id} value={person._id}>
+//                     {person.name} {selectedOrder.assignedDelivery?._id === person._id ? '(Current)' : ''}
+//                   </option>
+//                 ))}
+//               </select>
+//             </div>
 
-            <div className="form-group">
-              <label>Notes (optional):</label>
-              <textarea
-                value={assignmentNotes}
-                onChange={(e) => setAssignmentNotes(e.target.value)}
-                placeholder="Delivery instructions..."
-                rows="3"
-                className="form-control"
-              />
-            </div>
+//             <div className="form-group">
+//               <label>Notes (optional):</label>
+//               <textarea
+//                 value={assignmentNotes}
+//                 onChange={(e) => setAssignmentNotes(e.target.value)}
+//                 placeholder="Delivery instructions..."
+//                 rows="3"
+//                 className="form-control"
+//               />
+//             </div>
 
-            <div className="modal-actions">
-              <button 
-                className="btn-confirm"
-                onClick={handleAssignDelivery}
-              >
-                Assign Delivery
-              </button>
-              <button 
-                className="btn-cancel"
-                onClick={() => {
-                  setShowAssignDeliveryModal(false);
-                  setSelectedOrder(null);
-                  setSelectedDeliveryId('');
-                  setAssignmentNotes('');
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+//             <div className="modal-actions">
+//               <button 
+//                 className="btn-confirm"
+//                 onClick={handleAssignDelivery}
+//               >
+//                 Assign Delivery
+//               </button>
+//               <button 
+//                 className="btn-cancel"
+//                 onClick={() => {
+//                   setShowAssignDeliveryModal(false);
+//                   setSelectedOrder(null);
+//                   setSelectedDeliveryId('');
+//                   setAssignmentNotes('');
+//                 }}
+//               >
+//                 Cancel
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
 
-// ==================== MENU TAB ====================
-const MenuTab = () => {
-  const [menuItems, setMenuItems] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: '',
-    nameAm: '',
-    description: '',
-    fullDescription: '',
-    price: '',
-    category: '',
-    image: '',
-    vegetarian: false,
-    spicy: false,
-    signature: false,
-    available: true
-  });
+// // ==================== MENU TAB ====================
+// const MenuTab = () => {
+//   const [menuItems, setMenuItems] = useState([]);
+//   const [showForm, setShowForm] = useState(false);
+//   const [editingItem, setEditingItem] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [imageFile, setImageFile] = useState(null);
+//   const [imagePreview, setImagePreview] = useState('');
+//   const [uploadProgress, setUploadProgress] = useState(0);
+//   const [isSubmitting, setIsSubmitting] = useState(false);
+//   const [authChecked, setAuthChecked] = useState(false);
+//   const navigate = useNavigate();
+//   const [formData, setFormData] = useState({
+//     name: '',
+//     nameAm: '',
+//     description: '',
+//     fullDescription: '',
+//     price: '',
+//     category: '',
+//     image: '',
+//     vegetarian: false,
+//     spicy: false,
+//     signature: false,
+//     available: true
+//   });
 
-  // Check authentication first
-  useEffect(() => {
-    checkAuth();
-  }, []);
+//   // Check authentication first
+//   useEffect(() => {
+//     checkAuth();
+//   }, []);
 
-  const checkAuth = () => {
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
+//   const checkAuth = () => {
+//     const token = localStorage.getItem('token');
+//     const userStr = localStorage.getItem('user');
     
-    if (!token) {
-      toast.error('Please login first');
-      navigate('/login');
-      return;
-    }
+//     if (!token) {
+//       toast.error('Please login first');
+//       navigate('/login');
+//       return;
+//     }
 
-    try {
-      const user = JSON.parse(userStr);
-      if (user.role !== 'admin') {
-        toast.error('Admin access required');
-        navigate('/');
-        return;
-      }
-      setAuthChecked(true);
-      fetchMenuItems();
-    } catch (error) {
-      console.error('Auth check error:', error);
-      navigate('/login');
-    }
-  };
+//     try {
+//       const user = JSON.parse(userStr);
+//       if (user.role !== 'admin') {
+//         toast.error('Admin access required');
+//         navigate('/');
+//         return;
+//       }
+//       setAuthChecked(true);
+//       fetchMenuItems();
+//     } catch (error) {
+//       console.error('Auth check error:', error);
+//       navigate('/login');
+//     }
+//   };
 
-  const fetchMenuItems = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await menuService.getAllItems();
+//   const fetchMenuItems = async () => {
+//     try {
+//       setLoading(true);
+//       setError(null);
+//       const response = await menuService.getAllItems();
       
-      let items = [];
-      if (response && response.success && response.data) {
-        items = response.data;
-      } else if (Array.isArray(response)) {
-        items = response;
-      }
+//       let items = [];
+//       if (response && response.success && response.data) {
+//         items = response.data;
+//       } else if (Array.isArray(response)) {
+//         items = response;
+//       }
 
-      const mappedItems = items.map(item => ({
-        ...item,
-        vegetarian: item.isVegetarian || false,
-        spicy: item.isSpicy || false,
-        signature: item.isSignature || false,
-        isAvailable: item.isAvailable !== undefined ? item.isAvailable : true
-      }));
+//       const mappedItems = items.map(item => ({
+//         ...item,
+//         vegetarian: item.isVegetarian || false,
+//         spicy: item.isSpicy || false,
+//         signature: item.isSignature || false,
+//         isAvailable: item.isAvailable !== undefined ? item.isAvailable : true
+//       }));
       
-      setMenuItems(mappedItems);
-    } catch (error) {
-      console.error('Error fetching menu:', error);
-      if (error.response?.status === 401) {
-        toast.error('Session expired. Please login again');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/login');
-      } else {
-        setError(error.message || 'Failed to load menu items');
-        toast.error('Failed to load menu items');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+//       setMenuItems(mappedItems);
+//     } catch (error) {
+//       console.error('Error fetching menu:', error);
+//       if (error.response?.status === 401) {
+//         toast.error('Session expired. Please login again');
+//         localStorage.removeItem('token');
+//         localStorage.removeItem('user');
+//         navigate('/login');
+//       } else {
+//         setError(error.message || 'Failed to load menu items');
+//         toast.error('Failed to load menu items');
+//       }
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
 
-  const resetForm = () => {
-    setEditingItem(null);
-    setFormData({ 
-      name: '', 
-      nameAm: '',
-      description: '', 
-      fullDescription: '',
-      price: '', 
-      category: 'burgers', 
-      image: '', 
-      vegetarian: false, 
-      spicy: false, 
-      signature: false, 
-      available: true 
-    });
-    setImageFile(null);
-    setImagePreview('');
-    setUploadProgress(0);
-  };
+//   const resetForm = () => {
+//     setEditingItem(null);
+//     setFormData({ 
+//       name: '', 
+//       nameAm: '',
+//       description: '', 
+//       fullDescription: '',
+//       price: '', 
+//       category: 'burgers', 
+//       image: '', 
+//       vegetarian: false, 
+//       spicy: false, 
+//       signature: false, 
+//       available: true 
+//     });
+//     setImageFile(null);
+//     setImagePreview('');
+//     setUploadProgress(0);
+//   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size should be less than 5MB');
-        return;
-      }
+//   const handleImageChange = (e) => {
+//     const file = e.target.files[0];
+//     if (file) {
+//       if (file.size > 5 * 1024 * 1024) {
+//         toast.error('Image size should be less than 5MB');
+//         return;
+//       }
       
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please upload an image file');
-        return;
-      }
+//       if (!file.type.startsWith('image/')) {
+//         toast.error('Please upload an image file');
+//         return;
+//       }
       
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+//       setImageFile(file);
+//       const reader = new FileReader();
+//       reader.onloadend = () => {
+//         setImagePreview(reader.result);
+//       };
+//       reader.readAsDataURL(file);
+//     }
+//   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
     
-    if (!formData.name || !formData.description || !formData.price || !formData.category) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
+//     if (!formData.name || !formData.description || !formData.price || !formData.category) {
+//       toast.error('Please fill in all required fields');
+//       return;
+//     }
 
-    if (!editingItem && !imageFile) {
-      toast.error('Please select an image');
-      return;
-    }
+//     if (!editingItem && !imageFile) {
+//       toast.error('Please select an image');
+//       return;
+//     }
 
-    setIsSubmitting(true);
+//     setIsSubmitting(true);
 
-    try {
-      const payload = {
-        name: formData.name,
-        nameAm: formData.nameAm || formData.name,
-        description: formData.description,
-        fullDescription: formData.fullDescription || formData.description,
-        price: Number(formData.price),
-        category: formData.category,
-        isVegetarian: formData.vegetarian ? 'true' : 'false',
-        isSpicy: formData.spicy ? 'true' : 'false',
-        isSignature: formData.signature ? 'true' : 'false',
-        isAvailable: formData.available ? 'true' : 'false'
-      };
+//     try {
+//       const payload = {
+//         name: formData.name,
+//         nameAm: formData.nameAm || formData.name,
+//         description: formData.description,
+//         fullDescription: formData.fullDescription || formData.description,
+//         price: Number(formData.price),
+//         category: formData.category,
+//         isVegetarian: formData.vegetarian ? 'true' : 'false',
+//         isSpicy: formData.spicy ? 'true' : 'false',
+//         isSignature: formData.signature ? 'true' : 'false',
+//         isAvailable: formData.available ? 'true' : 'false'
+//       };
 
-      let response;
-      if (editingItem) {
-        if (imageFile) {
-          response = await menuService.updateItem(editingItem._id, payload, imageFile);
-        } else {
-          response = await menuService.updateItem(editingItem._id, payload);
-        }
-        toast.success('Menu item updated successfully');
-      } else {
-        response = await menuService.createItem(payload, imageFile);
-        toast.success('Menu item created successfully');
-      }
+//       let response;
+//       if (editingItem) {
+//         if (imageFile) {
+//           response = await menuService.updateItem(editingItem._id, payload, imageFile);
+//         } else {
+//           response = await menuService.updateItem(editingItem._id, payload);
+//         }
+//         toast.success('Menu item updated successfully');
+//       } else {
+//         response = await menuService.createItem(payload, imageFile);
+//         toast.success('Menu item created successfully');
+//       }
       
-      setShowForm(false);
-      resetForm();
-      fetchMenuItems();
-    } catch (error) {
-      console.error('Error saving menu item:', error);
-      toast.error(error.response?.data?.message || 'Failed to save menu item');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+//       setShowForm(false);
+//       resetForm();
+//       fetchMenuItems();
+//     } catch (error) {
+//       console.error('Error saving menu item:', error);
+//       toast.error(error.response?.data?.message || 'Failed to save menu item');
+//     } finally {
+//       setIsSubmitting(false);
+//     }
+//   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      try {
-        await menuService.deleteItem(id);
-        toast.success('Menu item deleted successfully');
-        fetchMenuItems();
-      } catch (error) {
-        console.error('Error deleting item:', error);
-        if (error.response?.status === 401) {
-          toast.error('Session expired. Please login again');
-          navigate('/login');
-        } else {
-          toast.error('Failed to delete menu item');
-        }
-      }
-    }
-  };
+//   const handleDelete = async (id) => {
+//     if (window.confirm('Are you sure you want to delete this item?')) {
+//       try {
+//         await menuService.deleteItem(id);
+//         toast.success('Menu item deleted successfully');
+//         fetchMenuItems();
+//       } catch (error) {
+//         console.error('Error deleting item:', error);
+//         if (error.response?.status === 401) {
+//           toast.error('Session expired. Please login again');
+//           navigate('/login');
+//         } else {
+//           toast.error('Failed to delete menu item');
+//         }
+//       }
+//     }
+//   };
 
-  const handleToggleAvailability = async (id, currentStatus) => {
-    try {
-      await menuService.toggleAvailability(id);
-      toast.success(`Item ${currentStatus ? 'unavailable' : 'available'} now`);
-      fetchMenuItems();
-    } catch (error) {
-      console.error('Error toggling availability:', error);
-      if (error.response?.status === 401) {
-        toast.error('Session expired. Please login again');
-        navigate('/login');
-      } else {
-        toast.error('Failed to toggle availability');
-      }
-    }
-  };
+//   const handleToggleAvailability = async (id, currentStatus) => {
+//     try {
+//       await menuService.toggleAvailability(id);
+//       toast.success(`Item ${currentStatus ? 'unavailable' : 'available'} now`);
+//       fetchMenuItems();
+//     } catch (error) {
+//       console.error('Error toggling availability:', error);
+//       if (error.response?.status === 401) {
+//         toast.error('Session expired. Please login again');
+//         navigate('/login');
+//       } else {
+//         toast.error('Failed to toggle availability');
+//       }
+//     }
+//   };
 
-  const getImageUrl = (image) => {
-    if (!image) return null;
-    if (image.startsWith('http')) return image;
-    if (image === 'default-food.jpg') return null;
-    return `${UPLOADS_URL}/${image}`;
-  };
+//   const getImageUrl = (image) => {
+//     if (!image) return null;
+//     if (image.startsWith('http')) return image;
+//     if (image === 'default-food.jpg') return null;
+//     return `${UPLOADS_URL}/${image}`;
+//   };
 
-  const getEmojiForCategory = (category) => {
-    const emojis = {
-      'burgers': '🍔',
-      'sandwiches': '🥪',
-      'pizza': '🍕',
-      'wraps': '🌯',
-      'traditional': '🍛',
-      'fastfood': '🍟',
-      'beverages': '☕',
-      'desserts': '🍰',
-      'fetira': '🥙'
-    };
-    return emojis[category] || '🍽️';
-  };
+//   const getEmojiForCategory = (category) => {
+//     const emojis = {
+//       'burgers': '🍔',
+//       'sandwiches': '🥪',
+//       'pizza': '🍕',
+//       'wraps': '🌯',
+//       'traditional': '🍛',
+//       'fastfood': '🍟',
+//       'beverages': '☕',
+//       'desserts': '🍰',
+//       'fetira': '🥙'
+//     };
+//     return emojis[category] || '🍽️';
+//   };
 
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Loading menu items...</p>
-      </div>
-    );
-  }
+//   if (loading) {
+//     return (
+//       <div className="loading-container">
+//         <div className="loading-spinner"></div>
+//         <p>Loading menu items...</p>
+//       </div>
+//     );
+//   }
 
-  return (
-    <div className="menu-tab">
-      <div className="tab-header">
-        <h1 className="page-title">Menu Management</h1>
-        <button 
-          className="btn-primary" 
-          onClick={() => {
-            resetForm();
-            setShowForm(true);
-          }}
-        >
-          + Add New Item
-        </button>
-      </div>
+//   return (
+//     <div className="menu-tab">
+//       <div className="tab-header">
+//         <h1 className="page-title">Menu Management</h1>
+//         <button 
+//           className="btn-primary" 
+//           onClick={() => {
+//             resetForm();
+//             setShowForm(true);
+//           }}
+//         >
+//           + Add New Item
+//         </button>
+//       </div>
 
-      {showForm && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h2>{editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Item Name (English) *</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  required
-                  placeholder="e.g., Cheese Burger"
-                />
-              </div>
+//       {showForm && (
+//         <div className="modal-overlay">
+//           <div className="modal-content" style={{ maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
+//             <h2>{editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}</h2>
+//             <form onSubmit={handleSubmit}>
+//               <div className="form-group">
+//                 <label>Item Name (English) *</label>
+//                 <input
+//                   type="text"
+//                   value={formData.name}
+//                   onChange={(e) => setFormData({...formData, name: e.target.value})}
+//                   required
+//                   placeholder="e.g., Cheese Burger"
+//                 />
+//               </div>
               
-              <div className="form-group">
-                <label>ስም (አማርኛ)</label>
-                <input
-                  type="text"
-                  value={formData.nameAm}
-                  onChange={(e) => setFormData({...formData, nameAm: e.target.value})}
-                  placeholder="ለምሳሌ፡ በርገር አይብ (አማራጭ)"
-                />
-                <small className="field-note">Optional - Amharic name</small>
-              </div>
+//               <div className="form-group">
+//                 <label>ስም (አማርኛ)</label>
+//                 <input
+//                   type="text"
+//                   value={formData.nameAm}
+//                   onChange={(e) => setFormData({...formData, nameAm: e.target.value})}
+//                   placeholder="ለምሳሌ፡ በርገር አይብ (አማራጭ)"
+//                 />
+//                 <small className="field-note">Optional - Amharic name</small>
+//               </div>
 
-              <div className="form-group">
-                <label>Description (English) *</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  required
-                  rows="3"
-                  placeholder="Describe the dish in English..."
-                />
-              </div>
+//               <div className="form-group">
+//                 <label>Description (English) *</label>
+//                 <textarea
+//                   value={formData.description}
+//                   onChange={(e) => setFormData({...formData, description: e.target.value})}
+//                   required
+//                   rows="3"
+//                   placeholder="Describe the dish in English..."
+//                 />
+//               </div>
 
-              <div className="form-group">
-                <label>ሙሉ መግለጫ (አማርኛ)</label>
-                <textarea
-                  value={formData.fullDescription}
-                  onChange={(e) => setFormData({...formData, fullDescription: e.target.value})}
-                  rows="3"
-                  placeholder="በአማርኛ ዝርዝር መግለጫ ያስገቡ (አማራጭ)"
-                />
-                <small className="field-note">Optional - Amharic description</small>
-              </div>
+//               <div className="form-group">
+//                 <label>ሙሉ መግለጫ (አማርኛ)</label>
+//                 <textarea
+//                   value={formData.fullDescription}
+//                   onChange={(e) => setFormData({...formData, fullDescription: e.target.value})}
+//                   rows="3"
+//                   placeholder="በአማርኛ ዝርዝር መግለጫ ያስገቡ (አማራጭ)"
+//                 />
+//                 <small className="field-note">Optional - Amharic description</small>
+//               </div>
 
-              <div className="form-row" style={{ display: 'flex', gap: '15px' }}>
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label>Price (ETB) *</label>
-                  <input
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => setFormData({...formData, price: e.target.value})}
-                    required
-                    min="0"
-                    step="0.01"
-                    placeholder="250"
-                  />
-                </div>
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label>Category *</label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({...formData, category: e.target.value})}
-                    required
-                  >
-                    <option value="">Select Category</option>
-                    <option value="burgers">Burgers</option>
-                    <option value="sandwiches">Sandwiches</option>
-                    <option value="pizza">Pizza</option>
-                    <option value="traditional">Traditional Ethiopian</option>
-                    <option value="fastfood">Fast Food</option>
-                    <option value="wraps">Wraps</option>
-                    <option value="fetira">Fetira</option>
-                    <option value="beverages">Beverages</option>
-                    <option value="desserts">Desserts</option>
-                  </select>
-                </div>
-              </div>
+//               <div className="form-row" style={{ display: 'flex', gap: '15px' }}>
+//                 <div className="form-group" style={{ flex: 1 }}>
+//                   <label>Price (ETB) *</label>
+//                   <input
+//                     type="number"
+//                     value={formData.price}
+//                     onChange={(e) => setFormData({...formData, price: e.target.value})}
+//                     required
+//                     min="0"
+//                     step="0.01"
+//                     placeholder="250"
+//                   />
+//                 </div>
+//                 <div className="form-group" style={{ flex: 1 }}>
+//                   <label>Category *</label>
+//                   <select
+//                     value={formData.category}
+//                     onChange={(e) => setFormData({...formData, category: e.target.value})}
+//                     required
+//                   >
+//                     <option value="">Select Category</option>
+//                     <option value="burgers">Burgers</option>
+//                     <option value="sandwiches">Sandwiches</option>
+//                     <option value="pizza">Pizza</option>
+//                     <option value="traditional">Traditional Ethiopian</option>
+//                     <option value="fastfood">Fast Food</option>
+//                     <option value="wraps">Wraps</option>
+//                     <option value="fetira">Fetira</option>
+//                     <option value="beverages">Beverages</option>
+//                     <option value="desserts">Desserts</option>
+//                   </select>
+//                 </div>
+//               </div>
               
-              <div className="form-row checkbox-group" style={{ display: 'flex', gap: '20px', margin: '15px 0', flexWrap: 'wrap' }}>
-                <div className="form-group checkbox">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={formData.vegetarian}
-                      onChange={(e) => setFormData({...formData, vegetarian: e.target.checked})}
-                    />
-                    🌱 Vegetarian
-                  </label>
-                </div>
-                <div className="form-group checkbox">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={formData.spicy}
-                      onChange={(e) => setFormData({...formData, spicy: e.target.checked})}
-                    />
-                    🌶️ Spicy
-                  </label>
-                </div>
-                <div className="form-group checkbox">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={formData.signature}
-                      onChange={(e) => setFormData({...formData, signature: e.target.checked})}
-                    />
-                    ⭐ Signature Dish
-                  </label>
-                </div>
-              </div>
+//               <div className="form-row checkbox-group" style={{ display: 'flex', gap: '20px', margin: '15px 0', flexWrap: 'wrap' }}>
+//                 <div className="form-group checkbox">
+//                   <label>
+//                     <input
+//                       type="checkbox"
+//                       checked={formData.vegetarian}
+//                       onChange={(e) => setFormData({...formData, vegetarian: e.target.checked})}
+//                     />
+//                     🌱 Vegetarian
+//                   </label>
+//                 </div>
+//                 <div className="form-group checkbox">
+//                   <label>
+//                     <input
+//                       type="checkbox"
+//                       checked={formData.spicy}
+//                       onChange={(e) => setFormData({...formData, spicy: e.target.checked})}
+//                     />
+//                     🌶️ Spicy
+//                   </label>
+//                 </div>
+//                 <div className="form-group checkbox">
+//                   <label>
+//                     <input
+//                       type="checkbox"
+//                       checked={formData.signature}
+//                       onChange={(e) => setFormData({...formData, signature: e.target.checked})}
+//                     />
+//                     ⭐ Signature Dish
+//                   </label>
+//                 </div>
+//               </div>
 
-              <div className="form-group">
-                <label>Image Upload {!editingItem && '*'}</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  required={!editingItem}
-                />
-                {(imagePreview || (editingItem && editingItem.image)) && (
-                  <div className="image-preview-container" style={{ marginTop: '10px' }}>
-                    <img 
-                      src={imagePreview || getImageUrl(editingItem?.image)} 
-                      alt="Preview" 
-                      style={{ 
-                        maxWidth: '150px', 
-                        maxHeight: '150px',
-                        borderRadius: '8px',
-                        border: '1px solid #ddd'
-                      }} 
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = 'https://via.placeholder.com/150?text=No+Image';
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
+//               <div className="form-group">
+//                 <label>Image Upload {!editingItem && '*'}</label>
+//                 <input
+//                   type="file"
+//                   accept="image/*"
+//                   onChange={handleImageChange}
+//                   required={!editingItem}
+//                 />
+//                 {(imagePreview || (editingItem && editingItem.image)) && (
+//                   <div className="image-preview-container" style={{ marginTop: '10px' }}>
+//                     <img 
+//                       src={imagePreview || getImageUrl(editingItem?.image)} 
+//                       alt="Preview" 
+//                       style={{ 
+//                         maxWidth: '150px', 
+//                         maxHeight: '150px',
+//                         borderRadius: '8px',
+//                         border: '1px solid #ddd'
+//                       }} 
+//                       onError={(e) => {
+//                         e.target.onerror = null;
+//                         e.target.src = 'https://via.placeholder.com/150?text=No+Image';
+//                       }}
+//                     />
+//                   </div>
+//                 )}
+//               </div>
 
-              <div className="modal-actions" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-                <button 
-                  type="submit" 
-                  className="btn-save"
-                  disabled={isSubmitting}
-                  style={{
-                    padding: '10px 20px',
-                    background: isSubmitting ? '#ccc' : '#4CAF50',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: isSubmitting ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  {isSubmitting ? 'Saving...' : (editingItem ? 'Update' : 'Create')}
-                </button>
-                <button 
-                  type="button" 
-                  className="btn-cancel"
-                  onClick={() => {
-                    setShowForm(false);
-                    resetForm();
-                  }}
-                  style={{
-                    padding: '10px 20px',
-                    background: '#f44336',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+//               <div className="modal-actions" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+//                 <button 
+//                   type="submit" 
+//                   className="btn-save"
+//                   disabled={isSubmitting}
+//                   style={{
+//                     padding: '10px 20px',
+//                     background: isSubmitting ? '#ccc' : '#4CAF50',
+//                     color: 'white',
+//                     border: 'none',
+//                     borderRadius: '4px',
+//                     cursor: isSubmitting ? 'not-allowed' : 'pointer'
+//                   }}
+//                 >
+//                   {isSubmitting ? 'Saving...' : (editingItem ? 'Update' : 'Create')}
+//                 </button>
+//                 <button 
+//                   type="button" 
+//                   className="btn-cancel"
+//                   onClick={() => {
+//                     setShowForm(false);
+//                     resetForm();
+//                   }}
+//                   style={{
+//                     padding: '10px 20px',
+//                     background: '#f44336',
+//                     color: 'white',
+//                     border: 'none',
+//                     borderRadius: '4px',
+//                     cursor: 'pointer'
+//                   }}
+//                 >
+//                   Cancel
+//                 </button>
+//               </div>
+//             </form>
+//           </div>
+//         </div>
+//       )}
 
-      {!menuItems.length ? (
-        <div className="empty-state" style={{ textAlign: 'center', padding: '40px' }}>
-          <div className="empty-icon" style={{ fontSize: '48px', marginBottom: '20px' }}>🍽️</div>
-          <h3>No Menu Items Yet</h3>
-          <p>Get started by adding your first menu item</p>
-          <button 
-            className="btn-primary" 
-            onClick={() => {
-              resetForm();
-              setShowForm(true);
-            }}
-          >
-            + Add Your First Item
-          </button>
-        </div>
-      ) : (
-        <div className="menu-items-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px', padding: '20px' }}>
-          {menuItems.map(item => (
-            <div key={item._id} className="menu-item-card" style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden', background: 'white' }}>
-              <div className="menu-item-image" style={{ height: '200px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
-                {item.image && item.image !== 'default-food.jpg' ? (
-                  <img 
-                    src={getImageUrl(item.image)}
-                    alt={item.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    onError={(e) => {
-                      console.log('Image failed to load:', item.image);
-                      e.target.onerror = null;
-                      e.target.style.display = 'none';
-                      e.target.parentNode.innerHTML = `<span style="font-size: 48px;">${getEmojiForCategory(item.category)}</span>`;
-                    }}
-                  />
-                ) : (
-                  <div className="no-image" style={{ fontSize: '48px' }}>
-                    {getEmojiForCategory(item.category)}
-                  </div>
-                )}
-              </div>
-              <div className="menu-item-content" style={{ padding: '15px' }}>
-                <h3 style={{ margin: '0 0 5px 0' }}>{item.name}</h3>
-                {item.nameAm && <p className="amharic-name" style={{ color: '#666', fontSize: '0.9em', margin: '0 0 10px 0' }}>አማርኛ: {item.nameAm}</p>}
-                <p className="description" style={{ color: '#666', margin: '0 0 10px 0' }}>{item.description}</p>
+//       {!menuItems.length ? (
+//         <div className="empty-state" style={{ textAlign: 'center', padding: '40px' }}>
+//           <div className="empty-icon" style={{ fontSize: '48px', marginBottom: '20px' }}>🍽️</div>
+//           <h3>No Menu Items Yet</h3>
+//           <p>Get started by adding your first menu item</p>
+//           <button 
+//             className="btn-primary" 
+//             onClick={() => {
+//               resetForm();
+//               setShowForm(true);
+//             }}
+//           >
+//             + Add Your First Item
+//           </button>
+//         </div>
+//       ) : (
+//         <div className="menu-items-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px', padding: '20px' }}>
+//           {menuItems.map(item => (
+//             <div key={item._id} className="menu-item-card" style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden', background: 'white' }}>
+//               <div className="menu-item-image" style={{ height: '200px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
+//                 {item.image && item.image !== 'default-food.jpg' ? (
+//                   <img 
+//                     src={getImageUrl(item.image)}
+//                     alt={item.name}
+//                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+//                     onError={(e) => {
+//                       console.log('Image failed to load:', item.image);
+//                       e.target.onerror = null;
+//                       e.target.style.display = 'none';
+//                       e.target.parentNode.innerHTML = `<span style="font-size: 48px;">${getEmojiForCategory(item.category)}</span>`;
+//                     }}
+//                   />
+//                 ) : (
+//                   <div className="no-image" style={{ fontSize: '48px' }}>
+//                     {getEmojiForCategory(item.category)}
+//                   </div>
+//                 )}
+//               </div>
+//               <div className="menu-item-content" style={{ padding: '15px' }}>
+//                 <h3 style={{ margin: '0 0 5px 0' }}>{item.name}</h3>
+//                 {item.nameAm && <p className="amharic-name" style={{ color: '#666', fontSize: '0.9em', margin: '0 0 10px 0' }}>አማርኛ: {item.nameAm}</p>}
+//                 <p className="description" style={{ color: '#666', margin: '0 0 10px 0' }}>{item.description}</p>
                 
-                <div className="menu-tags" style={{ marginBottom: '10px' }}>
-                  {item.isVegetarian && <span className="tag vegetarian" style={{ display: 'inline-block', padding: '2px 8px', background: '#e8f5e8', borderRadius: '12px', marginRight: '5px', fontSize: '0.85em' }}>🌱 Veg</span>}
-                  {item.isSpicy && <span className="tag spicy" style={{ display: 'inline-block', padding: '2px 8px', background: '#fff3e0', borderRadius: '12px', marginRight: '5px', fontSize: '0.85em' }}>🌶️ Spicy</span>}
-                  {item.isSignature && <span className="tag signature" style={{ display: 'inline-block', padding: '2px 8px', background: '#fff9c4', borderRadius: '12px', marginRight: '5px', fontSize: '0.85em' }}>⭐ Signature</span>}
-                </div>
+//                 <div className="menu-tags" style={{ marginBottom: '10px' }}>
+//                   {item.isVegetarian && <span className="tag vegetarian" style={{ display: 'inline-block', padding: '2px 8px', background: '#e8f5e8', borderRadius: '12px', marginRight: '5px', fontSize: '0.85em' }}>🌱 Veg</span>}
+//                   {item.isSpicy && <span className="tag spicy" style={{ display: 'inline-block', padding: '2px 8px', background: '#fff3e0', borderRadius: '12px', marginRight: '5px', fontSize: '0.85em' }}>🌶️ Spicy</span>}
+//                   {item.isSignature && <span className="tag signature" style={{ display: 'inline-block', padding: '2px 8px', background: '#fff9c4', borderRadius: '12px', marginRight: '5px', fontSize: '0.85em' }}>⭐ Signature</span>}
+//                 </div>
 
-                <div className="menu-item-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                  <span className="price" style={{ fontSize: '1.2em', fontWeight: 'bold', color: '#4CAF50' }}>{item.price} ETB</span>
-                  <span className="category-badge" style={{ padding: '2px 8px', background: '#e0e0e0', borderRadius: '12px', fontSize: '0.85em' }}>{item.category}</span>
-                </div>
+//                 <div className="menu-item-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+//                   <span className="price" style={{ fontSize: '1.2em', fontWeight: 'bold', color: '#4CAF50' }}>{item.price} ETB</span>
+//                   <span className="category-badge" style={{ padding: '2px 8px', background: '#e0e0e0', borderRadius: '12px', fontSize: '0.85em' }}>{item.category}</span>
+//                 </div>
 
-                <div className="availability-badge" style={{ marginBottom: '10px' }}>
-                  <span style={{ padding: '4px 8px', background: item.isAvailable ? '#4CAF50' : '#f44336', color: 'white', borderRadius: '4px', fontSize: '0.85em' }}>
-                    {item.isAvailable ? '✓ In Stock' : '✗ Out of Stock'}
-                  </span>
-                </div>
+//                 <div className="availability-badge" style={{ marginBottom: '10px' }}>
+//                   <span style={{ padding: '4px 8px', background: item.isAvailable ? '#4CAF50' : '#f44336', color: 'white', borderRadius: '4px', fontSize: '0.85em' }}>
+//                     {item.isAvailable ? '✓ In Stock' : '✗ Out of Stock'}
+//                   </span>
+//                 </div>
 
-                <div className="menu-item-actions" style={{ display: 'flex', gap: '8px' }}>
-                  <button 
-                    className="btn-edit"
-                    onClick={() => {
-                      setEditingItem(item);
-                      setFormData({
-                        name: item.name || '',
-                        nameAm: item.nameAm || '',
-                        description: item.description || '',
-                        fullDescription: item.fullDescription || '',
-                        price: item.price || '',
-                        category: item.category || 'burgers',
-                        image: item.image || '',
-                        vegetarian: item.isVegetarian || false,
-                        spicy: item.isSpicy || false,
-                        signature: item.isSignature || false,
-                        available: item.isAvailable !== undefined ? item.isAvailable : true
-                      });
-                      setImagePreview(getImageUrl(item.image));
-                      setShowForm(true);
-                    }}
-                    style={{ flex: 1, padding: '8px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                  >
-                    Edit
-                  </button>
-                  <button 
-                    className={`btn-toggle ${item.isAvailable ? 'available' : 'unavailable'}`}
-                    onClick={() => handleToggleAvailability(item._id, item.isAvailable)}
-                    style={{ flex: 1, padding: '8px', background: item.isAvailable ? '#ff9800' : '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                  >
-                    {item.isAvailable ? 'Set Unavailable' : 'Set Available'}
-                  </button>
-                  <button 
-                    className="btn-delete"
-                    onClick={() => handleDelete(item._id)}
-                    style={{ flex: 1, padding: '8px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+//                 <div className="menu-item-actions" style={{ display: 'flex', gap: '8px' }}>
+//                   <button 
+//                     className="btn-edit"
+//                     onClick={() => {
+//                       setEditingItem(item);
+//                       setFormData({
+//                         name: item.name || '',
+//                         nameAm: item.nameAm || '',
+//                         description: item.description || '',
+//                         fullDescription: item.fullDescription || '',
+//                         price: item.price || '',
+//                         category: item.category || 'burgers',
+//                         image: item.image || '',
+//                         vegetarian: item.isVegetarian || false,
+//                         spicy: item.isSpicy || false,
+//                         signature: item.isSignature || false,
+//                         available: item.isAvailable !== undefined ? item.isAvailable : true
+//                       });
+//                       setImagePreview(getImageUrl(item.image));
+//                       setShowForm(true);
+//                     }}
+//                     style={{ flex: 1, padding: '8px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+//                   >
+//                     Edit
+//                   </button>
+//                   <button 
+//                     className={`btn-toggle ${item.isAvailable ? 'available' : 'unavailable'}`}
+//                     onClick={() => handleToggleAvailability(item._id, item.isAvailable)}
+//                     style={{ flex: 1, padding: '8px', background: item.isAvailable ? '#ff9800' : '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+//                   >
+//                     {item.isAvailable ? 'Set Unavailable' : 'Set Available'}
+//                   </button>
+//                   <button 
+//                     className="btn-delete"
+//                     onClick={() => handleDelete(item._id)}
+//                     style={{ flex: 1, padding: '8px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+//                   >
+//                     Delete
+//                   </button>
+//                 </div>
+//               </div>
+//             </div>
+//           ))}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
 
-// ==================== REPORTS TAB ====================
-const ReportsTab = () => {
-  const [reportType, setReportType] = useState('daily');
-  const [reportData, setReportData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [dateRange, setDateRange] = useState({
-    start: new Date().toISOString().split('T')[0],
-    end: new Date().toISOString().split('T')[0]
-  });
+// // ==================== REPORTS TAB ====================
+// const ReportsTab = () => {
+//   const [reportType, setReportType] = useState('daily');
+//   const [reportData, setReportData] = useState(null);
+//   const [loading, setLoading] = useState(false);
+//   const [dateRange, setDateRange] = useState({
+//     start: new Date().toISOString().split('T')[0],
+//     end: new Date().toISOString().split('T')[0]
+//   });
 
-  const generateReport = async () => {
-    try {
-      setLoading(true);
-      let data;
+//   const generateReport = async () => {
+//     try {
+//       setLoading(true);
+//       let data;
       
-      switch(reportType) {
-        case 'daily':
-          data = await adminService.getDailyReport(dateRange.start);
-          break;
-        case 'weekly':
-          data = await adminService.getWeeklyReport();
-          break;
-        case 'monthly':
-          data = await adminService.getMonthlyReport();
-          break;
-        case 'custom':
-          data = await adminService.getReport('custom', dateRange.start, dateRange.end);
-          break;
-        default:
-          data = await adminService.getDailyReport();
-      }
+//       switch(reportType) {
+//         case 'daily':
+//           data = await adminService.getDailyReport(dateRange.start);
+//           break;
+//         case 'weekly':
+//           data = await adminService.getWeeklyReport();
+//           break;
+//         case 'monthly':
+//           data = await adminService.getMonthlyReport();
+//           break;
+//         case 'custom':
+//           data = await adminService.getReport('custom', dateRange.start, dateRange.end);
+//           break;
+//         default:
+//           data = await adminService.getDailyReport();
+//       }
       
-      setReportData(data);
-    } catch (error) {
-      console.error('Error generating report:', error);
-      setReportData({
-        totalOrders: 45,
-        totalRevenue: 12500,
-        averageOrderValue: 278,
-        categoryBreakdown: [
-          { category: 'Main Course', itemsSold: 28, revenue: 8400 },
-          { category: 'Appetizers', itemsSold: 12, revenue: 2160 },
-          { category: 'Desserts', itemsSold: 8, revenue: 960 },
-          { category: 'Beverages', itemsSold: 15, revenue: 980 },
-        ],
-        deliveryBreakdown: [
-          { name: 'Abebe', ordersCount: 15, totalAmount: 4200 },
-          { name: 'Kebede', ordersCount: 12, totalAmount: 3600 },
-          { name: 'Almaz', ordersCount: 18, totalAmount: 4700 },
-        ],
-        topItems: [
-          { name: 'Cheese Burger', quantity: 25, revenue: 6250 },
-          { name: 'Doro Wat', quantity: 18, revenue: 5040 },
-          { name: 'Pizza', quantity: 15, revenue: 5250 },
-        ]
-      });
-      toast.error('Using mock data - backend not connected');
-    } finally {
-      setLoading(false);
-    }
-  };
+//       setReportData(data);
+//     } catch (error) {
+//       console.error('Error generating report:', error);
+//       setReportData({
+//         totalOrders: 45,
+//         totalRevenue: 12500,
+//         averageOrderValue: 278,
+//         categoryBreakdown: [
+//           { category: 'Main Course', itemsSold: 28, revenue: 8400 },
+//           { category: 'Appetizers', itemsSold: 12, revenue: 2160 },
+//           { category: 'Desserts', itemsSold: 8, revenue: 960 },
+//           { category: 'Beverages', itemsSold: 15, revenue: 980 },
+//         ],
+//         deliveryBreakdown: [
+//           { name: 'Abebe', ordersCount: 15, totalAmount: 4200 },
+//           { name: 'Kebede', ordersCount: 12, totalAmount: 3600 },
+//           { name: 'Almaz', ordersCount: 18, totalAmount: 4700 },
+//         ],
+//         topItems: [
+//           { name: 'Cheese Burger', quantity: 25, revenue: 6250 },
+//           { name: 'Doro Wat', quantity: 18, revenue: 5040 },
+//           { name: 'Pizza', quantity: 15, revenue: 5250 },
+//         ]
+//       });
+//       toast.error('Using mock data - backend not connected');
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
 
-  const handleExport = async (format) => {
-    try {
-      const data = await adminService.exportReport(reportType, format, dateRange.start, dateRange.end);
-      const url = window.URL.createObjectURL(new Blob([data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `report-${reportType}.${format}`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success(`Report exported as ${format.toUpperCase()}`);
-    } catch (error) {
-      console.error('Error exporting report:', error);
-      toast.error('Failed to export report');
-    }
-  };
+//   const handleExport = async (format) => {
+//     try {
+//       const data = await adminService.exportReport(reportType, format, dateRange.start, dateRange.end);
+//       const url = window.URL.createObjectURL(new Blob([data]));
+//       const link = document.createElement('a');
+//       link.href = url;
+//       link.setAttribute('download', `report-${reportType}.${format}`);
+//       document.body.appendChild(link);
+//       link.click();
+//       link.remove();
+//       toast.success(`Report exported as ${format.toUpperCase()}`);
+//     } catch (error) {
+//       console.error('Error exporting report:', error);
+//       toast.error('Failed to export report');
+//     }
+//   };
 
-  return (
-    <div className="reports-tab">
-      <h1 className="page-title">Sales Reports</h1>
+//   return (
+//     <div className="reports-tab">
+//       <h1 className="page-title">Sales Reports</h1>
       
-      <div className="report-controls">
-        <div className="report-type-selector">
-          <button 
-            className={reportType === 'daily' ? 'active' : ''} 
-            onClick={() => setReportType('daily')}
-          >
-            Daily
-          </button>
-          <button 
-            className={reportType === 'weekly' ? 'active' : ''} 
-            onClick={() => setReportType('weekly')}
-          >
-            Weekly
-          </button>
-          <button 
-            className={reportType === 'monthly' ? 'active' : ''} 
-            onClick={() => setReportType('monthly')}
-          >
-            Monthly
-          </button>
-          <button 
-            className={reportType === 'custom' ? 'active' : ''} 
-            onClick={() => setReportType('custom')}
-          >
-            Custom Range
-          </button>
-        </div>
+//       <div className="report-controls">
+//         <div className="report-type-selector">
+//           <button 
+//             className={reportType === 'daily' ? 'active' : ''} 
+//             onClick={() => setReportType('daily')}
+//           >
+//             Daily
+//           </button>
+//           <button 
+//             className={reportType === 'weekly' ? 'active' : ''} 
+//             onClick={() => setReportType('weekly')}
+//           >
+//             Weekly
+//           </button>
+//           <button 
+//             className={reportType === 'monthly' ? 'active' : ''} 
+//             onClick={() => setReportType('monthly')}
+//           >
+//             Monthly
+//           </button>
+//           <button 
+//             className={reportType === 'custom' ? 'active' : ''} 
+//             onClick={() => setReportType('custom')}
+//           >
+//             Custom Range
+//           </button>
+//         </div>
 
-        {reportType === 'custom' && (
-          <div className="date-range">
-            <input
-              type="date"
-              value={dateRange.start}
-              onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
-            />
-            <span>to</span>
-            <input
-              type="date"
-              value={dateRange.end}
-              onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
-            />
-          </div>
-        )}
+//         {reportType === 'custom' && (
+//           <div className="date-range">
+//             <input
+//               type="date"
+//               value={dateRange.start}
+//               onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
+//             />
+//             <span>to</span>
+//             <input
+//               type="date"
+//               value={dateRange.end}
+//               onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
+//             />
+//           </div>
+//         )}
 
-        <div className="report-actions">
-          <button className="btn-generate" onClick={generateReport} disabled={loading}>
-            {loading ? 'Generating...' : 'Generate Report'}
-          </button>
-          {reportData && (
-            <div className="export-buttons">
-              <button className="btn-export" onClick={() => handleExport('csv')}>Export CSV</button>
-              <button className="btn-export" onClick={() => handleExport('pdf')}>Export PDF</button>
-            </div>
-          )}
-        </div>
-      </div>
+//         <div className="report-actions">
+//           <button className="btn-generate" onClick={generateReport} disabled={loading}>
+//             {loading ? 'Generating...' : 'Generate Report'}
+//           </button>
+//           {reportData && (
+//             <div className="export-buttons">
+//               <button className="btn-export" onClick={() => handleExport('csv')}>Export CSV</button>
+//               <button className="btn-export" onClick={() => handleExport('pdf')}>Export PDF</button>
+//             </div>
+//           )}
+//         </div>
+//       </div>
 
-      {reportData && (
-        <div className="report-results">
-          <h2>Report Summary - {reportType.charAt(0).toUpperCase() + reportType.slice(1)}</h2>
+//       {reportData && (
+//         <div className="report-results">
+//           <h2>Report Summary - {reportType.charAt(0).toUpperCase() + reportType.slice(1)}</h2>
           
-          <div className="summary-cards">
-            <div className="summary-card">
-              <span className="label">Total Orders</span>
-              <span className="value">{reportData.totalOrders}</span>
-            </div>
-            <div className="summary-card">
-              <span className="label">Total Revenue</span>
-              <span className="value">{reportData.totalRevenue.toLocaleString()} ETB</span>
-            </div>
-            <div className="summary-card">
-              <span className="label">Average Order</span>
-              <span className="value">{reportData.averageOrderValue.toLocaleString()} ETB</span>
-            </div>
-          </div>
+//           <div className="summary-cards">
+//             <div className="summary-card">
+//               <span className="label">Total Orders</span>
+//               <span className="value">{reportData.totalOrders}</span>
+//             </div>
+//             <div className="summary-card">
+//               <span className="label">Total Revenue</span>
+//               <span className="value">{reportData.totalRevenue.toLocaleString()} ETB</span>
+//             </div>
+//             <div className="summary-card">
+//               <span className="label">Average Order</span>
+//               <span className="value">{reportData.averageOrderValue.toLocaleString()} ETB</span>
+//             </div>
+//           </div>
 
-          <div className="report-section">
-            <h3>Sales by Category</h3>
-            <table className="report-table">
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th>Items Sold</th>
-                  <th>Revenue</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reportData.categoryBreakdown?.map(cat => (
-                  <tr key={cat.category}>
-                    <td>{cat.category}</td>
-                    <td>{cat.itemsSold}</td>
-                    <td>{cat.revenue.toLocaleString()} ETB</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+//           <div className="report-section">
+//             <h3>Sales by Category</h3>
+//             <table className="report-table">
+//               <thead>
+//                 <tr>
+//                   <th>Category</th>
+//                   <th>Items Sold</th>
+//                   <th>Revenue</th>
+//                 </tr>
+//               </thead>
+//               <tbody>
+//                 {reportData.categoryBreakdown?.map(cat => (
+//                   <tr key={cat.category}>
+//                     <td>{cat.category}</td>
+//                     <td>{cat.itemsSold}</td>
+//                     <td>{cat.revenue.toLocaleString()} ETB</td>
+//                   </tr>
+//                 ))}
+//               </tbody>
+//             </table>
+//           </div>
 
-          <div className="report-section">
-            <h3>Top Selling Items</h3>
-            <table className="report-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Quantity Sold</th>
-                  <th>Revenue</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reportData.topItems?.map(item => (
-                  <tr key={item.name}>
-                    <td>{item.name}</td>
-                    <td>{item.quantity}</td>
-                    <td>{item.revenue.toLocaleString()} ETB</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+//           <div className="report-section">
+//             <h3>Top Selling Items</h3>
+//             <table className="report-table">
+//               <thead>
+//                 <tr>
+//                   <th>Item</th>
+//                   <th>Quantity Sold</th>
+//                   <th>Revenue</th>
+//                 </tr>
+//               </thead>
+//               <tbody>
+//                 {reportData.topItems?.map(item => (
+//                   <tr key={item.name}>
+//                     <td>{item.name}</td>
+//                     <td>{item.quantity}</td>
+//                     <td>{item.revenue.toLocaleString()} ETB</td>
+//                   </tr>
+//                 ))}
+//               </tbody>
+//             </table>
+//           </div>
 
-          <div className="report-section">
-            <h3>Delivery Performance</h3>
-            <table className="report-table">
-              <thead>
-                <tr>
-                  <th>Delivery Person</th>
-                  <th>Orders Delivered</th>
-                  <th>Total Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reportData.deliveryBreakdown?.map(del => (
-                  <tr key={del.name}>
-                    <td>{del.name}</td>
-                    <td>{del.ordersCount}</td>
-                    <td>{del.totalAmount.toLocaleString()} ETB</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+//           <div className="report-section">
+//             <h3>Delivery Performance</h3>
+//             <table className="report-table">
+//               <thead>
+//                 <tr>
+//                   <th>Delivery Person</th>
+//                   <th>Orders Delivered</th>
+//                   <th>Total Amount</th>
+//                 </tr>
+//               </thead>
+//               <tbody>
+//                 {reportData.deliveryBreakdown?.map(del => (
+//                   <tr key={del.name}>
+//                     <td>{del.name}</td>
+//                     <td>{del.ordersCount}</td>
+//                     <td>{del.totalAmount.toLocaleString()} ETB</td>
+//                   </tr>
+//                 ))}
+//               </tbody>
+//             </table>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
 
-// ==================== USERS TAB ====================
-const UsersTab = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const roles = ['customer', 'chef', 'delivery', 'cashier', 'admin'];
+// // ==================== USERS TAB ====================
+// const UsersTab = () => {
+//   const [users, setUsers] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const roles = ['customer', 'chef', 'delivery', 'cashier', 'admin'];
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+//   useEffect(() => {
+//     fetchUsers();
+//   }, []);
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const data = await adminService.getAllUsers();
-      setUsers(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      setUsers([
-        { _id: '1', name: 'John Doe', email: 'john@example.com', phone: '0912345678', role: 'customer', status: 'active', createdAt: new Date().toISOString() },
-        { _id: '2', name: 'Chef Berhanu', email: 'berhanu@sewrica.com', phone: '0923456789', role: 'chef', status: 'active', createdAt: new Date().toISOString() },
-        { _id: '3', name: 'Abebe Delivery', email: 'abebe@sewrica.com', phone: '0934567890', role: 'delivery', status: 'active', createdAt: new Date().toISOString() },
-        { _id: '4', name: 'Admin User', email: 'admin@sewrica.com', phone: '0945678901', role: 'admin', status: 'active', createdAt: new Date().toISOString() },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+//   const fetchUsers = async () => {
+//     try {
+//       setLoading(true);
+//       const data = await adminService.getAllUsers();
+//       setUsers(Array.isArray(data) ? data : []);
+//     } catch (error) {
+//       console.error('Error fetching users:', error);
+//       setUsers([
+//         { _id: '1', name: 'John Doe', email: 'john@example.com', phone: '0912345678', role: 'customer', status: 'active', createdAt: new Date().toISOString() },
+//         { _id: '2', name: 'Chef Berhanu', email: 'berhanu@sewrica.com', phone: '0923456789', role: 'chef', status: 'active', createdAt: new Date().toISOString() },
+//         { _id: '3', name: 'Abebe Delivery', email: 'abebe@sewrica.com', phone: '0934567890', role: 'delivery', status: 'active', createdAt: new Date().toISOString() },
+//         { _id: '4', name: 'Admin User', email: 'admin@sewrica.com', phone: '0945678901', role: 'admin', status: 'active', createdAt: new Date().toISOString() },
+//       ]);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
 
-  const updateUserRole = async (userId, newRole) => {
-    try {
-      await adminService.updateUserRole(userId, newRole);
-      toast.success('User role updated successfully');
-      fetchUsers();
-    } catch (error) {
-      console.error('Error updating role:', error);
-      toast.error('Failed to update user role');
-    }
-  };
+//   const updateUserRole = async (userId, newRole) => {
+//     try {
+//       await adminService.updateUserRole(userId, newRole);
+//       toast.success('User role updated successfully');
+//       fetchUsers();
+//     } catch (error) {
+//       console.error('Error updating role:', error);
+//       toast.error('Failed to update user role');
+//     }
+//   };
 
-  const toggleUserStatus = async (userId) => {
-    try {
-      await adminService.toggleUserStatus(userId);
-      toast.success('User status toggled successfully');
-      fetchUsers();
-    } catch (error) {
-      console.error('Error toggling status:', error);
-      toast.error('Failed to toggle user status');
-    }
-  };
+//   const toggleUserStatus = async (userId) => {
+//     try {
+//       await adminService.toggleUserStatus(userId);
+//       toast.success('User status toggled successfully');
+//       fetchUsers();
+//     } catch (error) {
+//       console.error('Error toggling status:', error);
+//       toast.error('Failed to toggle user status');
+//     }
+//   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  };
+//   const formatDate = (dateString) => {
+//     const date = new Date(dateString);
+//     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+//   };
 
-  if (loading) return <div className="loading-spinner"></div>;
+//   if (loading) return <div className="loading-spinner"></div>;
 
-  return (
-    <div className="users-tab">
-      <h1 className="page-title">User Management</h1>
+//   return (
+//     <div className="users-tab">
+//       <h1 className="page-title">User Management</h1>
       
-      <div className="table-responsive">
-        <table className="data-table users-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Joined</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.length > 0 ? (
-              users.map(user => (
-                <tr key={user._id}>
-                  <td>{user.name}</td>
-                  <td>{user.email}</td>
-                  <td>{user.phone || 'N/A'}</td>
-                  <td>
-                    <select 
-                      value={user.role} 
-                      onChange={(e) => updateUserRole(user._id, e.target.value)}
-                      className="role-select"
-                    >
-                      {roles.map(role => (
-                        <option key={role} value={role}>{role}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <span className={`status-badge ${user.status}`}>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td>{formatDate(user.createdAt)}</td>
-                  <td>
-                    <div className="action-buttons">
-                      <button 
-                        className={`btn-status ${user.status === 'active' ? 'btn-disable' : 'btn-enable'}`}
-                        onClick={() => toggleUserStatus(user._id)}
-                      >
-                        {user.status === 'active' ? 'Disable' : 'Enable'}
-                      </button>
-                      <button className="btn-edit">Edit</button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="7" className="no-data">No users found</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
+//       <div className="table-responsive">
+//         <table className="data-table users-table">
+//           <thead>
+//             <tr>
+//               <th>Name</th>
+//               <th>Email</th>
+//               <th>Phone</th>
+//               <th>Role</th>
+//               <th>Status</th>
+//               <th>Joined</th>
+//               <th>Actions</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {users.length > 0 ? (
+//               users.map(user => (
+//                 <tr key={user._id}>
+//                   <td>{user.name}</td>
+//                   <td>{user.email}</td>
+//                   <td>{user.phone || 'N/A'}</td>
+//                   <td>
+//                     <select 
+//                       value={user.role} 
+//                       onChange={(e) => updateUserRole(user._id, e.target.value)}
+//                       className="role-select"
+//                     >
+//                       {roles.map(role => (
+//                         <option key={role} value={role}>{role}</option>
+//                       ))}
+//                     </select>
+//                   </td>
+//                   <td>
+//                     <span className={`status-badge ${user.status}`}>
+//                       {user.status}
+//                     </span>
+//                   </td>
+//                   <td>{formatDate(user.createdAt)}</td>
+//                   <td>
+//                     <div className="action-buttons">
+//                       <button 
+//                         className={`btn-status ${user.status === 'active' ? 'btn-disable' : 'btn-enable'}`}
+//                         onClick={() => toggleUserStatus(user._id)}
+//                       >
+//                         {user.status === 'active' ? 'Disable' : 'Enable'}
+//                       </button>
+//                       <button className="btn-edit">Edit</button>
+//                     </div>
+//                   </td>
+//                 </tr>
+//               ))
+//             ) : (
+//               <tr>
+//                 <td colSpan="7" className="no-data">No users found</td>
+//               </tr>
+//             )}
+//           </tbody>
+//         </table>
+//       </div>
+//     </div>
+//   );
+// };
 
-// ==================== STAFF TAB ====================
-const StaffTab = () => {
-  const [staff, setStaff] = useState({ cooks: [], delivery: [], cashiers: [] });
-  const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState('cooks');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showAssignModal, setShowAssignModal] = useState(false);
-  const [selectedStaff, setSelectedStaff] = useState(null);
-  const [showPerformanceModal, setShowPerformanceModal] = useState(false);
-  const [staffPerformance, setStaffPerformance] = useState(null);
+// // ==================== STAFF TAB ====================
+// const StaffTab = () => {
+//   const [staff, setStaff] = useState({ cooks: [], delivery: [], cashiers: [] });
+//   const [loading, setLoading] = useState(true);
+//   const [activeSection, setActiveSection] = useState('cooks');
+//   const [showAddModal, setShowAddModal] = useState(false);
+//   const [showAssignModal, setShowAssignModal] = useState(false);
+//   const [selectedStaff, setSelectedStaff] = useState(null);
+//   const [showPerformanceModal, setShowPerformanceModal] = useState(false);
+//   const [staffPerformance, setStaffPerformance] = useState(null);
 
-  useEffect(() => {
-    fetchStaff();
-  }, []);
+//   useEffect(() => {
+//     fetchStaff();
+//   }, []);
 
-  const fetchStaff = async () => {
-    try {
-      setLoading(true);
+//   const fetchStaff = async () => {
+//     try {
+//       setLoading(true);
       
-      const [cooks, delivery, cashiers] = await Promise.all([
-        staffService.getStaffByRole('cook'),
-        staffService.getStaffByRole('delivery'),
-        staffService.getStaffByRole('cashier')
-      ]);
+//       const [cooks, delivery, cashiers] = await Promise.all([
+//         staffService.getStaffByRole('cook'),
+//         staffService.getStaffByRole('delivery'),
+//         staffService.getStaffByRole('cashier')
+//       ]);
       
-      setStaff({
-        cooks: cooks.staff || [],
-        delivery: delivery.staff || [],
-        cashiers: cashiers.staff || []
-      });
-    } catch (error) {
-      console.error('Error fetching staff:', error);
-      toast.error('Failed to load staff data');
+//       setStaff({
+//         cooks: cooks.staff || [],
+//         delivery: delivery.staff || [],
+//         cashiers: cashiers.staff || []
+//       });
+//     } catch (error) {
+//       console.error('Error fetching staff:', error);
+//       toast.error('Failed to load staff data');
       
-      setStaff({
-        cooks: [
-          { _id: 'chef1', name: 'Chef Berhanu', email: 'berhanu@sewrica.com', phone: '0923456789', status: 'active', assignedOrders: 5, completedOrders: 45, rating: 4.8 },
-          { _id: 'chef2', name: 'Chef Tigist', email: 'tigist@sewrica.com', phone: '0934567890', status: 'active', assignedOrders: 3, completedOrders: 38, rating: 4.9 },
-          { _id: 'chef3', name: 'Chef Solomon', email: 'solomon@sewrica.com', phone: '0945678901', status: 'busy', assignedOrders: 7, completedOrders: 52, rating: 4.7 },
-        ],
-        delivery: [
-          { _id: 'del1', name: 'Abebe Kebede', email: 'abebe@sewrica.com', phone: '0956789012', status: 'active', assignedOrders: 4, completedOrders: 67, rating: 4.6 },
-          { _id: 'del2', name: 'Almaz Worku', email: 'almaz@sewrica.com', phone: '0967890123', status: 'active', assignedOrders: 2, completedOrders: 43, rating: 4.9 },
-          { _id: 'del3', name: 'Kebede Alemu', email: 'kebede@sewrica.com', phone: '0978901234', status: 'on_delivery', assignedOrders: 6, completedOrders: 58, rating: 4.5 },
-        ],
-        cashiers: [
-          { _id: 'cash1', name: 'Meron Tadesse', email: 'meron@sewrica.com', phone: '0989012345', status: 'active' },
-        ]
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+//       setStaff({
+//         cooks: [
+//           { _id: 'chef1', name: 'Chef Berhanu', email: 'berhanu@sewrica.com', phone: '0923456789', status: 'active', assignedOrders: 5, completedOrders: 45, rating: 4.8 },
+//           { _id: 'chef2', name: 'Chef Tigist', email: 'tigist@sewrica.com', phone: '0934567890', status: 'active', assignedOrders: 3, completedOrders: 38, rating: 4.9 },
+//           { _id: 'chef3', name: 'Chef Solomon', email: 'solomon@sewrica.com', phone: '0945678901', status: 'busy', assignedOrders: 7, completedOrders: 52, rating: 4.7 },
+//         ],
+//         delivery: [
+//           { _id: 'del1', name: 'Abebe Kebede', email: 'abebe@sewrica.com', phone: '0956789012', status: 'active', assignedOrders: 4, completedOrders: 67, rating: 4.6 },
+//           { _id: 'del2', name: 'Almaz Worku', email: 'almaz@sewrica.com', phone: '0967890123', status: 'active', assignedOrders: 2, completedOrders: 43, rating: 4.9 },
+//           { _id: 'del3', name: 'Kebede Alemu', email: 'kebede@sewrica.com', phone: '0978901234', status: 'on_delivery', assignedOrders: 6, completedOrders: 58, rating: 4.5 },
+//         ],
+//         cashiers: [
+//           { _id: 'cash1', name: 'Meron Tadesse', email: 'meron@sewrica.com', phone: '0989012345', status: 'active' },
+//         ]
+//       });
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
 
-  const handleStaffAdded = () => {
-    fetchStaff();
-  };
+//   const handleStaffAdded = () => {
+//     fetchStaff();
+//   };
 
-  const handleViewPerformance = async (staffId, role) => {
-    try {
-      setLoading(true);
-      let data;
+//   const handleViewPerformance = async (staffId, role) => {
+//     try {
+//       setLoading(true);
+//       let data;
       
-      if (role === 'cook') {
-        data = await staffService.getChefReport(staffId);
-      } else if (role === 'delivery') {
-        data = await staffService.getDeliveryReport(staffId);
-      }
+//       if (role === 'cook') {
+//         data = await staffService.getChefReport(staffId);
+//       } else if (role === 'delivery') {
+//         data = await staffService.getDeliveryReport(staffId);
+//       }
       
-      setStaffPerformance(data);
-      setSelectedStaff({ id: staffId, role });
-      setShowPerformanceModal(true);
-    } catch (error) {
-      console.error('Error fetching performance:', error);
+//       setStaffPerformance(data);
+//       setSelectedStaff({ id: staffId, role });
+//       setShowPerformanceModal(true);
+//     } catch (error) {
+//       console.error('Error fetching performance:', error);
       
-      const mockData = role === 'cook' ? {
-        summary: {
-          totalOrders: 45,
-          totalItemsCooked: 78,
-          totalCookingTime: 540,
-          averageCookingTime: 12
-        },
-        itemsBreakdown: {
-          'Cheese Burger': 25,
-          'Doro Wat': 18,
-          'Pizza': 15,
-          'Pasta': 12,
-          'Salad': 8
-        }
-      } : {
-        summary: {
-          totalDeliveries: 67,
-          totalAmount: 24500,
-          totalDeliveryTime: 1675,
-          averageDeliveryTime: 25
-        },
-        dailyBreakdown: {
-          '2024-03-01': { count: 12, totalAmount: 4500 },
-          '2024-03-02': { count: 15, totalAmount: 5200 },
-          '2024-03-03': { count: 10, totalAmount: 3800 },
-        }
-      };
+//       const mockData = role === 'cook' ? {
+//         summary: {
+//           totalOrders: 45,
+//           totalItemsCooked: 78,
+//           totalCookingTime: 540,
+//           averageCookingTime: 12
+//         },
+//         itemsBreakdown: {
+//           'Cheese Burger': 25,
+//           'Doro Wat': 18,
+//           'Pizza': 15,
+//           'Pasta': 12,
+//           'Salad': 8
+//         }
+//       } : {
+//         summary: {
+//           totalDeliveries: 67,
+//           totalAmount: 24500,
+//           totalDeliveryTime: 1675,
+//           averageDeliveryTime: 25
+//         },
+//         dailyBreakdown: {
+//           '2024-03-01': { count: 12, totalAmount: 4500 },
+//           '2024-03-02': { count: 15, totalAmount: 5200 },
+//           '2024-03-03': { count: 10, totalAmount: 3800 },
+//         }
+//       };
       
-      setStaffPerformance(mockData);
-      setSelectedStaff({ id: staffId, role });
-      setShowPerformanceModal(true);
-      toast.info('Using sample performance data');
-    } finally {
-      setLoading(false);
-    }
-  };
+//       setStaffPerformance(mockData);
+//       setSelectedStaff({ id: staffId, role });
+//       setShowPerformanceModal(true);
+//       toast.info('Using sample performance data');
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
 
-  const handleDeleteStaff = async (staffId, role) => {
-    if (!window.confirm('Are you sure you want to remove this staff member?')) return;
+//   const handleDeleteStaff = async (staffId, role) => {
+//     if (!window.confirm('Are you sure you want to remove this staff member?')) return;
     
-    try {
-      const response = await fetch(`/api/admin/staff/${staffId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+//     try {
+//       const response = await fetch(`/api/admin/staff/${staffId}`, {
+//         method: 'DELETE',
+//         headers: {
+//           'Authorization': `Bearer ${localStorage.getItem('token')}`
+//         }
+//       });
       
-      if (response.ok) {
-        toast.success('Staff member removed');
-        fetchStaff();
-      } else {
-        toast.error('Failed to remove staff');
-      }
-    } catch (error) {
-      console.error('Error deleting staff:', error);
-      toast.error('Network error');
-    }
-  };
+//       if (response.ok) {
+//         toast.success('Staff member removed');
+//         fetchStaff();
+//       } else {
+//         toast.error('Failed to remove staff');
+//       }
+//     } catch (error) {
+//       console.error('Error deleting staff:', error);
+//       toast.error('Network error');
+//     }
+//   };
 
-  const handleEditStaff = (staffMember) => {
-    toast.info('Edit functionality coming soon');
-  };
+//   const handleEditStaff = (staffMember) => {
+//     toast.info('Edit functionality coming soon');
+//   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      active: '#27ae60',
-      busy: '#f39c12',
-      on_delivery: '#3498db',
-      offline: '#95a5a6'
-    };
-    return colors[status] || '#95a5a6';
-  };
+//   const getStatusColor = (status) => {
+//     const colors = {
+//       active: '#27ae60',
+//       busy: '#f39c12',
+//       on_delivery: '#3498db',
+//       offline: '#95a5a6'
+//     };
+//     return colors[status] || '#95a5a6';
+//   };
 
-  const getStatusText = (status) => {
-    const texts = {
-      active: 'Available',
-      busy: 'Busy',
-      on_delivery: 'On Delivery',
-      offline: 'Offline'
-    };
-    return texts[status] || status;
-  };
+//   const getStatusText = (status) => {
+//     const texts = {
+//       active: 'Available',
+//       busy: 'Busy',
+//       on_delivery: 'On Delivery',
+//       offline: 'Offline'
+//     };
+//     return texts[status] || status;
+//   };
 
-  const renderStars = (rating) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      if (i <= rating) {
-        stars.push('★');
-      } else if (i - 0.5 <= rating) {
-        stars.push('½');
-      } else {
-        stars.push('☆');
-      }
-    }
-    return stars.join('');
-  };
+//   const renderStars = (rating) => {
+//     const stars = [];
+//     for (let i = 1; i <= 5; i++) {
+//       if (i <= rating) {
+//         stars.push('★');
+//       } else if (i - 0.5 <= rating) {
+//         stars.push('½');
+//       } else {
+//         stars.push('☆');
+//       }
+//     }
+//     return stars.join('');
+//   };
 
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Loading staff data...</p>
-      </div>
-    );
-  }
+//   if (loading) {
+//     return (
+//       <div className="loading-container">
+//         <div className="loading-spinner"></div>
+//         <p>Loading staff data...</p>
+//       </div>
+//     );
+//   }
 
-  return (
-    <div className="staff-tab">
-      <AddStaffModal 
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onStaffAdded={handleStaffAdded}
-      />
+//   return (
+//     <div className="staff-tab">
+//       <AddStaffModal 
+//         isOpen={showAddModal}
+//         onClose={() => setShowAddModal(false)}
+//         onStaffAdded={handleStaffAdded}
+//       />
 
-      {showPerformanceModal && staffPerformance && (
-        <div className="modal-overlay" onClick={() => setShowPerformanceModal(false)}>
-          <div className="modal-content performance-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Staff Performance Report</h2>
-              <button className="modal-close-btn" onClick={() => setShowPerformanceModal(false)}>×</button>
-            </div>
+//       {showPerformanceModal && staffPerformance && (
+//         <div className="modal-overlay" onClick={() => setShowPerformanceModal(false)}>
+//           <div className="modal-content performance-modal" onClick={e => e.stopPropagation()}>
+//             <div className="modal-header">
+//               <h2>Staff Performance Report</h2>
+//               <button className="modal-close-btn" onClick={() => setShowPerformanceModal(false)}>×</button>
+//             </div>
             
-            {selectedStaff?.role === 'cook' && (
-              <div className="performance-data">
-                <div className="summary-cards">
-                  <div className="summary-card">
-                    <span className="label">Total Orders</span>
-                    <span className="value">{staffPerformance.summary?.totalOrders || 0}</span>
-                  </div>
-                  <div className="summary-card">
-                    <span className="label">Items Cooked</span>
-                    <span className="value">{staffPerformance.summary?.totalItemsCooked || 0}</span>
-                  </div>
-                  <div className="summary-card">
-                    <span className="label">Total Time</span>
-                    <span className="value">{staffPerformance.summary?.totalCookingTime || 0} min</span>
-                  </div>
-                  <div className="summary-card">
-                    <span className="label">Avg. Time</span>
-                    <span className="value">{staffPerformance.summary?.averageCookingTime || 0} min</span>
-                  </div>
-                </div>
+//             {selectedStaff?.role === 'cook' && (
+//               <div className="performance-data">
+//                 <div className="summary-cards">
+//                   <div className="summary-card">
+//                     <span className="label">Total Orders</span>
+//                     <span className="value">{staffPerformance.summary?.totalOrders || 0}</span>
+//                   </div>
+//                   <div className="summary-card">
+//                     <span className="label">Items Cooked</span>
+//                     <span className="value">{staffPerformance.summary?.totalItemsCooked || 0}</span>
+//                   </div>
+//                   <div className="summary-card">
+//                     <span className="label">Total Time</span>
+//                     <span className="value">{staffPerformance.summary?.totalCookingTime || 0} min</span>
+//                   </div>
+//                   <div className="summary-card">
+//                     <span className="label">Avg. Time</span>
+//                     <span className="value">{staffPerformance.summary?.averageCookingTime || 0} min</span>
+//                   </div>
+//                 </div>
 
-                <h3 className="section-title">Items Cooked Breakdown</h3>
-                <table className="report-table">
-                  <thead>
-                    <tr>
-                      <th>Menu Item</th>
-                      <th>Quantity</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(staffPerformance.itemsBreakdown || {}).map(([item, qty]) => (
-                      <tr key={item}>
-                        <td>{item}</td>
-                        <td>{qty}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+//                 <h3 className="section-title">Items Cooked Breakdown</h3>
+//                 <table className="report-table">
+//                   <thead>
+//                     <tr>
+//                       <th>Menu Item</th>
+//                       <th>Quantity</th>
+//                     </tr>
+//                   </thead>
+//                   <tbody>
+//                     {Object.entries(staffPerformance.itemsBreakdown || {}).map(([item, qty]) => (
+//                       <tr key={item}>
+//                         <td>{item}</td>
+//                         <td>{qty}</td>
+//                       </tr>
+//                     ))}
+//                   </tbody>
+//                 </table>
+//               </div>
+//             )}
 
-            {selectedStaff?.role === 'delivery' && (
-              <div className="performance-data">
-                <div className="summary-cards">
-                  <div className="summary-card">
-                    <span className="label">Total Deliveries</span>
-                    <span className="value">{staffPerformance.summary?.totalDeliveries || 0}</span>
-                  </div>
-                  <div className="summary-card">
-                    <span className="label">Total Amount</span>
-                    <span className="value">ETB {staffPerformance.summary?.totalAmount?.toLocaleString() || 0}</span>
-                  </div>
-                  <div className="summary-card">
-                    <span className="label">Total Time</span>
-                    <span className="value">{staffPerformance.summary?.totalDeliveryTime || 0} min</span>
-                  </div>
-                  <div className="summary-card">
-                    <span className="label">Avg. Time</span>
-                    <span className="value">{staffPerformance.summary?.averageDeliveryTime || 0} min</span>
-                  </div>
-                </div>
+//             {selectedStaff?.role === 'delivery' && (
+//               <div className="performance-data">
+//                 <div className="summary-cards">
+//                   <div className="summary-card">
+//                     <span className="label">Total Deliveries</span>
+//                     <span className="value">{staffPerformance.summary?.totalDeliveries || 0}</span>
+//                   </div>
+//                   <div className="summary-card">
+//                     <span className="label">Total Amount</span>
+//                     <span className="value">ETB {staffPerformance.summary?.totalAmount?.toLocaleString() || 0}</span>
+//                   </div>
+//                   <div className="summary-card">
+//                     <span className="label">Total Time</span>
+//                     <span className="value">{staffPerformance.summary?.totalDeliveryTime || 0} min</span>
+//                   </div>
+//                   <div className="summary-card">
+//                     <span className="label">Avg. Time</span>
+//                     <span className="value">{staffPerformance.summary?.averageDeliveryTime || 0} min</span>
+//                   </div>
+//                 </div>
 
-                <h3 className="section-title">Daily Performance</h3>
-                <table className="report-table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Deliveries</th>
-                      <th>Total Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(staffPerformance.dailyBreakdown || {}).map(([date, data]) => (
-                      <tr key={date}>
-                        <td>{date}</td>
-                        <td>{data.count}</td>
-                        <td>ETB {data.totalAmount?.toLocaleString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+//                 <h3 className="section-title">Daily Performance</h3>
+//                 <table className="report-table">
+//                   <thead>
+//                     <tr>
+//                       <th>Date</th>
+//                       <th>Deliveries</th>
+//                       <th>Total Amount</th>
+//                     </tr>
+//                   </thead>
+//                   <tbody>
+//                     {Object.entries(staffPerformance.dailyBreakdown || {}).map(([date, data]) => (
+//                       <tr key={date}>
+//                         <td>{date}</td>
+//                         <td>{data.count}</td>
+//                         <td>ETB {data.totalAmount?.toLocaleString()}</td>
+//                       </tr>
+//                     ))}
+//                   </tbody>
+//                 </table>
+//               </div>
+//             )}
+//           </div>
+//         </div>
+//       )}
 
-      <div className="staff-tab-header">
-        <h1 className="page-title">Staff Management</h1>
-        <button 
-          className="btn-primary"
-          onClick={() => setShowAddModal(true)}
-        >
-          + Add New Staff
-        </button>
-      </div>
+//       <div className="staff-tab-header">
+//         <h1 className="page-title">Staff Management</h1>
+//         <button 
+//           className="btn-primary"
+//           onClick={() => setShowAddModal(true)}
+//         >
+//           + Add New Staff
+//         </button>
+//       </div>
 
-      <div className="staff-tabs">
-        <button 
-          className={`staff-tab-btn ${activeSection === 'cooks' ? 'active' : ''}`}
-          onClick={() => setActiveSection('cooks')}
-        >
-          👨‍🍳 Chefs ({staff.cooks.length})
-        </button>
-        <button 
-          className={`staff-tab-btn ${activeSection === 'delivery' ? 'active' : ''}`}
-          onClick={() => setActiveSection('delivery')}
-        >
-          🚚 Delivery ({staff.delivery.length})
-        </button>
-        <button 
-          className={`staff-tab-btn ${activeSection === 'cashiers' ? 'active' : ''}`}
-          onClick={() => setActiveSection('cashiers')}
-        >
-          💰 Cashiers ({staff.cashiers.length})
-        </button>
-      </div>
+//       <div className="staff-tabs">
+//         <button 
+//           className={`staff-tab-btn ${activeSection === 'cooks' ? 'active' : ''}`}
+//           onClick={() => setActiveSection('cooks')}
+//         >
+//           👨‍🍳 Chefs ({staff.cooks.length})
+//         </button>
+//         <button 
+//           className={`staff-tab-btn ${activeSection === 'delivery' ? 'active' : ''}`}
+//           onClick={() => setActiveSection('delivery')}
+//         >
+//           🚚 Delivery ({staff.delivery.length})
+//         </button>
+//         <button 
+//           className={`staff-tab-btn ${activeSection === 'cashiers' ? 'active' : ''}`}
+//           onClick={() => setActiveSection('cashiers')}
+//         >
+//           💰 Cashiers ({staff.cashiers.length})
+//         </button>
+//       </div>
 
-      <div className="staff-grid">
-        {activeSection === 'cooks' && staff.cooks.map(cook => (
-          <div key={cook._id} className="staff-card">
-            <div className="staff-card-header">
-              <div className="staff-avatar">👨‍🍳</div>
-              <div className="staff-info">
-                <h3>{cook.name}</h3>
-                <span className="staff-status" style={{ backgroundColor: getStatusColor(cook.status) }}>
-                  {getStatusText(cook.status)}
-                </span>
-              </div>
-            </div>
+//       <div className="staff-grid">
+//         {activeSection === 'cooks' && staff.cooks.map(cook => (
+//           <div key={cook._id} className="staff-card">
+//             <div className="staff-card-header">
+//               <div className="staff-avatar">👨‍🍳</div>
+//               <div className="staff-info">
+//                 <h3>{cook.name}</h3>
+//                 <span className="staff-status" style={{ backgroundColor: getStatusColor(cook.status) }}>
+//                   {getStatusText(cook.status)}
+//                 </span>
+//               </div>
+//             </div>
 
-            <div className="staff-card-body">
-              <div className="staff-detail">
-                <span className="detail-label">📧 Email:</span>
-                <span className="detail-value">{cook.email}</span>
-              </div>
-              <div className="staff-detail">
-                <span className="detail-label">📱 Phone:</span>
-                <span className="detail-value">{cook.phone}</span>
-              </div>
-              <div className="staff-detail">
-                <span className="detail-label">📊 Performance:</span>
-                <span className="detail-value rating">
-                  {renderStars(cook.rating || 4.5)} ({cook.rating || 4.5})
-                </span>
-              </div>
-              <div className="staff-stats">
-                <div className="stat">
-                  <span className="stat-value">{cook.assignedOrders || 0}</span>
-                  <span className="stat-label">Active</span>
-                </div>
-                <div className="stat">
-                  <span className="stat-value">{cook.completedOrders || 0}</span>
-                  <span className="stat-label">Completed</span>
-                </div>
-              </div>
-            </div>
+//             <div className="staff-card-body">
+//               <div className="staff-detail">
+//                 <span className="detail-label">📧 Email:</span>
+//                 <span className="detail-value">{cook.email}</span>
+//               </div>
+//               <div className="staff-detail">
+//                 <span className="detail-label">📱 Phone:</span>
+//                 <span className="detail-value">{cook.phone}</span>
+//               </div>
+//               <div className="staff-detail">
+//                 <span className="detail-label">📊 Performance:</span>
+//                 <span className="detail-value rating">
+//                   {renderStars(cook.rating || 4.5)} ({cook.rating || 4.5})
+//                 </span>
+//               </div>
+//               <div className="staff-stats">
+//                 <div className="stat">
+//                   <span className="stat-value">{cook.assignedOrders || 0}</span>
+//                   <span className="stat-label">Active</span>
+//                 </div>
+//                 <div className="stat">
+//                   <span className="stat-value">{cook.completedOrders || 0}</span>
+//                   <span className="stat-label">Completed</span>
+//                 </div>
+//               </div>
+//             </div>
 
-            <div className="staff-card-footer">
-              <button 
-                className="btn-view"
-                onClick={() => handleViewPerformance(cook._id, 'cook')}
-              >
-                📊 View Report
-              </button>
-              <button 
-                className="btn-edit"
-                onClick={() => handleEditStaff(cook)}
-              >
-                ✏️ Edit
-              </button>
-              <button 
-                className="btn-delete"
-                onClick={() => handleDeleteStaff(cook._id, 'cook')}
-              >
-                🗑️ Delete
-              </button>
-            </div>
-          </div>
-        ))}
+//             <div className="staff-card-footer">
+//               <button 
+//                 className="btn-view"
+//                 onClick={() => handleViewPerformance(cook._id, 'cook')}
+//               >
+//                 📊 View Report
+//               </button>
+//               <button 
+//                 className="btn-edit"
+//                 onClick={() => handleEditStaff(cook)}
+//               >
+//                 ✏️ Edit
+//               </button>
+//               <button 
+//                 className="btn-delete"
+//                 onClick={() => handleDeleteStaff(cook._id, 'cook')}
+//               >
+//                 🗑️ Delete
+//               </button>
+//             </div>
+//           </div>
+//         ))}
 
-        {activeSection === 'delivery' && staff.delivery.map(delivery => (
-          <div key={delivery._id} className="staff-card">
-            <div className="staff-card-header">
-              <div className="staff-avatar">🚚</div>
-              <div className="staff-info">
-                <h3>{delivery.name}</h3>
-                <span className="staff-status" style={{ backgroundColor: getStatusColor(delivery.status) }}>
-                  {getStatusText(delivery.status)}
-                </span>
-              </div>
-            </div>
+//         {activeSection === 'delivery' && staff.delivery.map(delivery => (
+//           <div key={delivery._id} className="staff-card">
+//             <div className="staff-card-header">
+//               <div className="staff-avatar">🚚</div>
+//               <div className="staff-info">
+//                 <h3>{delivery.name}</h3>
+//                 <span className="staff-status" style={{ backgroundColor: getStatusColor(delivery.status) }}>
+//                   {getStatusText(delivery.status)}
+//                 </span>
+//               </div>
+//             </div>
 
-            <div className="staff-card-body">
-              <div className="staff-detail">
-                <span className="detail-label">📧 Email:</span>
-                <span className="detail-value">{delivery.email}</span>
-              </div>
-              <div className="staff-detail">
-                <span className="detail-label">📱 Phone:</span>
-                <span className="detail-value">{delivery.phone}</span>
-              </div>
-              <div className="staff-detail">
-                <span className="detail-label">📊 Performance:</span>
-                <span className="detail-value rating">
-                  {renderStars(delivery.rating || 4.5)} ({delivery.rating || 4.5})
-                </span>
-              </div>
-              <div className="staff-stats">
-                <div className="stat">
-                  <span className="stat-value">{delivery.assignedOrders || 0}</span>
-                  <span className="stat-label">Active</span>
-                </div>
-                <div className="stat">
-                  <span className="stat-value">{delivery.completedOrders || 0}</span>
-                  <span className="stat-label">Delivered</span>
-                </div>
-              </div>
-            </div>
+//             <div className="staff-card-body">
+//               <div className="staff-detail">
+//                 <span className="detail-label">📧 Email:</span>
+//                 <span className="detail-value">{delivery.email}</span>
+//               </div>
+//               <div className="staff-detail">
+//                 <span className="detail-label">📱 Phone:</span>
+//                 <span className="detail-value">{delivery.phone}</span>
+//               </div>
+//               <div className="staff-detail">
+//                 <span className="detail-label">📊 Performance:</span>
+//                 <span className="detail-value rating">
+//                   {renderStars(delivery.rating || 4.5)} ({delivery.rating || 4.5})
+//                 </span>
+//               </div>
+//               <div className="staff-stats">
+//                 <div className="stat">
+//                   <span className="stat-value">{delivery.assignedOrders || 0}</span>
+//                   <span className="stat-label">Active</span>
+//                 </div>
+//                 <div className="stat">
+//                   <span className="stat-value">{delivery.completedOrders || 0}</span>
+//                   <span className="stat-label">Delivered</span>
+//                 </div>
+//               </div>
+//             </div>
 
-            <div className="staff-card-footer">
-              <button 
-                className="btn-view"
-                onClick={() => handleViewPerformance(delivery._id, 'delivery')}
-              >
-                📊 View Report
-              </button>
-              <button 
-                className="btn-edit"
-                onClick={() => handleEditStaff(delivery)}
-              >
-                ✏️ Edit
-              </button>
-              <button 
-                className="btn-delete"
-                onClick={() => handleDeleteStaff(delivery._id, 'delivery')}
-              >
-                🗑️ Delete
-              </button>
-            </div>
-          </div>
-        ))}
+//             <div className="staff-card-footer">
+//               <button 
+//                 className="btn-view"
+//                 onClick={() => handleViewPerformance(delivery._id, 'delivery')}
+//               >
+//                 📊 View Report
+//               </button>
+//               <button 
+//                 className="btn-edit"
+//                 onClick={() => handleEditStaff(delivery)}
+//               >
+//                 ✏️ Edit
+//               </button>
+//               <button 
+//                 className="btn-delete"
+//                 onClick={() => handleDeleteStaff(delivery._id, 'delivery')}
+//               >
+//                 🗑️ Delete
+//               </button>
+//             </div>
+//           </div>
+//         ))}
 
-        {activeSection === 'cashiers' && staff.cashiers.map(cashier => (
-          <div key={cashier._id} className="staff-card">
-            <div className="staff-card-header">
-              <div className="staff-avatar">💰</div>
-              <div className="staff-info">
-                <h3>{cashier.name}</h3>
-                <span className="staff-status" style={{ backgroundColor: getStatusColor(cashier.status) }}>
-                  {getStatusText(cashier.status)}
-                </span>
-              </div>
-            </div>
+//         {activeSection === 'cashiers' && staff.cashiers.map(cashier => (
+//           <div key={cashier._id} className="staff-card">
+//             <div className="staff-card-header">
+//               <div className="staff-avatar">💰</div>
+//               <div className="staff-info">
+//                 <h3>{cashier.name}</h3>
+//                 <span className="staff-status" style={{ backgroundColor: getStatusColor(cashier.status) }}>
+//                   {getStatusText(cashier.status)}
+//                 </span>
+//               </div>
+//             </div>
 
-            <div className="staff-card-body">
-              <div className="staff-detail">
-                <span className="detail-label">📧 Email:</span>
-                <span className="detail-value">{cashier.email}</span>
-              </div>
-              <div className="staff-detail">
-                <span className="detail-label">📱 Phone:</span>
-                <span className="detail-value">{cashier.phone}</span>
-              </div>
-            </div>
+//             <div className="staff-card-body">
+//               <div className="staff-detail">
+//                 <span className="detail-label">📧 Email:</span>
+//                 <span className="detail-value">{cashier.email}</span>
+//               </div>
+//               <div className="staff-detail">
+//                 <span className="detail-label">📱 Phone:</span>
+//                 <span className="detail-value">{cashier.phone}</span>
+//               </div>
+//             </div>
 
-            <div className="staff-card-footer">
-              <button 
-                className="btn-edit"
-                onClick={() => handleEditStaff(cashier)}
-              >
-                ✏️ Edit
-              </button>
-              <button 
-                className="btn-delete"
-                onClick={() => handleDeleteStaff(cashier._id, 'cashier')}
-              >
-                🗑️ Delete
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+//             <div className="staff-card-footer">
+//               <button 
+//                 className="btn-edit"
+//                 onClick={() => handleEditStaff(cashier)}
+//               >
+//                 ✏️ Edit
+//               </button>
+//               <button 
+//                 className="btn-delete"
+//                 onClick={() => handleDeleteStaff(cashier._id, 'cashier')}
+//               >
+//                 🗑️ Delete
+//               </button>
+//             </div>
+//           </div>
+//         ))}
+//       </div>
 
-      {staff[activeSection].length === 0 && (
-        <div className="empty-state">
-          <div className="empty-icon">
-            {activeSection === 'cooks' ? '👨‍🍳' : activeSection === 'delivery' ? '🚚' : '💰'}
-          </div>
-          <h3>No {activeSection} found</h3>
-          <p>Click "Add New Staff" to add a {activeSection.slice(0, -1)}.</p>
-        </div>
-      )}
-    </div>
-  );
-};
+//       {staff[activeSection].length === 0 && (
+//         <div className="empty-state">
+//           <div className="empty-icon">
+//             {activeSection === 'cooks' ? '👨‍🍳' : activeSection === 'delivery' ? '🚚' : '💰'}
+//           </div>
+//           <h3>No {activeSection} found</h3>
+//           <p>Click "Add New Staff" to add a {activeSection.slice(0, -1)}.</p>
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
 
-export default AdminDashboard;
+// export default AdminDashboard;

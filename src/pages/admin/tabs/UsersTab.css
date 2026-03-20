@@ -1,0 +1,136 @@
+/* src/pages/admin/tabs/UsersTab.css */
+.users-tab {
+  padding: 20px 0;
+}
+
+.users-table {
+  min-width: 1000px;
+}
+
+.role-select {
+  padding: 6px 10px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  width: 100%;
+  max-width: 120px;
+  font-size: 14px;
+}
+
+.role-select:focus {
+  outline: none;
+  border-color: #27ae60;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-status {
+  padding: 6px 12px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.btn-status:hover {
+  transform: translateY(-1px);
+}
+
+.btn-disable {
+  background: #e74c3c;
+}
+
+.btn-disable:hover {
+  background: #c0392b;
+}
+
+.btn-enable {
+  background: #27ae60;
+}
+
+.btn-enable:hover {
+  background: #229954;
+}
+
+.btn-edit-user {
+  padding: 6px 12px;
+  background: #f39c12;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s;
+}
+
+.btn-edit-user:hover {
+  background: #e67e22;
+  transform: translateY(-1px);
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #ecf0f1;
+  border-top-color: #27ae60;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .users-tab {
+    padding: 15px;
+  }
+  
+  .table-responsive {
+    overflow-x: auto;
+  }
+  
+  .users-table {
+    min-width: 800px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .btn-status,
+  .btn-edit-user {
+    width: 100%;
+  }
+  
+  .role-select {
+    max-width: 100px;
+  }
+}

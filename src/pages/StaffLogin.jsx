@@ -1,3 +1,4 @@
+// src/pages/StaffLogin.jsx (updated redirect logic)
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -27,7 +28,7 @@ const StaffLogin = () => {
         console.log('User role:', user?.role);
         
         // Check if user is staff (not customer)
-        if (user && ['cook', 'delivery', 'cashier', 'admin'].includes(user.role)) {
+        if (user && ['cook', 'chef', 'delivery', 'cashier', 'admin'].includes(user.role)) {
           toast.success(`Welcome back, ${user.name}!`);
           
           // Determine redirect path based on role
@@ -35,6 +36,7 @@ const StaffLogin = () => {
           
           switch(user.role) {
             case 'cook':
+            case 'chef':
               redirectPath = '/staff/kitchen';
               break;
             case 'delivery':
@@ -46,20 +48,14 @@ const StaffLogin = () => {
             case 'admin':
               redirectPath = '/admin';
               break;
+            default:
+              redirectPath = '/staff/dashboard';
           }
           
           console.log('Redirecting to:', redirectPath);
           
-          // METHOD 1: Try React Router navigate first
-          navigate(redirectPath, { replace: true });
-          
-          // METHOD 2: Fallback with window.location if still on login page after 1 second
-          setTimeout(() => {
-            if (window.location.pathname.includes('staff/login')) {
-              console.log('Navigate failed, using window.location fallback');
-              window.location.href = redirectPath;
-            }
-          }, 1000);
+          // Use window.location for reliable redirect
+          window.location.href = redirectPath;
           
         } else {
           toast.error('This portal is for staff only. Please use customer login.');
@@ -70,7 +66,7 @@ const StaffLogin = () => {
       }
     } catch (error) {
       console.error('Login error details:', error);
-      toast.error('An unexpected error occurred');
+      toast.error(error.response?.data?.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }

@@ -1,13 +1,9 @@
+
 import React from 'react';
-import { Container } from 'react-bootstrap';
+import AdminDashboard from './admin/AdminDashboard';
 
 const Admin = () => {
-  return (
-    <Container className="py-5">
-      <h1>Admin Dashboard</h1>
-      <p>Admin features coming soon!</p>
-    </Container>
-  );
+  return <AdminDashboard />;
 };
 
 export default Admin;

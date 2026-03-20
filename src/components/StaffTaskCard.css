@@ -392,3 +392,132 @@
     font-size: 18px;
   }
 }
+
+/* Add to StaffTaskCard.css */
+
+.accept-reject-buttons {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.btn-accept {
+  flex: 1;
+  background: #27ae60;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-accept:hover:not(:disabled) {
+  background: #229954;
+  transform: translateY(-2px);
+}
+
+.btn-reject {
+  flex: 1;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-reject:hover:not(:disabled) {
+  background: #c0392b;
+  transform: translateY(-2px);
+}
+
+.btn-start, .btn-complete {
+  width: 100%;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-start {
+  background: #3498db;
+  color: white;
+}
+
+.btn-start:hover:not(:disabled) {
+  background: #2980b9;
+  transform: translateY(-2px);
+}
+
+.btn-complete {
+  background: #2ecc71;
+  color: white;
+}
+
+.btn-complete:hover:not(:disabled) {
+  background: #27ae60;
+  transform: translateY(-2px);
+}
+
+.btn-details {
+  width: 100%;
+  padding: 8px;
+  background: #95a5a6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+}
+
+.btn-details:hover {
+  background: #7f8c8d;
+}
+
+.reject-modal .warning-text {
+  color: #e74c3c;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.btn-confirm-reject {
+  flex: 1;
+  padding: 10px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-confirm-reject:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.order-total {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #ecf0f1;
+  text-align: right;
+  font-size: 1.1em;
+}
+
+.completion-badge {
+  padding: 10px;
+  background: #d4edda;
+  color: #155724;
+  text-align: center;
+  font-size: 12px;
+  border-top: 1px solid #c3e6cb;
+}

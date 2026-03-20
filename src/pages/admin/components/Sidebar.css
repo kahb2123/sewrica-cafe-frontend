@@ -1,0 +1,142 @@
+/* src/pages/admin/components/Sidebar.css */
+.admin-sidebar {
+  width: 280px;
+  background: linear-gradient(135deg, #1e2b3a 0%, #2c3e50 100%);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+}
+
+.sidebar-header {
+  padding: 30px 20px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.sidebar-header p {
+  margin: 5px 0 0;
+  font-size: 14px;
+  opacity: 0.8;
+  color: #ecf0f1;
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 20px 0;
+  flex: 1;
+}
+
+.sidebar-menu li {
+  padding: 15px 25px;
+  margin: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.sidebar-menu li:hover {
+  background: rgba(255,255,255,0.1);
+  transform: translateX(5px);
+}
+
+.sidebar-menu li.active {
+  background: #27ae60;
+  box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
+}
+
+.menu-icon {
+  font-size: 20px;
+  margin-right: 15px;
+  width: 30px;
+}
+
+.menu-text {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(135deg, #1e2b3a 0%, #2c3e50 100%);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.user-role {
+  font-size: 14px;
+  opacity: 0.7;
+  text-transform: capitalize;
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 10px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .admin-sidebar {
+    transform: translateX(-100%);
+    width: 280px;
+    box-shadow: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1001;
+  }
+  
+  .admin-sidebar.open {
+    transform: translateX(0);
+    box-shadow: 2px 0 20px rgba(0,0,0,0.3);
+  }
+  
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    backdrop-filter: blur(2px);
+  }
+}

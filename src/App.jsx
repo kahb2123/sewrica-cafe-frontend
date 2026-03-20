@@ -1,3 +1,4 @@
+// src/App.jsx
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
@@ -21,7 +22,7 @@ import PaymentConfirmation from './pages/PaymentConfirmation';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Contact from './pages/Contact';
-import AdminDashboard from './pages/AdminDashboard';
+import Admin from './pages/Admin'; // ← Updated: Import from Admin.jsx
 import StaffDashboard from './pages/StaffDashboard';
 import StaffLogin from './pages/StaffLogin';
 
@@ -47,7 +48,7 @@ function App() {
                 
                 {/* Staff Login - Supporting both URLs for compatibility */}
                 <Route path="/staff-login" element={<StaffLogin />} />
-                <Route path="/staff/login" element={<StaffLogin />} /> {/* Added this line */}
+                <Route path="/staff/login" element={<StaffLogin />} />
                 
                 {/* Protected Routes */}
                 <Route path="/profile" element={
@@ -58,7 +59,7 @@ function App() {
                 
                 <Route path="/admin/*" element={
                   <PrivateRoute adminOnly>
-                    <AdminDashboard />
+                    <Admin /> {/* ← Updated: Use Admin component */}
                   </PrivateRoute>
                 } />
                 
@@ -68,7 +69,7 @@ function App() {
                   </StaffPrivateRoute>
                 } />
                 
-                {/* Catch-all route for 404 - Optional */}
+                {/* Catch-all route for 404 */}
                 <Route path="*" element={<div className="not-found">Page Not Found</div>} />
               </Routes>
             </main>

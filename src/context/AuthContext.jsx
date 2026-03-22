@@ -1,5 +1,4 @@
 // src/context/AuthContext.jsx
-/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { authService } from '../services/api';
 
@@ -16,23 +15,31 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
+
+  // Use sessionStorage instead of localStorage for tab isolation
+  const storage = sessionStorage;
 
   useEffect(() => {
     const initializeAuth = () => {
-      const token = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
+      const token = storage.getItem('token');
+      const storedUser = storage.getItem('user');
+
+      console.log('🔐 Auth Init - Token exists:', !!token);
+      console.log('🔐 Auth Init - Stored user:', storedUser);
 
       if (token && storedUser) {
         try {
           const userData = JSON.parse(storedUser);
-          console.log('Loaded user from storage:', userData);
+          console.log('🔐 Auth Init - Loaded user:', userData);
           setUser(userData);
         } catch (error) {
           console.error('Error parsing stored user:', error);
-          localStorage.removeItem('user');
+          storage.removeItem('user');
         }
       }
       setLoading(false);
+      setInitialized(true);
     };
 
     initializeAuth();
@@ -40,7 +47,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      console.log('🔐 Login attempt:', email);
       const data = await authService.login({ email, password });
+      console.log('🔐 Login response:', data);
+      
       if (data && data.token) {
         const userData = data.user || data;
         const normalized = {
@@ -51,8 +61,14 @@ export const AuthProvider = ({ children }) => {
           phone: userData.phone,
           role: userData.role || 'customer'
         };
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(normalized));
+        
+        console.log('🔐 Login - Normalized user:', normalized);
+        console.log('🔐 Login - User role:', normalized.role);
+        
+        // Store in sessionStorage (tab-specific)
+        storage.setItem('token', data.token);
+        storage.setItem('user', JSON.stringify(normalized));
+        
         setUser(normalized);
         return { success: true, user: normalized };
       }
@@ -64,9 +80,36 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    console.log('🔐 Logout - Clearing session');
+    storage.removeItem('token');
+    storage.removeItem('user');
     setUser(null);
+  };
+
+  // Helper functions with null checks
+  const getUserRole = () => user?.role?.toLowerCase() || null;
+  
+  const isAdmin = () => {
+    const role = getUserRole();
+    return role === 'admin';
+  };
+  
+  const isStaff = () => {
+    const role = getUserRole();
+    return ['cook', 'chef', 'delivery', 'cashier'].includes(role);
+  };
+  
+  const isChef = () => {
+    const role = getUserRole();
+    return role === 'cook' || role === 'chef';
+  };
+  
+  const isDelivery = () => {
+    return getUserRole() === 'delivery';
+  };
+  
+  const isCashier = () => {
+    return getUserRole() === 'cashier';
   };
 
   const value = {
@@ -74,12 +117,16 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     loading,
-    isAuthenticated: !!localStorage.getItem('token'),
-    isAdmin: user?.role === 'admin',
-    isStaff: ['cook', 'chef', 'delivery', 'cashier'].includes(user?.role?.toLowerCase()),
-    isChef: user?.role?.toLowerCase() === 'cook' || user?.role?.toLowerCase() === 'chef',
-    isDelivery: user?.role?.toLowerCase() === 'delivery',
-    isCashier: user?.role?.toLowerCase() === 'cashier'
+    initialized,
+    isAuthenticated: !!user, // Computed from user state, not storage
+    // Role checkers as functions (safer)
+    isAdmin: isAdmin(),
+    isStaff: isStaff(),
+    isChef: isChef(),
+    isDelivery: isDelivery(),
+    isCashier: isCashier(),
+    // Also expose the role string
+    userRole: getUserRole()
   };
 
   return (

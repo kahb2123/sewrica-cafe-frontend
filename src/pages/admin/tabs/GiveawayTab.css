@@ -1,0 +1,132 @@
+/* src/pages/admin/tabs/GiveawayTab.css */
+.giveaway-tab {
+  padding: 20px;
+}
+
+.giveaways-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.giveaway-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.3s;
+}
+
+.giveaway-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.giveaway-card-image {
+  height: 150px;
+  overflow: hidden;
+}
+
+.giveaway-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.giveaway-card-content {
+  padding: 20px;
+}
+
+.giveaway-card-content h3 {
+  margin: 0 0 10px;
+  color: #2c3e50;
+}
+
+.giveaway-card-content p {
+  color: #7f8c8d;
+  font-size: 14px;
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.giveaway-prize-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  color: white;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.giveaway-dates {
+  font-size: 12px;
+  color: #95a5a6;
+  margin-bottom: 10px;
+}
+
+.giveaway-status {
+  margin-bottom: 15px;
+}
+
+.status-active {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #27ae60;
+  color: white;
+  border-radius: 20px;
+  font-size: 11px;
+}
+
+.status-ended {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #95a5a6;
+  color: white;
+  border-radius: 20px;
+  font-size: 11px;
+}
+
+.giveaway-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.giveaway-actions button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.giveaway-actions .btn-edit {
+  background: #3498db;
+  color: white;
+}
+
+.giveaway-actions .btn-edit:hover {
+  background: #2980b9;
+}
+
+.giveaway-actions .btn-delete {
+  background: #e74c3c;
+  color: white;
+}
+
+.giveaway-actions .btn-delete:hover {
+  background: #c0392b;
+}
+
+.giveaway-form {
+  max-width: 600px;
+}
+
+@media (max-width: 768px) {
+  .giveaways-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -16,13 +16,13 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 second timeout for Render wake-up
+  timeout: 60000, // Increased to 60 seconds for Render free tier
 });
 
 // Add token to requests if it exists
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -46,8 +46,8 @@ api.interceptors.response.use(
       
       // Handle 401 Unauthorized
       if (error.response.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
         window.location.href = '/login';
       }
     } else if (error.request) {
@@ -74,8 +74,8 @@ export const authService = {
           role: response.data.role || 'customer'
         };
         
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(userData));
+        sessionStorage.setItem('token', response.data.token);
+        sessionStorage.setItem('user', JSON.stringify(userData));
         
         return {
           success: true,
@@ -103,8 +103,8 @@ export const authService = {
           role: response.data.role || 'customer'
         };
         
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(userData));
+        sessionStorage.setItem('token', response.data.token);
+        sessionStorage.setItem('user', JSON.stringify(userData));
         
         return {
           success: true,
@@ -117,7 +117,6 @@ export const authService = {
         success: false,
         error: 'Invalid response from server'
       };
-      
     } catch (error) {
       console.error('Login error:', error);
       
@@ -170,12 +169,12 @@ export const authService = {
   },
 
   logout: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
   },
 
   getCurrentUser: () => {
-    const userStr = localStorage.getItem('user');
+    const userStr = sessionStorage.getItem('user');
     if (userStr) {
       try {
         return JSON.parse(userStr);
@@ -187,7 +186,7 @@ export const authService = {
   },
 
   isAuthenticated: () => {
-    return !!localStorage.getItem('token');
+    return !!sessionStorage.getItem('token');
   }
 };
 
@@ -334,29 +333,11 @@ export const adminService = {
 
   getAllOrders: async (status = 'all') => {
     try {
-      const userStr = localStorage.getItem('user');
-      const user = userStr ? JSON.parse(userStr) : null;
-      
-      console.log('Admin getAllOrders called with status:', status);
-      console.log('Current user role:', user?.role);
-      
-      // First check if user is authorized
-      if (user?.role !== 'admin' && user?.role !== 'cashier') {
-        throw new Error('Admin access required');
-      }
-      
       const url = status === 'all' ? '/admin/orders' : `/admin/orders?status=${status}`;
       const response = await api.get(url);
-      console.log('Orders response:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching orders:', error);
-      
-      // Handle 403 specifically
-      if (error.response?.status === 403) {
-        throw { response: { data: { message: 'Admin access required' } } };
-      }
-      
       throw error.response?.data || { message: 'Failed to fetch orders' };
     }
   },
@@ -433,20 +414,6 @@ export const adminService = {
   },
 
   // ========== REPORT METHODS ==========
-  getReport: async (type, startDate = null, endDate = null) => {
-    try {
-      let url = `/admin/reports/${type}`;
-      if (startDate && endDate) {
-        url += `?start=${startDate}&end=${endDate}`;
-      }
-      const response = await api.get(url);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching report:', error);
-      throw error.response?.data || { message: 'Failed to fetch report' };
-    }
-  },
-
   getDailyReport: async (date = null) => {
     try {
       const url = date ? `/admin/reports/daily?date=${date}` : '/admin/reports/daily';
@@ -477,20 +444,6 @@ export const adminService = {
     } catch (error) {
       console.error('Error fetching monthly report:', error);
       throw error.response?.data || { message: 'Failed to fetch monthly report' };
-    }
-  },
-
-  getTopSellingItems: async (limit = 10, startDate = null, endDate = null) => {
-    try {
-      let url = `/admin/reports/top-items?limit=${limit}`;
-      if (startDate && endDate) {
-        url += `&start=${startDate}&end=${endDate}`;
-      }
-      const response = await api.get(url);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching top items:', error);
-      throw error.response?.data || { message: 'Failed to fetch top selling items' };
     }
   },
 
@@ -632,7 +585,6 @@ export const orderService = {
 
 // ========== STAFF SERVICES ==========
 export const staffService = {
-  // Get staff by role
   getStaffByRole: async (role) => {
     try {
       const response = await api.get(`/staff/${role}`);
@@ -643,7 +595,6 @@ export const staffService = {
     }
   },
 
-  // ========== ASSIGNMENT METHODS ==========
   assignChef: async (orderId, chefId, notes = '') => {
     try {
       const response = await api.post(`/staff/assign-chef/${orderId}`, { chefId, notes });
@@ -664,7 +615,6 @@ export const staffService = {
     }
   },
 
-  // ========== CHEF ACCEPTANCE METHODS ==========
   chefAcceptOrder: async (orderId, notes = '') => {
     try {
       const response = await api.post(`/staff/orders/${orderId}/chef-accept`, { notes });
@@ -685,7 +635,6 @@ export const staffService = {
     }
   },
 
-  // ========== DELIVERY ACCEPTANCE METHODS ==========
   deliveryAcceptOrder: async (orderId, notes = '') => {
     try {
       const response = await api.post(`/staff/orders/${orderId}/delivery-accept`, { notes });
@@ -706,7 +655,6 @@ export const staffService = {
     }
   },
 
-  // ========== COOKING METHODS ==========
   startCooking: async (orderId) => {
     try {
       const response = await api.post(`/staff/start-cooking/${orderId}`);
@@ -727,7 +675,6 @@ export const staffService = {
     }
   },
 
-  // ========== DELIVERY METHODS ==========
   startDelivery: async (orderId) => {
     try {
       const response = await api.post(`/staff/start-delivery/${orderId}`);
@@ -748,30 +695,37 @@ export const staffService = {
     }
   },
 
-  // ========== STAFF ORDER FETCHING ==========
   getMyCookingOrders: async () => {
     try {
       const response = await api.get('/staff/orders/cooking');
-      return response.data;
+      // Return the orders array directly
+      if (response.data && Array.isArray(response.data.orders)) {
+        return response.data.orders;
+      }
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      return [];
     } catch (error) {
       console.error('Error fetching cooking orders:', error);
-      if (error.response?.status === 403) {
-        return { orders: [] };
-      }
-      throw error.response?.data || { message: 'Failed to fetch cooking orders' };
+      return [];
     }
   },
 
   getMyDeliveryOrders: async () => {
     try {
       const response = await api.get('/staff/orders/delivery');
-      return response.data;
+      // Return the orders array directly
+      if (response.data && Array.isArray(response.data.orders)) {
+        return response.data.orders;
+      }
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      return [];
     } catch (error) {
       console.error('Error fetching delivery orders:', error);
-      if (error.response?.status === 403) {
-        return { orders: [] };
-      }
-      throw error.response?.data || { message: 'Failed to fetch delivery orders' };
+      return [];
     }
   },
 
@@ -785,7 +739,6 @@ export const staffService = {
     }
   },
 
-  // ========== UPDATE ORDER STATUS ==========
   updateOrderStatus: async (orderId, status, notes = '') => {
     try {
       const response = await api.patch(`/orders/${orderId}/status`, { status, notes });
@@ -796,7 +749,6 @@ export const staffService = {
     }
   },
 
-  // ========== REPORT METHODS ==========
   getChefReport: async (chefId, startDate, endDate) => {
     try {
       const params = new URLSearchParams();
@@ -835,10 +787,9 @@ export const staffService = {
     }
   },
 
-  // ========== STAFF STATS ==========
   getChefStats: async () => {
     try {
-      const userStr = localStorage.getItem('user');
+      const userStr = sessionStorage.getItem('user');
       const user = userStr ? JSON.parse(userStr) : null;
       
       if (user?._id) {
@@ -854,7 +805,7 @@ export const staffService = {
 
   getDeliveryStats: async () => {
     try {
-      const userStr = localStorage.getItem('user');
+      const userStr = sessionStorage.getItem('user');
       const user = userStr ? JSON.parse(userStr) : null;
       
       if (user?._id) {
@@ -876,19 +827,71 @@ export const staffService = {
       const completedPayments = completedResponse.orders || completedResponse;
       
       return {
-        pendingPayments: pendingPayments.length,
-        completedToday: completedPayments.filter(p => {
+        pendingPayments: Array.isArray(pendingPayments) ? pendingPayments.length : 0,
+        completedToday: Array.isArray(completedPayments) ? completedPayments.filter(p => {
           const paidAt = new Date(p.paidAt);
           const today = new Date();
           return paidAt.toDateString() === today.toDateString();
-        }).length,
-        totalCompleted: completedPayments.length
+        }).length : 0,
+        totalCompleted: Array.isArray(completedPayments) ? completedPayments.length : 0
       };
     } catch (error) {
       console.error('Error fetching cashier stats:', error);
       return { pendingPayments: 0, completedToday: 0, totalCompleted: 0 };
     }
+  },
+ getAllStaffReports: async (startDate, endDate) => {
+  try {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    
+    const url = `/staff/reports/all${params.toString() ? `?${params.toString()}` : ''}`;
+    const response = await api.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching staff reports:', error);
+    throw error.response?.data || { message: 'Failed to fetch staff reports' };
   }
+},
+
+getStaffReportsByRole: async (role, startDate, endDate) => {
+  try {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    
+    const url = `/staff/reports/${role}${params.toString() ? `?${params.toString()}` : ''}`;
+    const response = await api.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching staff reports by role:', error);
+    throw error.response?.data || { message: 'Failed to fetch staff reports' };
+  }
+},
+
+exportStaffReport: async (format, staffId = null, startDate, endDate, role = null) => {
+  try {
+    const params = new URLSearchParams();
+    params.append('format', format);
+    if (staffId) params.append('staffId', staffId);
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    if (role && role !== 'all') params.append('role', role);
+    
+    const url = `/staff/reports/export?${params.toString()}`;
+    const response = await api.get(url, { 
+      responseType: 'blob',
+      timeout: 60000
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error exporting staff report:', error);
+    throw error.response?.data || { message: 'Failed to export staff report' };
+  }
+},
+
+  
 };
 
 // ========== CART SERVICES ==========
@@ -997,5 +1000,4 @@ export const getImageUrl = (image) => {
   return `${UPLOADS_URL}/${image}`;
 };
 
-// ========== DEFAULT EXPORT ==========
 export default api;

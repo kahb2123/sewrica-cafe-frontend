@@ -631,3 +631,255 @@
     font-size: 2rem;
   }
 }
+
+/* Add to PaymentConfirmation.css */
+
+/* Lottery Ticket Section */
+.lottery-ticket-section {
+  margin: 20px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+}
+
+.lottery-ticket-section:hover {
+  transform: translateY(-2px);
+}
+
+.lottery-ticket-section.eligible {
+  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  animation: pulse 2s infinite;
+}
+
+.lottery-ticket-section.winner {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  animation: winnerPulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(39, 174, 96, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+}
+
+@keyframes winnerPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.lottery-banner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  cursor: pointer;
+  color: white;
+}
+
+.lottery-icon {
+  font-size: 48px;
+  width: 70px;
+  height: 70px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lottery-info {
+  flex: 1;
+}
+
+.lottery-info h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.ticket-number {
+  font-family: monospace;
+  font-size: 14px;
+  margin: 5px 0;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.lottery-message {
+  margin: 8px 0 0;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.claim-prize-btn {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 500;
+}
+
+.claim-prize-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateX(5px);
+}
+
+/* Lottery Modal */
+.lottery-modal {
+  max-width: 500px;
+}
+
+.lottery-modal-content {
+  padding: 20px;
+}
+
+.lottery-ticket {
+  background: #fff8e7;
+  border: 2px dashed #f39c12;
+  border-radius: 16px;
+  padding: 25px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.lottery-ticket.winner-ticket {
+  border: 3px solid #f39c12;
+  background: linear-gradient(135deg, #fff8e7 0%, #fff0d4 100%);
+  animation: ticketGlow 1s ease-in-out infinite alternate;
+}
+
+@keyframes ticketGlow {
+  from { box-shadow: 0 0 5px #f39c12; }
+  to { box-shadow: 0 0 20px #f39c12; }
+}
+
+.ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.ticket-title {
+  font-weight: bold;
+  font-size: 18px;
+  color: #2c3e50;
+}
+
+.ticket-number-large {
+  font-family: monospace;
+  font-size: 20px;
+  font-weight: bold;
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+  letter-spacing: 2px;
+  word-break: break-all;
+}
+
+.ticket-details {
+  text-align: left;
+  margin: 15px 0;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.ticket-details p {
+  margin: 5px 0;
+  font-size: 13px;
+}
+
+.ticket-status {
+  margin: 15px 0;
+}
+
+.winner-badge {
+  display: inline-block;
+  background: #f39c12;
+  color: white;
+  padding: 8px 20px;
+  border-radius: 30px;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.active-badge {
+  display: inline-block;
+  background: #27ae60;
+  color: white;
+  padding: 6px 15px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.pending-badge {
+  display: inline-block;
+  background: #95a5a6;
+  color: white;
+  padding: 6px 15px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.ticket-footer {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px dashed #ddd;
+  font-size: 12px;
+  color: #666;
+}
+
+.small-text {
+  font-size: 10px;
+  margin-top: 5px;
+}
+
+.btn-print-ticket {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.btn-print-ticket:hover {
+  background: #2980b9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .lottery-banner {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .lottery-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 30px;
+  }
+  
+  .ticket-number-large {
+    font-size: 14px;
+  }
+  
+  .lottery-modal {
+    width: 95%;
+    margin: 0 auto;
+  }
+}

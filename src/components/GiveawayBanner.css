@@ -1,0 +1,395 @@
+/* src/components/GiveawayBanner.css */
+
+.giveaway-banner-wrapper {
+  width: 100%;
+  max-width: 1400px;
+  margin: 20px auto;
+  opacity: 0;
+  transform: translateX(-50px);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0 20px;
+}
+
+.giveaway-banner-wrapper.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.giveaway-banner-container {
+  width: 100%;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.giveaway-banner-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 30px 50px rgba(0, 0, 0, 0.3);
+}
+
+.giveaway-banner-image {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  animation: zoomIn 10s ease-in-out infinite alternate;
+}
+
+@keyframes zoomIn {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+.giveaway-banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0.7) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 1s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.giveaway-banner-content {
+  max-width: 800px;
+  text-align: center;
+  color: white;
+  padding: 40px;
+  animation: slideInRight 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.giveaway-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 8px 20px;
+  border-radius: 50px;
+  margin-bottom: 20px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.badge-icon {
+  font-size: 20px;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.badge-text {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+
+.giveaway-title {
+  font-size: 48px;
+  font-weight: 800;
+  margin: 20px 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #fff, #ffd89b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.giveaway-description {
+  font-size: 18px;
+  margin-bottom: 30px;
+  opacity: 0.95;
+  line-height: 1.6;
+}
+
+.giveaway-prize-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 15px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  padding: 15px 25px;
+  border-radius: 60px;
+  margin-bottom: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.giveaway-prize-card:hover {
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.prize-icon {
+  font-size: 32px;
+  animation: rotate 3s infinite linear;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.prize-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.prize-label {
+  font-size: 12px;
+  opacity: 0.8;
+  letter-spacing: 1px;
+}
+
+.prize-value {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.giveaway-timer {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+.timer-block {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  padding: 15px 20px;
+  border-radius: 12px;
+  min-width: 80px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.timer-block:hover {
+  transform: translateY(-5px);
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.timer-number {
+  font-size: 36px;
+  font-weight: bold;
+  display: block;
+  font-family: monospace;
+}
+
+.timer-label {
+  font-size: 12px;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.giveaway-actions {
+  margin-top: 20px;
+}
+
+.giveaway-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+  color: white;
+  padding: 15px 35px;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.giveaway-btn:hover {
+  transform: translateX(5px);
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+  gap: 15px;
+}
+
+.btn-arrow {
+  transition: transform 0.3s ease;
+}
+
+.giveaway-btn:hover .btn-arrow {
+  transform: translateX(5px);
+}
+
+.giveaway-terms {
+  font-size: 12px;
+  margin-top: 15px;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .giveaway-banner-image {
+    height: 450px;
+  }
+  
+  .giveaway-title {
+    font-size: 36px;
+  }
+  
+  .timer-block {
+    min-width: 70px;
+    padding: 12px 15px;
+  }
+  
+  .timer-number {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 768px) {
+  .giveaway-banner-wrapper {
+    padding: 0 15px;
+    margin: 15px auto;
+  }
+  
+  .giveaway-banner-image {
+    height: 550px;
+  }
+  
+  .giveaway-banner-content {
+    padding: 20px;
+  }
+  
+  .giveaway-title {
+    font-size: 28px;
+  }
+  
+  .giveaway-description {
+    font-size: 14px;
+  }
+  
+  .giveaway-timer {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  
+  .timer-block {
+    min-width: 60px;
+    padding: 10px 12px;
+  }
+  
+  .timer-number {
+    font-size: 20px;
+  }
+  
+  .timer-label {
+    font-size: 10px;
+  }
+  
+  .giveaway-prize-card {
+    padding: 10px 20px;
+  }
+  
+  .prize-value {
+    font-size: 18px;
+  }
+  
+  .giveaway-btn {
+    padding: 12px 25px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .giveaway-banner-image {
+    height: 600px;
+  }
+  
+  .giveaway-title {
+    font-size: 24px;
+  }
+  
+  .timer-block {
+    min-width: 50px;
+    padding: 8px 10px;
+  }
+  
+  .timer-number {
+    font-size: 18px;
+  }
+  
+  .badge-text {
+    font-size: 10px;
+  }
+  
+  .giveaway-description {
+    font-size: 12px;
+  }
+}
+
+/* Add this to your Home.css to ensure the banner displays properly */
+.giveaway-banner-wrapper {
+  z-index: 10;
+  position: relative;
+}
+
+/* Optional: Add a subtle glowing effect on hover */
+.giveaway-banner-container:hover {
+  animation: glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  }
+  to {
+    box-shadow: 0 20px 50px rgba(255, 107, 107, 0.3);
+  }
+}

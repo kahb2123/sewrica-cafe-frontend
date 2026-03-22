@@ -6,13 +6,14 @@ import {
   FaChevronRight, FaCheckCircle, FaCoffee, FaLeaf,
   FaUsers, FaTrophy, FaHeart, FaInstagram, FaTelegram,
   FaPizzaSlice, FaHamburger, FaDrumstickBite, FaFish,
-  FaPepperHot, FaCheese, FaEgg, FaBreadSlice
+  FaPepperHot, FaCheese, FaEgg, FaBreadSlice, FaGift
 } from 'react-icons/fa';
 import { GiMeat, GiBowlOfRice, GiChickenLeg, GiCoffeeBeans, GiFrenchFries } from 'react-icons/gi';
 import { MdDeliveryDining, MdRestaurantMenu, MdLocalPizza } from 'react-icons/md';
 import { RiRestaurantLine, RiTakeawayLine } from 'react-icons/ri';
 import { IoFastFoodOutline } from 'react-icons/io5';
 import { TbBread } from 'react-icons/tb';
+import api from '../services/api';
 import './Home.css';
 
 const Home = () => {
@@ -23,31 +24,77 @@ const Home = () => {
     dishes: 0,
     years: 0,
   });
+  const [activeGiveaway, setActiveGiveaway] = useState(null);
 
-  
-  // Hero Slider Images
-  const heroSlides = [
-    {
-      image: 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80',
-      title: 'Enjoy with Best City View',
-      subtitle: 'SEWRICA Cafe',
-      description: 'Experience delicious food with breathtaking views of Addis Ababa'
-    },
-    {
-      image: 'https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80',
-      title: 'Delicious Food',
-      subtitle: 'From Burgers to Traditional Ethiopian Cuisine',
-      description: 'Order your favorites online for delivery or take-out'
-    },
-    {
-      image: 'https://images.unsplash.com/photo-1517244683847-7456ed63a8f7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80',
-      title: 'ምርጥ የከተማ እይታ',
-      subtitle: 'SEWRICA ካፌ',
-      description: 'በሚያማምሩ እይታዎች እና ጣፋጭ ምግቦች ይደሰቱ'
+  // Fetch active giveaway
+  useEffect(() => {
+    fetchActiveGiveaway();
+  }, []);
+
+  const fetchActiveGiveaway = async () => {
+    try {
+      const response = await api.get('/giveaway/active');
+      setActiveGiveaway(response.data.giveaway);
+    } catch (error) {
+      console.error('Error fetching giveaway:', error);
     }
-  ];
+  };
 
-  // Complete Menu Data based on your images
+  // Hero Slider Images with Giveaway as first slide
+  const getHeroSlides = () => {
+    const slides = [
+      // GIVEAWAY SLIDE - First and most prominent
+      activeGiveaway ? {
+        image: activeGiveaway.imageUrl || 'https://images.pexels.com/photos/958545/pexels-photo-958545.jpeg?auto=compress&cs=tinysrgb&w=1600',
+        title: '🎁 ' + activeGiveaway.title,
+        subtitle: 'Win Amazing Prizes!',
+        description: activeGiveaway.description,
+        buttonText: 'Participate Now →',
+        buttonLink: '/menu',
+        isGiveaway: true,
+        prize: activeGiveaway.prize,
+        endDate: activeGiveaway.endDate
+      } : {
+        image: 'https://images.pexels.com/photos/958545/pexels-photo-958545.jpeg?auto=compress&cs=tinysrgb&w=1600',
+        title: '🎁 Monthly Giveaway!',
+        subtitle: 'Win Amazing Prizes',
+        description: 'Every order automatically enters you into our monthly draw. Don\'t miss out on winning special prizes!',
+        buttonText: 'Order Now →',
+        buttonLink: '/menu',
+        isGiveaway: true,
+        prize: 'Special Surprise Gift'
+      },
+      {
+        image: 'https://images.pexels.com/photos/260922/pexels-photo-260922.jpeg?auto=compress&cs=tinysrgb&w=1600',
+        title: 'Welcome to SEWRICA Cafe',
+        subtitle: 'Experience the Best City View',
+        description: 'Enjoy breathtaking panoramic views of Addis Ababa while savoring our delicious cuisine',
+        buttonText: 'View Menu →',
+        buttonLink: '/menu'
+      },
+      {
+        image: 'https://images.pexels.com/photos/1279330/pexels-photo-1279330.jpeg?auto=compress&cs=tinysrgb&w=1600',
+        title: 'Signature Burgers & Pizzas',
+        subtitle: 'Crafted with Love',
+        description: 'Our famous Sewrica Burger and Sewrica Pizza are made with premium ingredients and secret recipes',
+        buttonText: 'Order Now →',
+        buttonLink: '/menu'
+      },
+      {
+        image: 'https://images.pexels.com/photos/3186654/pexels-photo-3186654.jpeg?auto=compress&cs=tinysrgb&w=1600',
+        title: 'Cozy Atmosphere',
+        subtitle: 'Perfect for Any Occasion',
+        description: 'Whether it\'s a romantic dinner or family gathering, we have the perfect setting for you',
+        buttonText: 'Book a Table →',
+        buttonLink: '/contact'
+      }
+    ];
+    return slides;
+  };
+
+  const heroSlides = getHeroSlides();
+
+  // Complete Menu Data
   const menuItems = [
     // Burgers Section
     {
@@ -105,10 +152,7 @@ const Home = () => {
       isVegetarian: false,
       popular: true,
       signature: true,
-     
     },
-
-    // Sandwiches Section
     {
       id: 5,
       name: 'Chicken Sandwich',
@@ -135,8 +179,6 @@ const Home = () => {
       prepTime: '15 min',
       isVegetarian: false
     },
-
-    // Fast Food Section
     {
       id: 7,
       name: 'Beyaynet',
@@ -180,8 +222,6 @@ const Home = () => {
       prepTime: '15 min',
       isVegetarian: true
     },
-
-    // Pizza Section
     {
       id: 10,
       name: 'Beef Pizza',
@@ -263,8 +303,6 @@ const Home = () => {
       prepTime: '18 min',
       isVegetarian: true
     },
-
-    // Wraps
     {
       id: 16,
       name: 'Special Wrap',
@@ -279,8 +317,6 @@ const Home = () => {
       isVegetarian: false,
       popular: true
     },
-
-    // Fetira
     {
       id: 17,
       name: 'Chechebsa with Egg',
@@ -338,30 +374,27 @@ const Home = () => {
   const testimonials = [
     {
       id: 1,
-      name: 'Abebe ',
+      name: 'Abebe Kebede',
       image: 'https://randomuser.me/api/portraits/men/1.jpg',
       rating: 5,
-      comment: 'Best view in Addis! The Sewrica Burger is absolutely amazing. Love the atmosphere and food.',
+      comment: 'Best view in Addis! The Sewrica Burger is absolutely amazing. Love the atmosphere and food. The city lights at night are breathtaking!',
       date: 'March 2024',
-      // platform: 'Google'
     },
     {
       id: 2,
-      name: 'Sara',
+      name: 'Sara Tekle',
       image: 'https://randomuser.me/api/portraits/women/2.jpg',
       rating: 5,
-      comment: 'The city view from this cafe is breathtaking. Their pizza and traditional dishes are delicious!',
+      comment: 'The city view from this cafe is breathtaking. Their pizza and traditional dishes are delicious! Highly recommend the Sewrica Pizza.',
       date: 'February 2024',
-      // platform: 'TripAdvisor'
     },
     {
       id: 3,
-      name: 'Kebede',
+      name: 'Kebede Desta',
       image: 'https://randomuser.me/api/portraits/men/3.jpg',
       rating: 5,
-      comment: 'Great food, amazing view, excellent service. The Chechebsa is my favorite breakfast now.',
+      comment: 'Great food, amazing view, excellent service. The Chechebsa is my favorite breakfast now. Will definitely come back!',
       date: 'January 2024',
-      // platform: 'Facebook'
     }
   ];
 
@@ -379,7 +412,6 @@ const Home = () => {
       customers: targetStats.customers / steps,
       dishes: targetStats.dishes / steps,
       years: targetStats.years / steps,
-      awards: targetStats.awards / steps
     };
 
     let currentStep = 0;
@@ -390,7 +422,6 @@ const Home = () => {
           customers: Math.min(prev.customers + increment.customers, targetStats.customers),
           dishes: Math.min(prev.dishes + increment.dishes, targetStats.dishes),
           years: Math.min(prev.years + increment.years, targetStats.years),
-          awards: Math.min(prev.awards + increment.awards, targetStats.awards)
         }));
         currentStep++;
       } else {
@@ -416,7 +447,32 @@ const Home = () => {
       nextSlide();
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [heroSlides.length]);
+
+  // Timer for giveaway slide
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    if (activeGiveaway && activeGiveaway.endDate) {
+      const interval = setInterval(() => {
+        const now = new Date().getTime();
+        const end = new Date(activeGiveaway.endDate).getTime();
+        const distance = end - now;
+
+        if (distance < 0) {
+          setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        } else {
+          setTimeLeft({
+            days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+            hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+            minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+            seconds: Math.floor((distance % (1000 * 60)) / 1000)
+          });
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [activeGiveaway]);
 
   // Render stars for rating
   const renderStars = (rating) => {
@@ -445,20 +501,60 @@ const Home = () => {
             <div
               key={index}
               className={`hero-slide ${index === currentSlide ? 'active' : ''}`}
-              style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${slide.image})` }}
+              style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${slide.image})` }}
             >
               <div className="hero-content">
+                {slide.isGiveaway && (
+                  <div className="giveaway-badge-hero">
+                    <span className="badge-icon">🎁</span>
+                    <span className="badge-text">LIMITED TIME OFFER</span>
+                  </div>
+                )}
                 <h1 className="hero-title">{slide.title}</h1>
                 <h2 className="hero-subtitle">{slide.subtitle}</h2>
                 <p className="hero-description">{slide.description}</p>
+                
+                {slide.isGiveaway && slide.prize && (
+                  <div className="giveaway-prize-hero">
+                    <span className="prize-icon">🏆</span>
+                    <span className="prize-text">Grand Prize: {slide.prize}</span>
+                  </div>
+                )}
+                
+                {slide.isGiveaway && activeGiveaway && activeGiveaway.endDate && (
+                  <div className="giveaway-timer-hero">
+                    <div className="timer-block">
+                      <span className="timer-number">{String(timeLeft.days).padStart(2, '0')}</span>
+                      <span className="timer-label">Days</span>
+                    </div>
+                    <div className="timer-block">
+                      <span className="timer-number">{String(timeLeft.hours).padStart(2, '0')}</span>
+                      <span className="timer-label">Hours</span>
+                    </div>
+                    <div className="timer-block">
+                      <span className="timer-number">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                      <span className="timer-label">Mins</span>
+                    </div>
+                    <div className="timer-block">
+                      <span className="timer-number">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                      <span className="timer-label">Secs</span>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="hero-buttons">
-                  <Link to="/menu" className="btn-primary">
-                    <MdRestaurantMenu /> Order Online
+                  <Link to={slide.buttonLink} className="btn-primary btn-large">
+                    {slide.buttonText}
                   </Link>
-                  <Link to="/contact" className="btn-secondary">
-                    <FaMapMarkerAlt /> Find Us
-                  </Link>
+                  {slide.isGiveaway && (
+                    <Link to="/menu" className="btn-secondary btn-large">
+                      <FaGift /> Order to Participate
+                    </Link>
+                  )}
                 </div>
+                {slide.isGiveaway && (
+                  <p className="giveaway-terms-hero">*Every order automatically enters you into the draw</p>
+                )}
               </div>
             </div>
           ))}
@@ -526,7 +622,7 @@ const Home = () => {
             </div>
             <div className="welcome-image">
               <img 
-                src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
+                src="https://images.pexels.com/photos/260922/pexels-photo-260922.jpeg?auto=compress&cs=tinysrgb&w=800" 
                 alt="SEWRICA Cafe City View"
               />
               <div className="image-badge">
@@ -742,18 +838,10 @@ const Home = () => {
               <div className="stat-number">{Math.round(stats.years)}+</div>
               <div className="stat-label">Years Serving</div>
             </div>
-            {/* <div className="stat-item">
-              <div className="stat-icon">
-                <FaTrophy />
-              </div>
-              <div className="stat-number">{Math.round(stats.awards)}+</div>
-              <div className="stat-label">Awards Won</div>
-            </div> */}
           </div>
         </div>
       </section>
         
- 
       {/* Why Choose Us Section */}
       <section className="features-section">
         <div className="container">
@@ -779,7 +867,6 @@ const Home = () => {
             <div className="feature-card">
               <div className="feature-icon-wrapper"><MdLocalPizza /></div>
               <h3 className="feature-title">Sewrica Pizza</h3>
-              {/* <h4 className="feature-title-am">ጎርሜ ፒዛ</h4> */}
               <p className="feature-description">From classic to signature Sewrica Pizza, we have something for everyone.</p>
             </div>
             <div className="feature-card">
@@ -816,7 +903,6 @@ const Home = () => {
                         />
                       ))}
                     </div>
-                    <span className="testimonial-platform">{testimonial.platform}</span>
                   </div>
                 </div>
                 <p className="testimonial-comment">"{testimonial.comment}"</p>
@@ -856,7 +942,5 @@ const Home = () => {
     </div>
   );
 };
-
-
 
 export default Home;

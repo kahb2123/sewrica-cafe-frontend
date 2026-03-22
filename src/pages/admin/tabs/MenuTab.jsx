@@ -1,11 +1,13 @@
 // src/pages/admin/tabs/MenuTab.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext'; // Import useAuth
 import { menuService, UPLOADS_URL } from '../../../services/api';
 import { toast } from 'react-toastify';
 import './MenuTab.css';
 
 const MenuTab = () => {
+  const { user, isAuthenticated, loading: authLoading } = useAuth(); // Use auth context
   const [menuItems, setMenuItems] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -28,38 +30,40 @@ const MenuTab = () => {
     available: true
   });
 
+  // Check authentication using auth context
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = () => {
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
+    console.log('🔐 MenuTab - isAuthenticated:', isAuthenticated);
+    console.log('🔐 MenuTab - User:', user);
+    console.log('🔐 MenuTab - Auth loading:', authLoading);
     
-    if (!token) {
+    if (authLoading) {
+      return; // Wait for auth to initialize
+    }
+    
+    if (!isAuthenticated) {
+      console.log('❌ Not authenticated, redirecting to login');
       toast.error('Please login first');
       navigate('/login');
       return;
     }
 
-    try {
-      const user = JSON.parse(userStr);
-      if (user.role !== 'admin') {
-        toast.error('Admin access required');
-        navigate('/');
-        return;
-      }
-      fetchMenuItems();
-    } catch (error) {
-      console.error('Auth check error:', error);
-      navigate('/login');
+    if (!user || user.role !== 'admin') {
+      console.log('❌ Not admin, role:', user?.role);
+      toast.error('Admin access required');
+      navigate('/');
+      return;
     }
-  };
+
+    console.log('✅ Admin access granted for MenuTab');
+    fetchMenuItems();
+  }, [isAuthenticated, user, authLoading, navigate]);
 
   const fetchMenuItems = async () => {
     try {
       setLoading(true);
+      console.log('📦 Fetching menu items...');
       const response = await menuService.getAllItems();
+      console.log('📦 Menu items response:', response);
       
       let items = [];
       if (response && response.success && response.data) {
@@ -81,8 +85,6 @@ const MenuTab = () => {
       console.error('Error fetching menu:', error);
       if (error.response?.status === 401) {
         toast.error('Session expired. Please login again');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
         navigate('/login');
       } else {
         toast.error('Failed to load menu items');
@@ -231,6 +233,16 @@ const MenuTab = () => {
     return emojis[category] || '🍽️';
   };
 
+  // Show loading while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Checking authentication...</p>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -238,6 +250,11 @@ const MenuTab = () => {
         <p>Loading menu items...</p>
       </div>
     );
+  }
+
+  // Don't render if not admin
+  if (!user || user.role !== 'admin') {
+    return null;
   }
 
   return (

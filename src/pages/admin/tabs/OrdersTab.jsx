@@ -1,5 +1,7 @@
 // src/pages/admin/tabs/OrdersTab.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
 import { adminService, orderService } from '../../../services/api';
 import { staffService } from '../../../services/api';
 import { toast } from 'react-toastify';
@@ -10,6 +12,8 @@ import AssignDeliveryModal from '../components/modals/AssignDeliveryModal';
 import './OrdersTab.css';
 
 const OrdersTab = () => {
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
@@ -18,11 +22,9 @@ const OrdersTab = () => {
   const [cashAmount, setCashAmount] = useState('');
   const [processingPayment, setProcessingPayment] = useState(false);
   
-  // State for rejection modal
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   
-  // State for assignment modals
   const [showAssignChefModal, setShowAssignChefModal] = useState(false);
   const [showAssignDeliveryModal, setShowAssignDeliveryModal] = useState(false);
   const [availableChefs, setAvailableChefs] = useState([]);
@@ -32,60 +34,59 @@ const OrdersTab = () => {
   const [assignmentNotes, setAssignmentNotes] = useState('');
 
   useEffect(() => {
-    fetchOrders();
-    fetchAvailableStaff();
-  }, [filter]);
-
-  // src/pages/admin/tabs/OrdersTab.jsx - Update fetchOrders function
-
-const fetchOrders = async () => {
-  try {
-    setLoading(true);
-    
-    // Get current user to check role
-    const userStr = localStorage.getItem('user');
-    const user = userStr ? JSON.parse(userStr) : null;
-    
-    console.log('Current user role:', user?.role);
-    console.log('Fetching orders with filter:', filter);
-    
-    let response;
-    
-    // If user is admin, use admin endpoint
-    if (user?.role === 'admin') {
-      response = await adminService.getAllOrders(filter);
-      setOrders(Array.isArray(response) ? response : response?.orders || []);
-    } 
-    // If user is staff (cashier, cook, delivery), they can only view certain orders
-    else if (user?.role === 'cashier') {
-      // Cashiers can see all orders (for payment processing)
-      response = await adminService.getAllOrders(filter);
-      setOrders(Array.isArray(response) ? response : response?.orders || []);
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
     }
-    else {
-      // For other roles, they shouldn't be here, redirect
-      toast.error('Access denied. Admin area only.');
+    
+    if (!user || user.role !== 'admin') {
+      toast.error('Admin access required');
       navigate('/');
       return;
     }
     
-  } catch (error) {
-    console.error('Error fetching orders:', error);
-    
-    if (error.response?.status === 403) {
-      toast.error('Admin access required. Please login as admin.');
-      navigate('/');
-    } else if (error.response?.status === 401) {
-      toast.error('Session expired. Please login again.');
-      navigate('/login');
-    } else {
-      toast.error('Failed to fetch orders');
-      setOrders([]);
+    fetchOrders();
+    fetchAvailableStaff();
+  }, [filter, user, isAuthenticated, navigate]);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      console.log('📦 Fetching orders with filter:', filter);
+      
+      const response = await adminService.getAllOrders(filter);
+      console.log('📦 Orders response:', response);
+      
+      // Handle different response formats
+      let ordersData = [];
+      if (Array.isArray(response)) {
+        ordersData = response;
+      } else if (response?.orders && Array.isArray(response.orders)) {
+        ordersData = response.orders;
+      } else if (response?.data && Array.isArray(response.data)) {
+        ordersData = response.data;
+      }
+      
+      console.log('📦 Setting orders:', ordersData.length);
+      setOrders(ordersData);
+      
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      
+      if (error.response?.status === 403) {
+        toast.error('Admin access required');
+        navigate('/');
+      } else if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        navigate('/login');
+      } else {
+        toast.error('Failed to fetch orders');
+        setOrders([]);
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const fetchAvailableStaff = async () => {
     try {
@@ -149,7 +150,7 @@ const fetchOrders = async () => {
     }
 
     try {
-      await staffService.assignChef(selectedOrder._id, selectedChefId, assignmentNotes);
+      await adminService.assignChef(selectedOrder._id, selectedChefId, assignmentNotes);
       toast.success('Chef assigned successfully');
       setShowAssignChefModal(false);
       setSelectedChefId('');
@@ -169,7 +170,7 @@ const fetchOrders = async () => {
     }
 
     try {
-      await staffService.assignDelivery(selectedOrder._id, selectedDeliveryId, assignmentNotes);
+      await adminService.assignDelivery(selectedOrder._id, selectedDeliveryId, assignmentNotes);
       toast.success('Delivery person assigned successfully');
       setShowAssignDeliveryModal(false);
       setSelectedDeliveryId('');
@@ -182,21 +183,16 @@ const fetchOrders = async () => {
     }
   };
 
-  // In OrdersTab.jsx, update the updateOrderStatus function:
-const updateOrderStatus = async (orderId, newStatus) => {
-  try {
-    // Use the correct endpoint from orderService or staffService
-    const response = await api.patch(`/orders/${orderId}/status`, { status: newStatus });
-    // OR use orderService:
-    // const response = await orderService.updateOrderStatus(orderId, newStatus);
-    
-    toast.success(`Order status updated to ${newStatus}`);
-    fetchOrders();
-  } catch (error) {
-    console.error('Error updating order:', error);
-    toast.error('Failed to update order status');
-  }
-};
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      await orderService.updateOrderStatus(orderId, newStatus);
+      toast.success(`Order status updated to ${newStatus}`);
+      fetchOrders();
+    } catch (error) {
+      console.error('Error updating order:', error);
+      toast.error('Failed to update order status');
+    }
+  };
 
   const processCashPayment = async () => {
     if (!selectedOrder) return;
@@ -222,6 +218,30 @@ const updateOrderStatus = async (orderId, newStatus) => {
     }
   };
 
+  const handleQuickAssignChef = async (orderId, chefId) => {
+    try {
+      await adminService.assignChef(orderId, chefId);
+      toast.success('Chef assigned successfully');
+      fetchOrders();
+      fetchAvailableStaff();
+    } catch (error) {
+      console.error('Error assigning chef:', error);
+      toast.error(error.message || 'Failed to assign chef');
+    }
+  };
+
+  const handleQuickAssignDelivery = async (orderId, deliveryId) => {
+    try {
+      await adminService.assignDelivery(orderId, deliveryId);
+      toast.success('Delivery person assigned successfully');
+      fetchOrders();
+      fetchAvailableStaff();
+    } catch (error) {
+      console.error('Error assigning delivery:', error);
+      toast.error(error.message || 'Failed to assign delivery');
+    }
+  };
+
   const handleAssignChefClick = (order) => {
     setSelectedOrder(order);
     setSelectedChefId(order.assignedChef?._id || '');
@@ -234,30 +254,6 @@ const updateOrderStatus = async (orderId, newStatus) => {
     setSelectedDeliveryId(order.assignedDelivery?._id || '');
     setAssignmentNotes(order.deliveryNotes || '');
     setShowAssignDeliveryModal(true);
-  };
-
-  const handleQuickAssignChef = async (orderId, chefId) => {
-    try {
-      await staffService.assignChef(orderId, chefId);
-      toast.success('Chef assigned successfully');
-      fetchOrders();
-      fetchAvailableStaff();
-    } catch (error) {
-      console.error('Error assigning chef:', error);
-      toast.error(error.message || 'Failed to assign chef');
-    }
-  };
-
-  const handleQuickAssignDelivery = async (orderId, deliveryId) => {
-    try {
-      await staffService.assignDelivery(orderId, deliveryId);
-      toast.success('Delivery person assigned successfully');
-      fetchOrders();
-      fetchAvailableStaff();
-    } catch (error) {
-      console.error('Error assigning delivery:', error);
-      toast.error(error.message || 'Failed to assign delivery');
-    }
   };
 
   const handleCashPaymentClick = (order) => {
@@ -288,12 +284,18 @@ const updateOrderStatus = async (orderId, newStatus) => {
     });
   };
 
-  if (loading) return (
-    <div className="loading-container">
-      <div className="loading-spinner"></div>
-      <p>Loading orders...</p>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading orders...</p>
+      </div>
+    );
+  }
+
+  if (!user || user.role !== 'admin') {
+    return null;
+  }
 
   return (
     <div className="orders-tab">
@@ -305,19 +307,19 @@ const updateOrderStatus = async (orderId, newStatus) => {
             All Orders ({orders.length})
           </button>
           <button className={filter === 'pending' ? 'active' : ''} onClick={() => setFilter('pending')}>
-            Pending
+            Pending ({orders.filter(o => o.status === 'pending').length})
           </button>
           <button className={filter === 'confirmed' ? 'active' : ''} onClick={() => setFilter('confirmed')}>
-            Confirmed
+            Confirmed ({orders.filter(o => o.status === 'confirmed').length})
           </button>
           <button className={filter === 'preparing' ? 'active' : ''} onClick={() => setFilter('preparing')}>
-            Preparing
+            Preparing ({orders.filter(o => o.status === 'preparing').length})
           </button>
           <button className={filter === 'ready' ? 'active' : ''} onClick={() => setFilter('ready')}>
-            Ready
+            Ready ({orders.filter(o => o.status === 'ready').length})
           </button>
           <button className={filter === 'delivered' ? 'active' : ''} onClick={() => setFilter('delivered')}>
-            Delivered
+            Delivered ({orders.filter(o => o.status === 'delivered').length})
           </button>
         </div>
       </div>
@@ -328,7 +330,7 @@ const updateOrderStatus = async (orderId, newStatus) => {
             <div key={order._id} className="order-card">
               <div className="order-card-header">
                 <div>
-                  <h3>Order #{order.orderNumber || order._id.slice(-6)}</h3>
+                  <h3>Order #{order.orderNumber || order._id?.slice(-6)}</h3>
                   <span className="order-date">{formatDate(order.createdAt)}</span>
                 </div>
                 <span className="status-badge" style={{backgroundColor: getStatusColor(order.status)}}>
@@ -489,6 +491,7 @@ const updateOrderStatus = async (orderId, newStatus) => {
         )}
       </div>
 
+      {/* Modals */}
       <RejectOrderModal
         isOpen={showRejectModal}
         onClose={() => {

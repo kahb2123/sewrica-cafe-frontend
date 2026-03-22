@@ -1221,3 +1221,144 @@
 .cta-section {
   animation: slideInUp 1s ease-out;
 }
+/* Add to Home.css */
+
+/* Giveaway Badge in Hero */
+.giveaway-badge-hero {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+  padding: 8px 20px;
+  border-radius: 50px;
+  margin-bottom: 20px;
+  animation: pulse 2s infinite;
+}
+
+.giveaway-badge-hero .badge-icon {
+  font-size: 20px;
+  animation: bounce 1s infinite;
+}
+
+.giveaway-badge-hero .badge-text {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* Giveaway Prize */
+.giveaway-prize-hero {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 215, 0, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 10px 20px;
+  border-radius: 50px;
+  margin: 20px 0;
+  border: 1px solid rgba(255, 215, 0, 0.5);
+}
+
+.giveaway-prize-hero .prize-icon {
+  font-size: 24px;
+}
+
+.giveaway-prize-hero .prize-text {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Giveaway Timer */
+.giveaway-timer-hero {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.giveaway-timer-hero .timer-block {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  padding: 10px 15px;
+  border-radius: 12px;
+  min-width: 70px;
+  text-align: center;
+}
+
+.giveaway-timer-hero .timer-number {
+  font-size: 28px;
+  font-weight: bold;
+  display: block;
+  font-family: monospace;
+}
+
+.giveaway-timer-hero .timer-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+/* Giveaway Terms */
+.giveaway-terms-hero {
+  font-size: 12px;
+  margin-top: 15px;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+/* Hero Buttons */
+.hero-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-large {
+  padding: 14px 32px;
+  font-size: 16px;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .giveaway-timer-hero {
+    gap: 8px;
+  }
+  
+  .giveaway-timer-hero .timer-block {
+    min-width: 50px;
+    padding: 6px 10px;
+  }
+  
+  .giveaway-timer-hero .timer-number {
+    font-size: 18px;
+  }
+  
+  .giveaway-prize-hero .prize-text {
+    font-size: 14px;
+  }
+  
+  .btn-large {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+}

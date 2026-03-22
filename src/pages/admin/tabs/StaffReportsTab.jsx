@@ -1,13 +1,14 @@
 // src/pages/admin/tabs/StaffReportsTab.jsx
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../../context/AuthContext';
 import { staffService } from '../../../services/api';
 import { toast } from 'react-toastify';
 import './StaffReportsTab.css';
 
 const StaffReportsTab = () => {
+  const { user, isAuthenticated } = useAuth();
   const [staffReports, setStaffReports] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedStaff, setSelectedStaff] = useState(null);
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0]
@@ -15,10 +16,14 @@ const StaffReportsTab = () => {
   const [filterRole, setFilterRole] = useState('all');
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'admin') {
+      return;
+    }
     fetchStaffReports();
-  }, [dateRange, filterRole]);
+  }, [dateRange, filterRole, isAuthenticated, user]);
 
   const fetchStaffReports = async () => {
     try {
@@ -32,76 +37,11 @@ const StaffReportsTab = () => {
       }
       
       setStaffReports(data.reports || []);
+      
     } catch (error) {
       console.error('Error fetching staff reports:', error);
-      // Mock data for testing
-      setStaffReports([
-        {
-          _id: '1',
-          staffId: 'chef1',
-          name: 'Chef Berhanu',
-          role: 'cook',
-          totalOrders: 45,
-          totalRevenue: 11250,
-          completedOrders: 42,
-          cancelledOrders: 3,
-          averageRating: 4.8,
-          performance: [
-            { date: '2024-03-01', orders: 8, revenue: 2000 },
-            { date: '2024-03-02', orders: 10, revenue: 2500 },
-            { date: '2024-03-03', orders: 7, revenue: 1750 }
-          ]
-        },
-        {
-          _id: '2',
-          staffId: 'chef2',
-          name: 'Chef Tigist',
-          role: 'cook',
-          totalOrders: 38,
-          totalRevenue: 9500,
-          completedOrders: 36,
-          cancelledOrders: 2,
-          averageRating: 4.9,
-          performance: [
-            { date: '2024-03-01', orders: 6, revenue: 1500 },
-            { date: '2024-03-02', orders: 9, revenue: 2250 },
-            { date: '2024-03-03', orders: 8, revenue: 2000 }
-          ]
-        },
-        {
-          _id: '3',
-          staffId: 'del1',
-          name: 'Abebe Kebede',
-          role: 'delivery',
-          totalOrders: 67,
-          totalRevenue: 16750,
-          completedOrders: 65,
-          cancelledOrders: 2,
-          averageRating: 4.6,
-          performance: [
-            { date: '2024-03-01', deliveries: 12, amount: 3000 },
-            { date: '2024-03-02', deliveries: 15, amount: 3750 },
-            { date: '2024-03-03', deliveries: 10, amount: 2500 }
-          ]
-        },
-        {
-          _id: '4',
-          staffId: 'del2',
-          name: 'Almaz Worku',
-          role: 'delivery',
-          totalOrders: 43,
-          totalRevenue: 10750,
-          completedOrders: 42,
-          cancelledOrders: 1,
-          averageRating: 4.9,
-          performance: [
-            { date: '2024-03-01', deliveries: 8, amount: 2000 },
-            { date: '2024-03-02', deliveries: 10, amount: 2500 },
-            { date: '2024-03-03', deliveries: 7, amount: 1750 }
-          ]
-        }
-      ]);
-      toast.info('Using sample staff reports data');
+      toast.error(error.response?.data?.message || 'Failed to load staff reports');
+      setStaffReports([]);
     } finally {
       setLoading(false);
     }
@@ -109,6 +49,7 @@ const StaffReportsTab = () => {
 
   const handleExportReport = async (format, staffId = null) => {
     try {
+      setExporting(true);
       const data = await staffService.exportStaffReport(
         format, 
         staffId, 
@@ -116,6 +57,7 @@ const StaffReportsTab = () => {
         dateRange.end,
         filterRole !== 'all' ? filterRole : null
       );
+      
       const url = window.URL.createObjectURL(new Blob([data]));
       const link = document.createElement('a');
       link.href = url;
@@ -123,10 +65,14 @@ const StaffReportsTab = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
+      
       toast.success(`Report exported as ${format.toUpperCase()}`);
     } catch (error) {
       console.error('Error exporting report:', error);
       toast.error('Failed to export report');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -224,14 +170,16 @@ const StaffReportsTab = () => {
           <button 
             className="btn-export-all"
             onClick={() => handleExportReport('csv')}
+            disabled={exporting || staffReports.length === 0}
           >
-            📊 Export All (CSV)
+            {exporting ? 'Exporting...' : '📊 Export All (CSV)'}
           </button>
           <button 
             className="btn-export-all"
             onClick={() => handleExportReport('pdf')}
+            disabled={exporting || staffReports.length === 0}
           >
-            📄 Export All (PDF)
+            {exporting ? 'Exporting...' : '📄 Export All (PDF)'}
           </button>
         </div>
       </div>
@@ -339,8 +287,9 @@ const StaffReportsTab = () => {
                 <button 
                   className="btn-export-staff"
                   onClick={() => handleExportReport('pdf', report.staffId)}
+                  disabled={exporting}
                 >
-                  📄 Export PDF
+                  {exporting ? 'Exporting...' : '📄 Export PDF'}
                 </button>
               </div>
             </div>
@@ -432,8 +381,9 @@ const StaffReportsTab = () => {
                 <button 
                   className="btn-export-detail"
                   onClick={() => handleExportReport('pdf', selectedReport.staffId)}
+                  disabled={exporting}
                 >
-                  📄 Export Full Report (PDF)
+                  {exporting ? 'Exporting...' : '📄 Export Full Report (PDF)'}
                 </button>
                 <button 
                   className="btn-close-detail"

@@ -13,7 +13,9 @@ const Sidebar = ({ activeTab, onMenuClick, mobileMenuOpen, user, onClose }) => {
     { id: 'menu', icon: '🍽️', label: 'Menu Items' },
     { id: 'reports', icon: '📈', label: 'Reports' },
     { id: 'users', icon: '👥', label: 'Users' },
-    { id: 'staff-reports', icon: '📋', label: 'Staff Reports' }
+    { id: 'staff-reports', icon: '📋', label: 'Staff Reports' },
+    { id: 'lottery', icon: '🎲', label: 'Lottery' },
+    { id: 'giveaway', icon: '🎁', label: 'Giveaway' }
   ];
 
   return (

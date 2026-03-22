@@ -20,14 +20,28 @@ export const SocketProvider = ({ children }) => {
   const [reconnecting, setReconnecting] = useState(false);
   const { user } = useAuth();
 
-  // Get socket URL from environment
-  const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 
-    (import.meta.env.DEV ? 'http://localhost:5000' : 'https://sewrica-cafe-backend.onrender.com');
+  // Get socket URL - improved fallback
+  const getSocketUrl = () => {
+    // First check if VITE_SOCKET_URL is set
+    if (import.meta.env.VITE_SOCKET_URL) {
+      return import.meta.env.VITE_SOCKET_URL;
+    }
+    
+    // If not, derive from VITE_API_URL
+    if (import.meta.env.VITE_API_URL) {
+      return import.meta.env.VITE_API_URL.replace(/\/api$/, '');
+    }
+    
+    // Default for development
+    return 'http://localhost:5000';
+  };
+
+  const SOCKET_URL = getSocketUrl();
 
   useEffect(() => {
     console.log('🔌 Attempting to connect to socket at:', SOCKET_URL);
 
-    // Check if backend is reachable first
+    // Check if backend is reachable first (optional, can remove if causing issues)
     fetch(`${SOCKET_URL}/api/health`)
       .then(res => res.json())
       .then(data => {
@@ -35,7 +49,6 @@ export const SocketProvider = ({ children }) => {
       })
       .catch(err => {
         console.warn('⚠️ Backend health check failed:', err.message);
-        toast.warning('Connecting to backend...');
       });
 
     const newSocket = io(SOCKET_URL, {
@@ -75,8 +88,6 @@ export const SocketProvider = ({ children }) => {
           console.log('👤 Customer registered');
         }
       }
-      
-      toast.success('🔌 Connected to real-time server');
     });
 
     newSocket.on('disconnect', (reason) => {
@@ -84,7 +95,6 @@ export const SocketProvider = ({ children }) => {
       setConnected(false);
       
       if (reason === 'io server disconnect') {
-        // Server disconnected, reconnect manually
         newSocket.connect();
       }
     });
@@ -92,11 +102,6 @@ export const SocketProvider = ({ children }) => {
     newSocket.on('connect_error', (error) => {
       console.error('Socket connection error:', error.message);
       setConnected(false);
-      
-      if (error.message === 'websocket error') {
-        console.log('WebSocket failed, falling back to polling...');
-        // Socket.IO will automatically fall back to polling
-      }
     });
 
     newSocket.on('reconnecting', (attemptNumber) => {
@@ -109,7 +114,6 @@ export const SocketProvider = ({ children }) => {
       console.log(`✅ Socket reconnected after ${attemptNumber} attempts`);
       setConnected(true);
       setReconnecting(false);
-      toast.success('🔌 Reconnected to server');
     });
 
     newSocket.on('reconnect_failed', () => {
@@ -131,8 +135,6 @@ export const SocketProvider = ({ children }) => {
     if (socket && connected) {
       socket.emit('register-order', orderId);
       console.log(`📦 Registered for order updates: ${orderId}`);
-    } else {
-      console.warn('Cannot register order - socket not connected');
     }
   };
 
@@ -141,20 +143,23 @@ export const SocketProvider = ({ children }) => {
       socket.on('order-status-updated', (data) => {
         console.log('📢 Order status update received:', data);
         
-        if (data.status === 'confirmed') {
-          toast.success('✅ Your order has been accepted!');
+        const statusMessages = {
+          confirmed: '✅ Your order has been accepted!',
+          cancelled: '❌ Your order has been cancelled',
+          ready: '🍽️ Your order is ready!',
+          delivered: '🚚 Your order has been delivered!',
+          preparing: '👨‍🍳 Your order is being prepared!',
+          'out-for-delivery': '🛵 Your order is out for delivery!'
+        };
+        
+        const message = statusMessages[data.status] || `Order status: ${data.status}`;
+        
+        if (data.status === 'confirmed' || data.status === 'ready' || data.status === 'delivered') {
+          toast.success(message);
         } else if (data.status === 'cancelled') {
-          toast.error('❌ Your order has been cancelled');
-        } else if (data.status === 'ready') {
-          toast.success('🍽️ Your order is ready!');
-        } else if (data.status === 'delivered') {
-          toast.success('🚚 Your order has been delivered!');
-        } else if (data.status === 'preparing') {
-          toast.info('👨‍🍳 Your order is being prepared!');
-        } else if (data.status === 'out-for-delivery') {
-          toast.info('🛵 Your order is out for delivery!');
+          toast.error(message);
         } else {
-          toast.info(`Order status: ${data.status}`);
+          toast.info(message);
         }
         
         callback(data);

@@ -54,44 +54,80 @@ const StaffDashboard = () => {
     }
   }, [connected, onOrderAssigned]);
 
+  // Helper function to safely extract array from response
+  const extractArray = (response, defaultArray = []) => {
+    if (!response) return defaultArray;
+    
+    // If it's already an array
+    if (Array.isArray(response)) return response;
+    
+    // If it's an object with orders array
+    if (response.orders && Array.isArray(response.orders)) return response.orders;
+    
+    // If it's an object with deliveries array
+    if (response.deliveries && Array.isArray(response.deliveries)) return response.deliveries;
+    
+    // If it's an object with data array
+    if (response.data && Array.isArray(response.data)) return response.data;
+    
+    // If it's an object with tasks array
+    if (response.tasks && Array.isArray(response.tasks)) return response.tasks;
+    
+    // Log the response for debugging
+    console.warn('Unexpected response format:', response);
+    return defaultArray;
+  };
+
   const fetchTasks = async () => {
     setLoading(true);
     try {
       const userRole = user?.role?.toLowerCase();
       console.log('Fetching tasks for role:', userRole);
       
-      let response;
       let activeTasks = [];
       let completed = [];
       
       if (userRole === 'cook' || userRole === 'chef') {
-        response = await staffService.getMyCookingOrders();
+        const response = await staffService.getMyCookingOrders();
         console.log('Cooking orders response:', response);
         
-        const orders = response?.orders || response || [];
+        const orders = extractArray(response, []);
+        console.log('Extracted orders:', orders);
+        
         activeTasks = orders.filter(o => 
           o.status === 'confirmed' || o.status === 'preparing'
         );
         completed = orders.filter(o => 
           o.status === 'ready' || o.status === 'delivered'
         );
+        
       } else if (userRole === 'delivery') {
-        response = await staffService.getMyDeliveryOrders();
+        const response = await staffService.getMyDeliveryOrders();
         console.log('Delivery orders response:', response);
         
-        const deliveries = response?.deliveries || response || [];
+        const deliveries = extractArray(response, []);
+        console.log('Extracted deliveries:', deliveries);
+        
         activeTasks = deliveries.filter(d => 
           d.status === 'ready' || d.status === 'out-for-delivery'
         );
         completed = deliveries.filter(d => 
           d.status === 'delivered'
         );
+        
       } else if (userRole === 'cashier') {
-        // Cashier specific endpoint
-        response = await staffService.getCashierTasks();
-        const tasks = response?.tasks || response || [];
-        activeTasks = tasks.filter(t => t.status === 'pending');
-        completed = tasks.filter(t => t.status === 'completed');
+        const response = await staffService.getCashierTasks();
+        console.log('Cashier tasks response:', response);
+        
+        const tasksArray = extractArray(response, []);
+        console.log('Extracted tasks:', tasksArray);
+        
+        activeTasks = tasksArray.filter(t => 
+          t.paymentStatus === 'pending' || t.status === 'pending'
+        );
+        completed = tasksArray.filter(t => 
+          t.paymentStatus === 'completed' || t.status === 'completed'
+        );
       }
 
       setTasks(activeTasks);
@@ -99,13 +135,15 @@ const StaffDashboard = () => {
 
       // Calculate stats
       const today = new Date().toDateString();
-      const todayTasksCount = activeTasks.filter(t => 
-        new Date(t.createdAt).toDateString() === today
-      ).length;
+      const todayTasksCount = activeTasks.filter(t => {
+        const date = new Date(t.createdAt || t.orderDate);
+        return date.toDateString() === today;
+      }).length;
 
-      const completedTodayCount = completed.filter(t => 
-        new Date(t.updatedAt || t.completedAt).toDateString() === today
-      ).length;
+      const completedTodayCount = completed.filter(t => {
+        const date = new Date(t.updatedAt || t.completedAt || t.createdAt);
+        return date.toDateString() === today;
+      }).length;
 
       setStats({
         todayTasks: todayTasksCount,

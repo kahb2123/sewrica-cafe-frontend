@@ -22,7 +22,6 @@ const StaffDashboard = () => {
     pendingTasks: 0
   });
 
-  // Check authentication and role
   useEffect(() => {
     if (!user) {
       navigate('/staff-login');
@@ -41,7 +40,6 @@ const StaffDashboard = () => {
     fetchTasks();
   }, [user]);
 
-  // Listen for socket events
   useEffect(() => {
     if (connected && onOrderAssigned) {
       const unsubscribe = onOrderAssigned((data) => {
@@ -54,28 +52,116 @@ const StaffDashboard = () => {
     }
   }, [connected, onOrderAssigned]);
 
-  // Helper function to safely extract array from response
   const extractArray = (response, defaultArray = []) => {
     if (!response) return defaultArray;
-    
-    // If it's already an array
     if (Array.isArray(response)) return response;
-    
-    // If it's an object with orders array
     if (response.orders && Array.isArray(response.orders)) return response.orders;
-    
-    // If it's an object with deliveries array
     if (response.deliveries && Array.isArray(response.deliveries)) return response.deliveries;
-    
-    // If it's an object with data array
     if (response.data && Array.isArray(response.data)) return response.data;
-    
-    // If it's an object with tasks array
     if (response.tasks && Array.isArray(response.tasks)) return response.tasks;
-    
-    // Log the response for debugging
-    console.warn('Unexpected response format:', response);
     return defaultArray;
+  };
+
+  // ========== CHEF ACTION HANDLERS ==========
+  const handleChefAccept = async (orderId) => {
+    try {
+      await staffService.chefAcceptOrder(orderId);
+      toast.success('✅ Order accepted!');
+      await fetchTasks();
+    } catch (error) {
+      console.error('Error accepting order:', error);
+      toast.error(error.response?.data?.message || 'Failed to accept order');
+    }
+  };
+
+  const handleChefReject = async (orderId, reason) => {
+    try {
+      await staffService.chefRejectOrder(orderId, reason);
+      toast.error('❌ Order rejected');
+      await fetchTasks();
+    } catch (error) {
+      console.error('Error rejecting order:', error);
+      toast.error(error.response?.data?.message || 'Failed to reject order');
+    }
+  };
+
+  const handleStartPreparing = async (orderId) => {
+    try {
+      await staffService.startCooking(orderId);
+      toast.success('👨‍🍳 Started preparing!');
+      await fetchTasks();
+    } catch (error) {
+      console.error('Error starting preparation:', error);
+      toast.error(error.response?.data?.message || 'Failed to start preparing');
+    }
+  };
+
+  const handleMarkReady = async (orderId) => {
+    try {
+      await staffService.completeCooking(orderId);
+      toast.success('✅ Order ready for delivery!');
+      await fetchTasks();
+    } catch (error) {
+      console.error('Error marking ready:', error);
+      toast.error(error.response?.data?.message || 'Failed to mark ready');
+    }
+  };
+
+  // ========== DELIVERY ACTION HANDLERS ==========
+  const handleDeliveryAccept = async (orderId) => {
+    try {
+      await staffService.deliveryAcceptOrder(orderId);
+      toast.success('✅ Delivery accepted!');
+      await fetchTasks();
+    } catch (error) {
+      console.error('Error accepting delivery:', error);
+      toast.error(error.response?.data?.message || 'Failed to accept delivery');
+    }
+  };
+
+  const handleDeliveryReject = async (orderId, reason) => {
+    try {
+      await staffService.deliveryRejectOrder(orderId, reason);
+      toast.error('❌ Delivery rejected');
+      await fetchTasks();
+    } catch (error) {
+      console.error('Error rejecting delivery:', error);
+      toast.error(error.response?.data?.message || 'Failed to reject delivery');
+    }
+  };
+
+  const handleStartDelivery = async (orderId) => {
+    try {
+      await staffService.startDelivery(orderId);
+      toast.success('🛵 Started delivery!');
+      await fetchTasks();
+    } catch (error) {
+      console.error('Error starting delivery:', error);
+      toast.error(error.response?.data?.message || 'Failed to start delivery');
+    }
+  };
+
+  const handleCompleteDelivery = async (orderId) => {
+    try {
+      await staffService.completeDelivery(orderId);
+      toast.success('✅ Order delivered!');
+      await fetchTasks();
+    } catch (error) {
+      console.error('Error completing delivery:', error);
+      toast.error(error.response?.data?.message || 'Failed to complete delivery');
+    }
+  };
+
+  // ========== CASHIER ACTION HANDLERS ==========
+  const handleProcessPayment = async (orderId, amount) => {
+    try {
+      await staffService.processCashPayment(orderId, amount);
+      toast.success('💰 Payment processed!');
+      await fetchTasks();
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      toast.error(error.response?.data?.message || 'Failed to process payment');
+    }
   };
 
   const fetchTasks = async () => {
@@ -89,13 +175,11 @@ const StaffDashboard = () => {
       
       if (userRole === 'cook' || userRole === 'chef') {
         const response = await staffService.getMyCookingOrders();
-        console.log('Cooking orders response:', response);
-        
         const orders = extractArray(response, []);
-        console.log('Extracted orders:', orders);
         
+        // Active: confirmed (needs accept), confirmed+accepted (needs start), preparing/cooking (in progress)
         activeTasks = orders.filter(o => 
-          o.status === 'confirmed' || o.status === 'preparing'
+          o.status === 'confirmed' || o.status === 'preparing' || o.status === 'cooking'
         );
         completed = orders.filter(o => 
           o.status === 'ready' || o.status === 'delivered'
@@ -103,10 +187,7 @@ const StaffDashboard = () => {
         
       } else if (userRole === 'delivery') {
         const response = await staffService.getMyDeliveryOrders();
-        console.log('Delivery orders response:', response);
-        
         const deliveries = extractArray(response, []);
-        console.log('Extracted deliveries:', deliveries);
         
         activeTasks = deliveries.filter(d => 
           d.status === 'ready' || d.status === 'out-for-delivery'
@@ -117,10 +198,7 @@ const StaffDashboard = () => {
         
       } else if (userRole === 'cashier') {
         const response = await staffService.getCashierTasks();
-        console.log('Cashier tasks response:', response);
-        
         const tasksArray = extractArray(response, []);
-        console.log('Extracted tasks:', tasksArray);
         
         activeTasks = tasksArray.filter(t => 
           t.paymentStatus === 'pending' || t.status === 'pending'
@@ -133,7 +211,6 @@ const StaffDashboard = () => {
       setTasks(activeTasks);
       setCompletedTasks(completed);
 
-      // Calculate stats
       const today = new Date().toDateString();
       const todayTasksCount = activeTasks.filter(t => {
         const date = new Date(t.createdAt || t.orderDate);
@@ -158,12 +235,10 @@ const StaffDashboard = () => {
         toast.error('Session expired. Please login again.');
         logout();
         navigate('/staff-login');
-      } else if (error.response?.status === 404) {
-        toast.warning('No tasks found');
-        setTasks([]);
-        setCompletedTasks([]);
       } else {
         toast.error(error.response?.data?.message || 'Failed to load tasks');
+        setTasks([]);
+        setCompletedTasks([]);
       }
     } finally {
       setLoading(false);
@@ -172,7 +247,6 @@ const StaffDashboard = () => {
 
   const handleTaskUpdate = (updatedOrder) => {
     fetchTasks();
-    toast.success('Task updated successfully');
   };
 
   const getRoleIcon = () => {
@@ -296,6 +370,15 @@ const StaffDashboard = () => {
                       task={task}
                       type={user?.role?.toLowerCase() === 'chef' ? 'cook' : user?.role?.toLowerCase()}
                       onTaskUpdate={handleTaskUpdate}
+                      onChefAccept={handleChefAccept}
+                      onChefReject={handleChefReject}
+                      onStartPreparing={handleStartPreparing}
+                      onMarkReady={handleMarkReady}
+                      onDeliveryAccept={handleDeliveryAccept}
+                      onDeliveryReject={handleDeliveryReject}
+                      onStartDelivery={handleStartDelivery}
+                      onCompleteDelivery={handleCompleteDelivery}
+                      onProcessPayment={handleProcessPayment}
                     />
                   ))
                 ) : (
@@ -317,6 +400,15 @@ const StaffDashboard = () => {
                       task={task}
                       type={user?.role?.toLowerCase() === 'chef' ? 'cook' : user?.role?.toLowerCase()}
                       onTaskUpdate={handleTaskUpdate}
+                      onChefAccept={handleChefAccept}
+                      onChefReject={handleChefReject}
+                      onStartPreparing={handleStartPreparing}
+                      onMarkReady={handleMarkReady}
+                      onDeliveryAccept={handleDeliveryAccept}
+                      onDeliveryReject={handleDeliveryReject}
+                      onStartDelivery={handleStartDelivery}
+                      onCompleteDelivery={handleCompleteDelivery}
+                      onProcessPayment={handleProcessPayment}
                     />
                   ))
                 ) : (

@@ -1,31 +1,27 @@
 // src/components/StaffTaskCard.jsx
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import { staffService } from '../services/api';
 import './StaffTaskCard.css';
 
-const StaffTaskCard = ({ task, type, onTaskUpdate }) => {
+const StaffTaskCard = ({ 
+  task, 
+  type, 
+  onTaskUpdate,
+  onChefAccept,
+  onChefReject,
+  onStartPreparing,
+  onMarkReady,
+  onDeliveryAccept,
+  onDeliveryReject,
+  onStartDelivery,
+  onCompleteDelivery,
+  onProcessPayment
+}) => {
   const [loading, setLoading] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [notes, setNotes] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
-
-  // Debug log to see what task data we have
-  console.log('StaffTaskCard - Task:', {
-    id: task._id,
-    orderNumber: task.orderNumber,
-    status: task.status,
-    chefAccepted: task.chefAccepted,
-    chefRejected: task.chefRejected,
-    cookingStartedAt: task.cookingStartedAt,
-    cookingCompletedAt: task.cookingCompletedAt,
-    deliveryAccepted: task.deliveryAccepted,
-    deliveryRejected: task.deliveryRejected,
-    deliveryStartedAt: task.deliveryStartedAt,
-    deliveryCompletedAt: task.deliveryCompletedAt,
-    type: type
-  });
 
   const getStatusColor = (status) => {
     const colors = {
@@ -72,159 +68,149 @@ const StaffTaskCard = ({ task, type, onTaskUpdate }) => {
     });
   };
 
-  // ========== CHEF ACCEPTANCE ==========
+  // ========== CHEF: ACCEPT ORDER ==========
   const handleChefAccept = async () => {
-    if (!task._id) return;
+    if (!task._id || loading) return;
     
     setLoading(true);
     try {
-      const response = await staffService.chefAcceptOrder(task._id, notes);
-      toast.success('✅ Order accepted! You can start cooking.');
-      if (onTaskUpdate) {
-        onTaskUpdate(response.order);
-      }
+      await onChefAccept(task._id);
+      toast.success('✅ Order accepted successfully!');
+      if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
-      console.error('Error accepting order:', error);
-      toast.error(error.response?.data?.message || 'Failed to accept order');
+      toast.error(error.message || 'Failed to accept order');
     } finally {
       setLoading(false);
     }
   };
 
+  // ========== CHEF: REJECT ORDER ==========
   const handleChefReject = async () => {
-    if (!task._id || !rejectionReason) {
-      toast.error('Please provide a reason for rejection');
-      return;
-    }
+    if (!task._id || !rejectionReason || loading) return;
     
     setLoading(true);
     try {
-      const response = await staffService.chefRejectOrder(task._id, rejectionReason);
+      await onChefReject(task._id, rejectionReason);
       toast.error('❌ Order rejected');
       setShowRejectModal(false);
       setRejectionReason('');
-      if (onTaskUpdate) {
-        onTaskUpdate(response.order);
-      }
+      if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
-      console.error('Error rejecting order:', error);
-      toast.error(error.response?.data?.message || 'Failed to reject order');
+      toast.error(error.message || 'Failed to reject order');
     } finally {
       setLoading(false);
     }
   };
 
-  // ========== DELIVERY ACCEPTANCE ==========
+  // ========== CHEF: START PREPARING ==========
+  const handleStartPreparing = async () => {
+    if (!task._id || loading) return;
+    
+    setLoading(true);
+    try {
+      await onStartPreparing(task._id);
+      toast.success('👨‍🍳 Started preparing!');
+      if (onTaskUpdate) onTaskUpdate(task);
+    } catch (error) {
+      toast.error(error.message || 'Failed to start preparing');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ========== CHEF: MARK AS READY ==========
+  const handleMarkReady = async () => {
+    if (!task._id || loading) return;
+    
+    setLoading(true);
+    try {
+      await onMarkReady(task._id);
+      toast.success('✅ Order ready for delivery!');
+      if (onTaskUpdate) onTaskUpdate(task);
+    } catch (error) {
+      toast.error(error.message || 'Failed to mark ready');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ========== DELIVERY: ACCEPT DELIVERY ==========
   const handleDeliveryAccept = async () => {
-    if (!task._id) return;
+    if (!task._id || loading) return;
     
     setLoading(true);
     try {
-      const response = await staffService.deliveryAcceptOrder(task._id, notes);
-      toast.success('✅ Delivery accepted! You can start delivery.');
-      if (onTaskUpdate) {
-        onTaskUpdate(response.order);
-      }
+      await onDeliveryAccept(task._id);
+      toast.success('✅ Delivery accepted!');
+      if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
-      console.error('Error accepting delivery:', error);
-      toast.error(error.response?.data?.message || 'Failed to accept delivery');
+      toast.error(error.message || 'Failed to accept delivery');
     } finally {
       setLoading(false);
     }
   };
 
+  // ========== DELIVERY: REJECT DELIVERY ==========
   const handleDeliveryReject = async () => {
-    if (!task._id || !rejectionReason) {
-      toast.error('Please provide a reason for rejection');
-      return;
-    }
+    if (!task._id || !rejectionReason || loading) return;
     
     setLoading(true);
     try {
-      const response = await staffService.deliveryRejectOrder(task._id, rejectionReason);
+      await onDeliveryReject(task._id, rejectionReason);
       toast.error('❌ Delivery rejected');
       setShowRejectModal(false);
       setRejectionReason('');
-      if (onTaskUpdate) {
-        onTaskUpdate(response.order);
-      }
+      if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
-      console.error('Error rejecting delivery:', error);
-      toast.error(error.response?.data?.message || 'Failed to reject delivery');
+      toast.error(error.message || 'Failed to reject delivery');
     } finally {
       setLoading(false);
     }
   };
 
-  // ========== CHEF COOKING ACTIONS ==========
-  const handleStartCooking = async () => {
-    if (!task._id) return;
-    
-    setLoading(true);
-    try {
-      const response = await staffService.startCooking(task._id);
-      toast.success('👨‍🍳 Started cooking!');
-      if (onTaskUpdate) {
-        onTaskUpdate(response.order);
-      }
-    } catch (error) {
-      console.error('Error starting cooking:', error);
-      toast.error(error.response?.data?.message || 'Failed to start cooking');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleMarkReady = async () => {
-    if (!task._id) return;
-    
-    setLoading(true);
-    try {
-      const response = await staffService.completeCooking(task._id);
-      toast.success('✅ Order ready for delivery!');
-      if (onTaskUpdate) {
-        onTaskUpdate(response.order);
-      }
-    } catch (error) {
-      console.error('Error marking ready:', error);
-      toast.error(error.response?.data?.message || 'Failed to mark ready');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ========== DELIVERY ACTIONS ==========
+  // ========== DELIVERY: START DELIVERY ==========
   const handleStartDelivery = async () => {
-    if (!task._id) return;
+    if (!task._id || loading) return;
     
     setLoading(true);
     try {
-      const response = await staffService.startDelivery(task._id);
+      await onStartDelivery(task._id);
       toast.success('🛵 Started delivery!');
-      if (onTaskUpdate) {
-        onTaskUpdate(response.order);
-      }
+      if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
-      console.error('Error starting delivery:', error);
-      toast.error(error.response?.data?.message || 'Failed to start delivery');
+      toast.error(error.message || 'Failed to start delivery');
     } finally {
       setLoading(false);
     }
   };
 
+  // ========== DELIVERY: COMPLETE DELIVERY ==========
   const handleCompleteDelivery = async () => {
-    if (!task._id) return;
+    if (!task._id || loading) return;
     
     setLoading(true);
     try {
-      const response = await staffService.completeDelivery(task._id);
+      await onCompleteDelivery(task._id);
       toast.success('✅ Order delivered successfully!');
-      if (onTaskUpdate) {
-        onTaskUpdate(response.order);
-      }
+      if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
-      console.error('Error completing delivery:', error);
-      toast.error(error.response?.data?.message || 'Failed to complete delivery');
+      toast.error(error.message || 'Failed to complete delivery');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ========== CASHIER: PROCESS PAYMENT ==========
+  const handleProcessPayment = async () => {
+    if (!task._id || loading) return;
+    
+    setLoading(true);
+    try {
+      await onProcessPayment(task._id, task.totalAmount);
+      toast.success('💰 Payment processed successfully!');
+      if (onTaskUpdate) onTaskUpdate(task);
+    } catch (error) {
+      toast.error(error.message || 'Failed to process payment');
     } finally {
       setLoading(false);
     }
@@ -247,99 +233,127 @@ const StaffTaskCard = ({ task, type, onTaskUpdate }) => {
 
   const timeSpent = calculateTimeSpent();
 
-  // ========== BUTTON LOGIC WITH DEBUGGING ==========
-  
-  // For Chef (type === 'cook')
-  const getChefActions = () => {
-    console.log('getChefActions - Task status:', task.status);
-    console.log('  chefAccepted:', task.chefAccepted);
-    console.log('  chefRejected:', task.chefRejected);
-    console.log('  cookingStartedAt:', task.cookingStartedAt);
-    console.log('  cookingCompletedAt:', task.cookingCompletedAt);
-    
-    // Case 1: Order is confirmed but not yet accepted
+  // ========== RENDER CHEF BUTTONS ==========
+  const renderChefButtons = () => {
+    // Case 1: Order confirmed, not accepted/rejected → Show Accept/Reject
     if (task.status === 'confirmed' && !task.chefAccepted && !task.chefRejected) {
-      console.log('✅ Showing Accept/Reject buttons for chef');
       return (
-        <div className="accept-reject-buttons">
-          <button className="btn-accept" onClick={handleChefAccept} disabled={loading}>
-            {loading ? 'Processing...' : '✓ Accept Order'}
+        <div className="button-group">
+          <button 
+            className="btn-accept" 
+            onClick={handleChefAccept} 
+            disabled={loading}
+          >
+            {loading ? 'Processing...' : '✅ Accept Order'}
           </button>
-          <button className="btn-reject" onClick={() => setShowRejectModal(true)} disabled={loading}>
-            ✗ Reject Order
+          <button 
+            className="btn-reject" 
+            onClick={() => setShowRejectModal(true)} 
+            disabled={loading}
+          >
+            ❌ Reject Order
           </button>
         </div>
       );
     }
     
-    // Case 2: Accepted but cooking not started
+    // Case 2: Accepted but not started preparing
     if (task.status === 'confirmed' && task.chefAccepted && !task.cookingStartedAt) {
-      console.log('✅ Showing Start Cooking button');
       return (
-        <button className="btn-start" onClick={handleStartCooking} disabled={loading}>
-          {loading ? 'Starting...' : '👨‍🍳 Start Cooking'}
+        <button 
+          className="btn-preparing" 
+          onClick={handleStartPreparing} 
+          disabled={loading}
+        >
+          {loading ? 'Starting...' : '👨‍🍳 Start Preparing'}
         </button>
       );
     }
     
-    // Case 3: Cooking in progress
-    if (task.status === 'preparing' && task.cookingStartedAt && !task.cookingCompletedAt) {
-      console.log('✅ Showing Mark as Ready button');
+    // Case 3: Preparing in progress
+    if ((task.status === 'preparing' || task.status === 'cooking') && 
+        task.cookingStartedAt && !task.cookingCompletedAt) {
       return (
-        <button className="btn-complete" onClick={handleMarkReady} disabled={loading}>
+        <button 
+          className="btn-ready" 
+          onClick={handleMarkReady} 
+          disabled={loading}
+        >
           {loading ? 'Marking...' : '✅ Mark as Ready'}
         </button>
       );
     }
     
-    console.log('❌ No chef actions available');
     return null;
   };
-  
-  // For Delivery (type === 'delivery')
-  const getDeliveryActions = () => {
-    console.log('getDeliveryActions - Task status:', task.status);
-    console.log('  deliveryAccepted:', task.deliveryAccepted);
-    console.log('  deliveryRejected:', task.deliveryRejected);
-    console.log('  deliveryStartedAt:', task.deliveryStartedAt);
-    console.log('  deliveryCompletedAt:', task.deliveryCompletedAt);
-    
-    // Case 1: Order is ready but not yet accepted
+
+  // ========== RENDER DELIVERY BUTTONS ==========
+  const renderDeliveryButtons = () => {
+    // Case 1: Order ready, not accepted/rejected → Show Accept/Reject
     if (task.status === 'ready' && !task.deliveryAccepted && !task.deliveryRejected) {
-      console.log('✅ Showing Accept/Reject buttons for delivery');
       return (
-        <div className="accept-reject-buttons">
-          <button className="btn-accept" onClick={handleDeliveryAccept} disabled={loading}>
-            {loading ? 'Processing...' : '✓ Accept Delivery'}
+        <div className="button-group">
+          <button 
+            className="btn-accept" 
+            onClick={handleDeliveryAccept} 
+            disabled={loading}
+          >
+            {loading ? 'Processing...' : '✅ Accept Delivery'}
           </button>
-          <button className="btn-reject" onClick={() => setShowRejectModal(true)} disabled={loading}>
-            ✗ Reject Delivery
+          <button 
+            className="btn-reject" 
+            onClick={() => setShowRejectModal(true)} 
+            disabled={loading}
+          >
+            ❌ Reject Delivery
           </button>
         </div>
       );
     }
     
-    // Case 2: Accepted but delivery not started
+    // Case 2: Accepted but not started
     if (task.status === 'ready' && task.deliveryAccepted && !task.deliveryStartedAt) {
-      console.log('✅ Showing Start Delivery button');
       return (
-        <button className="btn-start" onClick={handleStartDelivery} disabled={loading}>
+        <button 
+          className="btn-deliver" 
+          onClick={handleStartDelivery} 
+          disabled={loading}
+        >
           {loading ? 'Starting...' : '🛵 Start Delivery'}
         </button>
       );
     }
     
-    // Case 3: Delivery in progress
-    if (task.status === 'out-for-delivery' && task.deliveryStartedAt && !task.deliveryCompletedAt) {
-      console.log('✅ Showing Mark as Delivered button');
+    // Case 3: In progress
+    if (task.status === 'out-for-delivery' && 
+        task.deliveryStartedAt && !task.deliveryCompletedAt) {
       return (
-        <button className="btn-complete" onClick={handleCompleteDelivery} disabled={loading}>
-          {loading ? 'Completing...' : '✅ Mark as Delivered'}
+        <button 
+          className="btn-complete" 
+          onClick={handleCompleteDelivery} 
+          disabled={loading}
+        >
+          {loading ? 'Completing...' : '✅ Complete Delivery'}
         </button>
       );
     }
     
-    console.log('❌ No delivery actions available');
+    return null;
+  };
+
+  // ========== RENDER CASHIER BUTTONS ==========
+  const renderCashierButtons = () => {
+    if (task.paymentStatus === 'pending') {
+      return (
+        <button 
+          className="btn-payment" 
+          onClick={handleProcessPayment} 
+          disabled={loading}
+        >
+          {loading ? 'Processing...' : '💰 Process Payment'}
+        </button>
+      );
+    }
     return null;
   };
 
@@ -347,10 +361,10 @@ const StaffTaskCard = ({ task, type, onTaskUpdate }) => {
     <div className={`staff-task-card ${type} ${task.status}`} data-status={task.status}>
       <div className="task-card-header">
         <div className="task-type-badge">
-          {type === 'cook' ? '👨‍🍳 Kitchen' : '🚚 Delivery'}
+          {type === 'cook' ? '👨‍🍳 Kitchen' : type === 'delivery' ? '🚚 Delivery' : '💰 Cashier'}
         </div>
-        <div className="task-status" style={{ backgroundColor: getStatusColor(task.status) }}>
-          {getStatusIcon(task.status)} {task.status}
+        <div className="task-status" style={{ backgroundColor: getStatusColor(task.status || task.paymentStatus) }}>
+          {getStatusIcon(task.status || task.paymentStatus)} {task.status || task.paymentStatus || 'pending'}
         </div>
       </div>
 
@@ -363,14 +377,14 @@ const StaffTaskCard = ({ task, type, onTaskUpdate }) => {
         <div className="customer-info">
           <p><span className="info-label">👤 Customer:</span> {task.customerName || task.customer?.name || 'Guest'}</p>
           <p><span className="info-label">📞 Phone:</span> {task.customerPhone || task.customer?.phone || 'N/A'}</p>
-          <p><span className="info-label">📍 Address:</span> {task.deliveryAddress ? 
-            `${task.deliveryAddress.area || ''} ${task.deliveryAddress.street || ''}`.trim() || 'Pickup' 
-            : 'Pickup'}
-          </p>
+          {type === 'delivery' && task.deliveryAddress && (
+            <p><span className="info-label">📍 Address:</span> {task.deliveryAddress}</p>
+          )}
+          <p><span className="info-label">💰 Total:</span> ETB {task.totalAmount}</p>
         </div>
 
         <div className="items-section">
-          <h4>Items to {type === 'cook' ? 'prepare' : 'deliver'}:</h4>
+          <h4>Items to {type === 'cook' ? 'prepare' : type === 'delivery' ? 'deliver' : 'process'}:</h4>
           <div className="items-list">
             {task.items?.map((item, idx) => (
               <div key={idx} className="item-row">
@@ -391,34 +405,22 @@ const StaffTaskCard = ({ task, type, onTaskUpdate }) => {
           </div>
         )}
 
-        {/* Timer for active tasks */}
-        {((type === 'cook' && task.cookingStartedAt && !task.cookingCompletedAt) ||
-          (type === 'delivery' && task.deliveryStartedAt && !task.deliveryCompletedAt)) && (
+        {(type === 'cook' && task.cookingStartedAt && !task.cookingCompletedAt) ||
+         (type === 'delivery' && task.deliveryStartedAt && !task.deliveryCompletedAt) ? (
           <div className="timer-section">
             <div className="timer">
               <span className="timer-icon">⏱️</span>
               <span className="timer-value">{timeSpent} min</span>
             </div>
           </div>
-        )}
-
-        {showDetails && (
-          <div className="notes-section">
-            <textarea
-              placeholder="Add notes (optional)..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows="2"
-            />
-          </div>
-        )}
+        ) : null}
       </div>
 
       <div className="task-card-footer">
-        {/* Show appropriate actions based on role */}
-        {type === 'cook' && getChefActions()}
-        {type === 'delivery' && getDeliveryActions()}
-
+        {type === 'cook' && renderChefButtons()}
+        {type === 'delivery' && renderDeliveryButtons()}
+        {type === 'cashier' && renderCashierButtons()}
+        
         <button 
           className="btn-details"
           onClick={() => setShowDetails(!showDetails)}
@@ -426,6 +428,18 @@ const StaffTaskCard = ({ task, type, onTaskUpdate }) => {
           {showDetails ? '▲ Hide Notes' : '▼ Add Notes'}
         </button>
       </div>
+
+      {/* Notes section */}
+      {showDetails && (
+        <div className="notes-section">
+          <textarea
+            placeholder="Add notes (optional)..."
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows="2"
+          />
+        </div>
+      )}
 
       {/* Rejection Modal */}
       {showRejectModal && (
@@ -451,8 +465,8 @@ const StaffTaskCard = ({ task, type, onTaskUpdate }) => {
                 Cancel
               </button>
               <button 
-                onClick={type === 'cook' ? handleChefReject : handleDeliveryReject}
-                className="btn-confirm-reject"
+                onClick={type === 'cook' ? handleChefReject : handleDeliveryReject} 
+                className="btn-confirm-reject" 
                 disabled={!rejectionReason}
               >
                 Yes, Reject Order
@@ -463,15 +477,15 @@ const StaffTaskCard = ({ task, type, onTaskUpdate }) => {
       )}
 
       {/* Completion badges */}
-      {(type === 'cook' && task.cookingCompletedAt) && (
+      {type === 'cook' && task.cookingCompletedAt && (
         <div className="completion-badge">
-          ✅ Completed at {formatTime(task.cookingCompletedAt)} ({task.cookingTime} min)
+          ✅ Completed at {formatTime(task.cookingCompletedAt)} ({task.cookingTime || '?'} min)
         </div>
       )}
 
-      {(type === 'delivery' && task.deliveryCompletedAt) && (
+      {type === 'delivery' && task.deliveryCompletedAt && (
         <div className="completion-badge">
-          ✅ Delivered at {formatTime(task.deliveryCompletedAt)} ({task.deliveryTime} min)
+          ✅ Delivered at {formatTime(task.deliveryCompletedAt)} ({task.deliveryTime || '?'} min)
         </div>
       )}
     </div>

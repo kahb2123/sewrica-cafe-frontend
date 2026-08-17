@@ -23,6 +23,20 @@ const StaffTaskCard = ({
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
 
+  console.log('📋 StaffTaskCard - Task:', {
+    id: task._id,
+    orderNumber: task.orderNumber,
+    status: task.status,
+    chefAccepted: task.chefAccepted,
+    chefRejected: task.chefRejected,
+    cookingStartedAt: task.cookingStartedAt,
+    cookingCompletedAt: task.cookingCompletedAt,
+    deliveryAccepted: task.deliveryAccepted,
+    deliveryStartedAt: task.deliveryStartedAt,
+    deliveryCompletedAt: task.deliveryCompletedAt,
+    type: type
+  });
+
   const getStatusColor = (status) => {
     const colors = {
       pending: '#f39c12',
@@ -233,10 +247,19 @@ const StaffTaskCard = ({
 
   const timeSpent = calculateTimeSpent();
 
-  // ========== RENDER CHEF BUTTONS ==========
+  // ========== RENDER CHEF BUTTONS - FIXED LOGIC ==========
   const renderChefButtons = () => {
+    console.log('🔍 Chef button check:', {
+      status: task.status,
+      chefAccepted: task.chefAccepted,
+      chefRejected: task.chefRejected,
+      cookingStartedAt: !!task.cookingStartedAt,
+      cookingCompletedAt: !!task.cookingCompletedAt
+    });
+
     // Case 1: Order confirmed, not accepted/rejected → Show Accept/Reject
     if (task.status === 'confirmed' && !task.chefAccepted && !task.chefRejected) {
+      console.log('✅ Showing Accept/Reject buttons');
       return (
         <div className="button-group">
           <button 
@@ -257,8 +280,9 @@ const StaffTaskCard = ({
       );
     }
     
-    // Case 2: Accepted but not started preparing
+    // Case 2: Accepted but not started preparing (status is still 'confirmed')
     if (task.status === 'confirmed' && task.chefAccepted && !task.cookingStartedAt) {
+      console.log('✅ Showing Start Preparing button');
       return (
         <button 
           className="btn-preparing" 
@@ -270,9 +294,10 @@ const StaffTaskCard = ({
       );
     }
     
-    // Case 3: Preparing in progress
-    if ((task.status === 'preparing' || task.status === 'cooking') && 
-        task.cookingStartedAt && !task.cookingCompletedAt) {
+    // Case 3: Status is 'preparing' - SHOW MARK AS READY
+    // This handles the case where cookingStartedAt might be undefined
+    if (task.status === 'preparing' && !task.cookingCompletedAt) {
+      console.log('✅ Showing Mark as Ready button (status is preparing)');
       return (
         <button 
           className="btn-ready" 
@@ -284,13 +309,37 @@ const StaffTaskCard = ({
       );
     }
     
+    // Case 4: Status is 'cooking' and cooking in progress
+    if (task.status === 'cooking' && !task.cookingCompletedAt) {
+      console.log('✅ Showing Mark as Ready button (status is cooking)');
+      return (
+        <button 
+          className="btn-ready" 
+          onClick={handleMarkReady} 
+          disabled={loading}
+        >
+          {loading ? 'Marking...' : '✅ Mark as Ready'}
+        </button>
+      );
+    }
+    
+    console.log('❌ No chef actions available');
     return null;
   };
 
   // ========== RENDER DELIVERY BUTTONS ==========
   const renderDeliveryButtons = () => {
+    console.log('🔍 Delivery button check:', {
+      status: task.status,
+      deliveryAccepted: task.deliveryAccepted,
+      deliveryRejected: task.deliveryRejected,
+      deliveryStartedAt: !!task.deliveryStartedAt,
+      deliveryCompletedAt: !!task.deliveryCompletedAt
+    });
+    
     // Case 1: Order ready, not accepted/rejected → Show Accept/Reject
     if (task.status === 'ready' && !task.deliveryAccepted && !task.deliveryRejected) {
+      console.log('✅ Showing Accept/Reject buttons for delivery');
       return (
         <div className="button-group">
           <button 
@@ -313,6 +362,7 @@ const StaffTaskCard = ({
     
     // Case 2: Accepted but not started
     if (task.status === 'ready' && task.deliveryAccepted && !task.deliveryStartedAt) {
+      console.log('✅ Showing Start Delivery button');
       return (
         <button 
           className="btn-deliver" 
@@ -327,6 +377,7 @@ const StaffTaskCard = ({
     // Case 3: In progress
     if (task.status === 'out-for-delivery' && 
         task.deliveryStartedAt && !task.deliveryCompletedAt) {
+      console.log('✅ Showing Complete Delivery button');
       return (
         <button 
           className="btn-complete" 
@@ -338,6 +389,7 @@ const StaffTaskCard = ({
       );
     }
     
+    console.log('❌ No delivery buttons to show');
     return null;
   };
 

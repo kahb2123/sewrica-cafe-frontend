@@ -182,7 +182,8 @@
 }
 
 .nav-link {
-  color: var(--ethiopian-charcoal);
+  color: var(--ethiopian-cream) !important;
+  background: transparent;
   text-decoration: none;
   font-size: 1rem;
   font-weight: 500;
@@ -195,11 +196,11 @@
 }
 
 .nav-link:hover {
-  color: var(--ethiopian-gold);
+  color: var(--ethiopian-gold) !important;
 }
 
 .nav-link.active {
-  color: var(--ethiopian-gold);
+  color: var(--ethiopian-gold) !important;
   font-weight: 600;
 }
 

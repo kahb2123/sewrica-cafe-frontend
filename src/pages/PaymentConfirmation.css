@@ -459,7 +459,7 @@
   background: #f8f9fa;
 }
 
-.nav-link {
+.confirmation-page .bottom-navigation .nav-link {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -474,14 +474,14 @@
   font-size: 0.95rem;
 }
 
-.nav-link:hover {
+.confirmation-page .bottom-navigation .nav-link:hover {
   background: #4CAF50;
   color: white;
   border-color: #4CAF50;
   transform: translateY(-2px);
 }
 
-.nav-link.back {
+.confirmation-page .bottom-navigation .nav-link.back {
   background: #f8f9fa;
 }
 

@@ -1159,6 +1159,237 @@
   opacity: 0.5;
 }
 
+/* Menu card refinement */
+.menu-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 285px), 1fr));
+  gap: 22px;
+}
+
+.menu-card {
+  min-height: 100%;
+  border: 1px solid rgba(11, 105, 101, 0.1);
+  border-radius: 16px;
+  background: var(--color-white);
+  box-shadow: 0 8px 24px rgba(6, 75, 74, 0.1);
+  transform: translateY(0);
+}
+
+.menu-card::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 4px;
+  background: var(--gradient-gold);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.menu-card:hover {
+  border-color: rgba(239, 159, 34, 0.75);
+  box-shadow: 0 18px 34px rgba(6, 75, 74, 0.18);
+  transform: translateY(-7px);
+}
+
+.menu-card:hover::after {
+  transform: scaleX(1);
+}
+
+.menu-card-image {
+  height: 190px;
+  background: var(--gradient-dark);
+}
+
+.menu-card-image::after {
+  content: '';
+  position: absolute;
+  inset: 45% 0 0;
+  background: linear-gradient(to bottom, transparent, rgba(6, 75, 74, 0.45));
+  pointer-events: none;
+}
+
+.menu-card-image img {
+  transition: transform 0.65s cubic-bezier(0.2, 0.7, 0.2, 1), filter 0.3s ease;
+}
+
+.menu-card:hover .menu-card-image img {
+  transform: scale(1.06);
+  filter: saturate(1.08) contrast(1.03);
+}
+
+.signature-badge {
+  top: 14px;
+  left: 14px;
+  z-index: 2;
+  border: 1px solid rgba(255, 248, 233, 0.45);
+  background: var(--gradient-gold);
+  color: var(--sewrica-dark);
+  box-shadow: 0 5px 14px rgba(6, 75, 74, 0.2);
+  letter-spacing: 0.02em;
+}
+
+.menu-card-content {
+  padding: 20px;
+}
+
+.menu-card-header {
+  margin-bottom: 8px;
+}
+
+.menu-card-title {
+  color: var(--sewrica-dark);
+  font-size: clamp(1.1rem, 1.4vw, 1.35rem);
+  letter-spacing: -0.01em;
+}
+
+.menu-card-title-am {
+  color: var(--sewrica-gold);
+  font-size: 0.86rem;
+}
+
+.menu-card-rating {
+  gap: 4px;
+  margin: 12px 0 16px;
+  padding: 6px 10px;
+  background: var(--sewrica-light);
+  border: 1px solid rgba(239, 159, 34, 0.16);
+}
+
+.star-filled,
+.star-half {
+  color: var(--sewrica-gold);
+}
+
+.star-empty {
+  color: #b9c6c2;
+}
+
+.rating-value {
+  color: var(--sewrica-dark);
+}
+
+.menu-card-description {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  min-height: 44px;
+}
+
+.menu-card-meta {
+  gap: 7px;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed rgba(11, 105, 101, 0.18);
+}
+
+.prep-time,
+.veg-icon,
+.spicy-icon {
+  padding: 6px 10px;
+  background: var(--sewrica-light);
+  font-size: 0.78rem;
+}
+
+.prep-time {
+  color: var(--color-text-muted);
+}
+
+.prep-time svg {
+  color: var(--sewrica-gold);
+}
+
+.veg-icon {
+  color: var(--sewrica-brown);
+}
+
+.spicy-icon {
+  color: #b84432;
+}
+
+.menu-card-footer {
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.menu-card-price {
+  color: var(--sewrica-dark);
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  line-height: 1;
+}
+
+.menu-card-price::before {
+  color: var(--sewrica-gold);
+  top: -13px;
+}
+
+.quick-add-btn {
+  min-height: 42px;
+  padding: 10px 17px;
+  border-radius: 10px;
+  background: var(--gradient-primary);
+  box-shadow: 0 7px 16px rgba(6, 75, 74, 0.2);
+}
+
+.quick-add-btn:hover:not(:disabled) {
+  background: var(--gradient-gold);
+  color: var(--sewrica-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 9px 18px rgba(239, 159, 34, 0.3);
+}
+
+.quick-add-btn:focus-visible {
+  outline: 3px solid rgba(239, 159, 34, 0.45);
+  outline-offset: 3px;
+}
+
+@media (max-width: 575px) {
+  .menu-grid {
+    gap: 16px;
+  }
+
+  .menu-card {
+    border-radius: 14px;
+  }
+
+  .menu-card-image {
+    height: 180px;
+  }
+
+  .menu-card-content {
+    padding: 17px;
+  }
+}
+
+@media (max-width: 360px) {
+  .menu-card-image {
+    height: 165px;
+  }
+
+  .menu-card-content {
+    padding: 15px;
+  }
+
+  .menu-card-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quick-add-btn {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+@media (min-width: 1200px) {
+  .menu-grid {
+    gap: 24px;
+  }
+
+  .menu-card-image {
+    height: 210px;
+  }
+}
+
 @media (min-width: 768px) {
   .no-items-icon {
     font-size: 6rem;

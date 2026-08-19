@@ -81,7 +81,7 @@
   font-weight: 500;
 }
 
-.stat-number {
+.overview-tab .stat-number {
   color: #333 !important;
   font-size: 28px !important;
   font-weight: bold !important;
@@ -231,7 +231,7 @@
     margin-right: 15px;
   }
 
-  .stat-number {
+  .overview-tab .stat-number {
     font-size: 20px;
   }
 

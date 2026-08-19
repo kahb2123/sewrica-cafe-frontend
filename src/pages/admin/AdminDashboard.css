@@ -618,7 +618,7 @@
   font-weight: 500;
 }
 
-.stat-number {
+.admin-dashboard .stat-number {
   color: #333 !important;
   font-size: 28px !important;
   font-weight: bold !important;
@@ -646,7 +646,7 @@
     margin-right: 15px;
   }
   
-  .stat-number {
+  .admin-dashboard .stat-number {
     font-size: 20px;
   }
   
@@ -670,7 +670,7 @@
     margin-right: 12px;
   }
   
-  .stat-number {
+  .admin-dashboard .stat-number {
     font-size: 18px;
   }
 }

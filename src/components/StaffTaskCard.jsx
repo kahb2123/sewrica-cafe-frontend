@@ -116,17 +116,17 @@ const StaffTaskCard = ({
     }
   };
 
-  // ========== CHEF: START PREPARING ==========
+  // ========== CHEF: START COOKING ==========
   const handleStartPreparing = async () => {
     if (!task._id || loading) return;
     
     setLoading(true);
     try {
       await onStartPreparing(task._id);
-      toast.success('👨‍🍳 Started preparing!');
+      toast.success('👨‍🍳 Started cooking!');
       if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
-      toast.error(error.message || 'Failed to start preparing');
+      toast.error(error.message || 'Failed to start cooking');
     } finally {
       setLoading(false);
     }
@@ -280,36 +280,21 @@ const StaffTaskCard = ({
       );
     }
     
-    // Case 2: Accepted but not started preparing (status is still 'confirmed')
-    if (task.status === 'confirmed' && task.chefAccepted && !task.cookingStartedAt) {
-      console.log('✅ Showing Start Preparing button');
+    // Case 2: Accepted and preparing, but cooking has not started
+    if (task.status === 'preparing' && task.chefAccepted && !task.cookingStartedAt) {
+      console.log('✅ Showing Start Cooking button');
       return (
         <button 
           className="btn-preparing" 
           onClick={handleStartPreparing} 
           disabled={loading}
         >
-          {loading ? 'Starting...' : '👨‍🍳 Start Preparing'}
+          {loading ? 'Starting...' : '👨‍🍳 Start Cooking'}
         </button>
       );
     }
     
-    // Case 3: Status is 'preparing' - SHOW MARK AS READY
-    // This handles the case where cookingStartedAt might be undefined
-    if (task.status === 'preparing' && !task.cookingCompletedAt) {
-      console.log('✅ Showing Mark as Ready button (status is preparing)');
-      return (
-        <button 
-          className="btn-ready" 
-          onClick={handleMarkReady} 
-          disabled={loading}
-        >
-          {loading ? 'Marking...' : '✅ Mark as Ready'}
-        </button>
-      );
-    }
-    
-    // Case 4: Status is 'cooking' and cooking in progress
+    // Case 3: Status is 'cooking' and cooking is in progress
     if (task.status === 'cooking' && !task.cookingCompletedAt) {
       console.log('✅ Showing Mark as Ready button (status is cooking)');
       return (

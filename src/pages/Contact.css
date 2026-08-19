@@ -1,7 +1,7 @@
 /* Contact Page Styles */
 .contact-page {
   font-family: 'Poppins', sans-serif;
-  background: #f8f9fa;
+  background: var(--color-bg);
   min-height: 100vh;
 }
 

@@ -4,7 +4,7 @@
   font-family: 'Poppins', sans-serif;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-dark);
 }
 
 /* Background Decoration */
@@ -167,7 +167,7 @@
 
 .browse-menu:hover {
   background: white;
-  color: #764ba2;
+  color: var(--sewrica-brown);
   transform: translateY(-3px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
@@ -287,7 +287,7 @@
 }
 
 .input-icon {
-  color: #764ba2;
+  color: var(--sewrica-brown);
 }
 
 .form-group input {
@@ -300,7 +300,7 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #764ba2;
+  border-color: var(--sewrica-gold);
   box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
 }
 
@@ -327,7 +327,7 @@
 }
 
 .password-toggle:hover {
-  color: #764ba2;
+  color: var(--sewrica-brown);
 }
 
 /* Error Message */
@@ -356,11 +356,11 @@
 .remember-me input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: #764ba2;
+  accent-color: var(--sewrica-gold);
 }
 
 .forgot-password {
-  color: #764ba2;
+  color: var(--sewrica-brown);
   text-decoration: none;
   transition: color 0.3s ease;
 }
@@ -373,7 +373,7 @@
 /* Submit Button */
 .submit-btn {
   padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-dark);
   border: none;
   border-radius: 10px;
   color: white;
@@ -419,7 +419,7 @@
 .toggle-btn {
   background: none;
   border: none;
-  color: #764ba2;
+  color: var(--sewrica-brown);
   font-weight: 600;
   cursor: pointer;
   margin-left: 5px;
@@ -441,7 +441,7 @@
 }
 
 .terms-text a {
-  color: #764ba2;
+  color: var(--sewrica-brown);
   text-decoration: none;
   transition: color 0.3s ease;
 }

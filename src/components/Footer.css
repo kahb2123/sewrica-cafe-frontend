@@ -1,24 +1,9 @@
 /* Import Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap');
 
-/* Ethiopian-inspired color palette */
-:root {
-  --ethiopian-gold: #D4AF37;
-  --ethiopian-green: #1E4D2B;
-  --ethiopian-red: #B22234;
-  --ethiopian-cream: #FDF5E6;
-  --ethiopian-brown: #8B4513;
-  --ethiopian-terracotta: #CD5C5C;
-  --ethiopian-charcoal: #2C3E50;
-  --ethiopian-sand: #C4A484;
-  --ethiopian-ochre: #CC7722;
-  --text-dark: #2C1810;
-  --text-light: #FDF5E6;
-}
-
 /* Footer Styles */
 .footer {
-  background: linear-gradient(135deg, var(--ethiopian-charcoal) 0%, #1a2632 100%);
+  background: var(--gradient-dark);
   color: var(--ethiopian-cream);
   font-family: 'Poppins', sans-serif;
   position: relative;

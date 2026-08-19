@@ -42,6 +42,19 @@
   --border-light: #E8D5B8;
   --border-medium: #C49B3D;
   --border-dark: #8B6B3D;
+
+  /* Compatibility names used by older page styles. */
+  --ethiopian-gold: var(--sewrica-gold);
+  --ethiopian-green: var(--sewrica-brown);
+  --ethiopian-red: #a83d32;
+  --ethiopian-cream: var(--sewrica-cream);
+  --ethiopian-brown: var(--sewrica-dark);
+  --ethiopian-terracotta: #c96d58;
+  --ethiopian-charcoal: var(--color-text);
+  --ethiopian-sand: var(--sewrica-warm);
+  --ethiopian-ochre: var(--sewrica-gold);
+  --text-dark: var(--color-text);
+  --text-light: var(--color-light);
 }
 
 /* ========================================

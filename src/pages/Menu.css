@@ -2,22 +2,22 @@
 
 /* Base Styles */
 :root {
-  --primary-gold: #D4AF37;
-  --primary-gold-dark: #c4a030;
-  --primary-dark: #2C3E50;
-  --primary-darker: #1a2a3a;
+  --primary-gold: var(--sewrica-gold);
+  --primary-gold-dark: var(--sewrica-gold-light);
+  --primary-dark: var(--sewrica-dark);
+  --primary-darker: var(--sewrica-brown);
   --accent-red: #C0392B;
   --accent-red-dark: #a93226;
-  --text-dark: #2C3E50;
-  --text-light: #666;
-  --text-lighter: #999;
-  --bg-light: #f8f9fa;
-  --bg-white: #ffffff;
-  --border-light: #e0e0e0;
+  --text-dark: var(--color-text);
+  --text-light: var(--color-text-muted);
+  --text-lighter: #78918d;
+  --bg-light: var(--color-bg);
+  --bg-white: var(--color-white);
+  --border-light: var(--border-light);
   --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 20px 40px rgba(212, 175, 55, 0.15);
-  --shadow-gold: 0 8px 25px rgba(212, 175, 55, 0.3);
+  --shadow-lg: var(--shadow-heavy);
+  --shadow-gold: 0 8px 25px rgba(239, 159, 34, 0.3);
   --border-radius-sm: 12px;
   --border-radius-md: 20px;
   --border-radius-lg: 30px;
@@ -33,7 +33,7 @@
 
 .menu-page {
   font-family: 'Poppins', sans-serif;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: var(--color-bg);
   min-height: 100vh;
 }
 
@@ -685,7 +685,7 @@
   position: relative;
   height: 160px;
   overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-dark);
   flex-shrink: 0;
 }
 

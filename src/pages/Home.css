@@ -4,21 +4,6 @@
   font-family: 'Poppins', sans-serif;
 }
 
-/* Ethiopian-inspired color palette */
-:root {
-  --ethiopian-gold: #D4AF37;
-  --ethiopian-green: #1E4D2B;
-  --ethiopian-red: #B22234;
-  --ethiopian-cream: #FDF5E6;
-  --ethiopian-brown: #8B4513;
-  --ethiopian-terracotta: #CD5C5C;
-  --ethiopian-charcoal: #2C3E50;
-  --ethiopian-sand: #C4A484;
-  --ethiopian-ochre: #CC7722;
-  --text-dark: #2C1810;
-  --text-light: #FDF5E6;
-}
-
 /* Container */
 .container {
   max-width: 1400px;

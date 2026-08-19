@@ -20,6 +20,7 @@ import MenuTab from './tabs/MenuTab';
 import ReportsTab from './tabs/ReportsTab';
 import UsersTab from './tabs/UsersTab';
 import StaffReportsTab from './tabs/StaffReportsTab';
+import InventoryTab from './tabs/InventoryTab';
 
 const AdminDashboard = () => {
   const { user, isAuthenticated } = useAuth();
@@ -136,6 +137,8 @@ const AdminDashboard = () => {
         return <StaffTab />;
       case 'menu':
         return <MenuTab />;
+      case 'inventory':
+        return <InventoryTab />;
       case 'reports':
         return <ReportsTab />;
       case 'users':

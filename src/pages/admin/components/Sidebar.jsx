@@ -11,6 +11,7 @@ const Sidebar = ({ activeTab, onMenuClick, mobileMenuOpen, user, onClose }) => {
     { id: 'orders', icon: '📦', label: 'Orders' },
     { id: 'staff', icon: '👨‍🍳', label: 'Staff' },
     { id: 'menu', icon: '🍽️', label: 'Menu Items' },
+    { id: 'inventory', icon: '📦', label: 'Inventory' },
     { id: 'reports', icon: '📈', label: 'Reports' },
     { id: 'users', icon: '👥', label: 'Users' },
     { id: 'staff-reports', icon: '📋', label: 'Staff Reports' },

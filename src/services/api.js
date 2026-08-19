@@ -290,6 +290,24 @@ export const menuService = {
     }
   },
 
+  getInventory: async () => {
+    try {
+      const response = await api.get('/menu/inventory');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch inventory' };
+    }
+  },
+
+  updateInventory: async (id, inventoryData) => {
+    try {
+      const response = await api.patch(`/menu/${id}/inventory`, inventoryData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update inventory' };
+    }
+  },
+
   getAllCategories: async () => {
     try {
       const response = await api.get('/menu/categories');

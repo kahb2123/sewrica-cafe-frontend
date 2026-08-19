@@ -1,0 +1,598 @@
+/* src/themes/sewrica-theme.css */
+/* ========================================
+   SEWRICA RESTAURANT - COMPLETE THEME
+   Colors based on Sewrica Logo
+   ======================================== */
+
+:root {
+  /* ========== BRAND COLORS ========== */
+  --sewrica-brown: #0b6965;
+  --sewrica-gold: #ef9f22;
+  --sewrica-dark: #064b4a;
+  --sewrica-cream: #fff8e9;
+  --sewrica-warm: #f2c46d;
+  --sewrica-light: #f8f1df;
+  --sewrica-gold-light: #ffc95a;
+  --sewrica-brown-light: #2d8b81;
+  
+  /* ========== THEME VARIABLES ========== */
+  --color-primary: #0b6965;
+  --color-secondary: #ef9f22;
+  --color-dark: #064b4a;
+  --color-light: #fff8e9;
+  --color-accent: #f2c46d;
+  --color-bg: #f8f1df;
+  --color-white: #FFFFFF;
+  --color-text: #173d3a;
+  --color-text-light: #FFFFFF;
+  --color-text-muted: #52706c;
+  
+  /* ========== GRADIENTS ========== */
+  --gradient-primary: linear-gradient(135deg, #064b4a 0%, #0b6965 100%);
+  --gradient-dark: linear-gradient(135deg, #064b4a 0%, #0b6965 100%);
+  --gradient-warm: linear-gradient(135deg, #f2c46d 0%, #fff8e9 100%);
+  --gradient-gold: linear-gradient(135deg, #ef9f22 0%, #ffc95a 100%);
+  
+  /* ========== SHADOWS ========== */
+  --shadow-light: 0 2px 10px rgba(92, 64, 51, 0.1);
+  --shadow-medium: 0 4px 20px rgba(139, 107, 61, 0.15);
+  --shadow-heavy: 0 8px 30px rgba(139, 107, 61, 0.25);
+  
+  /* ========== BORDERS ========== */
+  --border-light: #E8D5B8;
+  --border-medium: #C49B3D;
+  --border-dark: #8B6B3D;
+}
+
+/* ========================================
+   GLOBAL STYLES
+   ======================================== */
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+
+.btn-primary {
+  background: var(--gradient-primary);
+  border: none;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+  background: var(--sewrica-dark);
+}
+
+.btn-secondary {
+  background: var(--gradient-gold);
+  border: none;
+  color: var(--color-dark);
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+  background: var(--sewrica-gold);
+}
+
+.btn-accept {
+  background: var(--sewrica-gold);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-accept:hover:not(:disabled) {
+  background: var(--sewrica-brown);
+  transform: translateY(-2px);
+}
+
+.btn-reject {
+  background: #8B0000;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-reject:hover:not(:disabled) {
+  background: #660000;
+  transform: translateY(-2px);
+}
+
+/* ========================================
+   NAVBAR
+   ======================================== */
+
+.navbar {
+  background: var(--gradient-dark) !important;
+  box-shadow: var(--shadow-medium);
+  padding: 12px 0;
+}
+
+.navbar .navbar-brand {
+  color: var(--sewrica-gold-light) !important;
+  font-weight: 700;
+  font-size: 24px;
+}
+
+.navbar .navbar-brand:hover {
+  color: var(--color-white) !important;
+}
+
+.navbar .nav-link {
+  color: var(--color-white) !important;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.navbar .nav-link:hover {
+  color: var(--sewrica-gold-light) !important;
+}
+
+.navbar .nav-link.active {
+  color: var(--sewrica-gold-light) !important;
+  border-bottom: 2px solid var(--sewrica-gold-light);
+}
+
+.navbar .btn-outline-light {
+  border-color: var(--sewrica-gold-light);
+  color: var(--sewrica-gold-light);
+}
+
+.navbar .btn-outline-light:hover {
+  background: var(--sewrica-gold-light);
+  color: var(--color-dark);
+}
+
+/* ========================================
+   HERO SECTION
+   ======================================== */
+
+.hero-section {
+  background: var(--gradient-dark);
+  color: white;
+  padding: 80px 0;
+}
+
+.hero-title {
+  color: var(--sewrica-gold-light);
+  font-weight: 800;
+}
+
+.hero-subtitle {
+  color: var(--sewrica-cream);
+}
+
+.hero-description {
+  color: var(--sewrica-cream);
+  opacity: 0.9;
+}
+
+/* ========================================
+   CARDS
+   ======================================== */
+
+.card {
+  background: var(--color-white);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: var(--shadow-light);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-heavy);
+  transform: translateY(-4px);
+}
+
+.card-header {
+  background: var(--gradient-warm);
+  border-bottom: 2px solid var(--sewrica-gold);
+  color: var(--color-dark);
+  font-weight: 600;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.card .price {
+  color: var(--sewrica-brown);
+  font-weight: 700;
+}
+
+.card .category-badge {
+  background: var(--sewrica-gold);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+/* ========================================
+   STAT CARDS
+   ======================================== */
+
+.stat-card {
+  background: var(--color-white);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow-light);
+  border-left: 4px solid var(--sewrica-gold);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  box-shadow: var(--shadow-medium);
+  transform: translateY(-3px);
+}
+
+.stat-card .stat-number {
+  color: var(--sewrica-brown);
+  font-weight: 700;
+  font-size: 28px;
+}
+
+.stat-card .stat-label {
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+/* ========================================
+   ADMIN SIDEBAR
+   ======================================== */
+
+.admin-sidebar {
+  background: var(--gradient-dark) !important;
+}
+
+.admin-sidebar .sidebar-header {
+  background: var(--gradient-primary);
+  padding: 30px 20px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-sidebar .sidebar-header h2 {
+  color: var(--sewrica-gold-light);
+}
+
+.admin-sidebar .sidebar-header p {
+  color: var(--sewrica-cream);
+  opacity: 0.8;
+}
+
+.admin-sidebar .sidebar-menu li {
+  color: var(--color-white);
+  transition: all 0.3s ease;
+}
+
+.admin-sidebar .sidebar-menu li:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(5px);
+}
+
+.admin-sidebar .sidebar-menu li.active {
+  background: var(--sewrica-gold);
+  box-shadow: 0 4px 10px rgba(196, 155, 61, 0.3);
+}
+
+.admin-sidebar .sidebar-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-sidebar .logout-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.admin-sidebar .logout-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ========================================
+   STAFF DASHBOARD
+   ======================================== */
+
+.dashboard-header {
+  background: var(--gradient-primary) !important;
+}
+
+.staff-avatar-large {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.role-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* ========================================
+   STAFF TASK CARDS
+   ======================================== */
+
+.staff-task-card {
+  background: var(--color-white);
+  border-radius: 12px;
+  box-shadow: var(--shadow-light);
+  border: 1px solid var(--border-light);
+  transition: all 0.3s ease;
+}
+
+.staff-task-card:hover {
+  box-shadow: var(--shadow-medium);
+  transform: translateY(-2px);
+}
+
+.staff-task-card .task-card-header {
+  background: var(--gradient-warm);
+  border-bottom: 2px solid var(--sewrica-gold);
+  border-radius: 12px 12px 0 0;
+}
+
+.staff-task-card .task-type-badge {
+  color: var(--color-dark);
+  font-weight: 600;
+}
+
+.staff-task-card .task-status {
+  background: var(--sewrica-gold);
+  color: white;
+}
+
+/* ========================================
+   FORMS
+   ======================================== */
+
+.form-control:focus {
+  border-color: var(--sewrica-gold);
+  box-shadow: 0 0 0 3px rgba(196, 155, 61, 0.2);
+}
+
+.form-label {
+  color: var(--color-dark);
+  font-weight: 500;
+}
+
+/* ========================================
+   TABLES
+   ======================================== */
+
+.data-table th {
+  background: var(--gradient-primary);
+  color: white;
+  padding: 12px 16px;
+}
+
+.data-table tr:hover {
+  background: rgba(196, 155, 61, 0.05);
+}
+
+.data-table .status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.status-badge.pending {
+  background: #f39c12;
+  color: white;
+}
+
+.status-badge.confirmed {
+  background: var(--sewrica-gold);
+  color: white;
+}
+
+.status-badge.preparing {
+  background: var(--sewrica-warm);
+  color: white;
+}
+
+.status-badge.ready {
+  background: #27ae60;
+  color: white;
+}
+
+.status-badge.delivered {
+  background: #2ecc71;
+  color: white;
+}
+
+.status-badge.cancelled {
+  background: #e74c3c;
+  color: white;
+}
+
+/* ========================================
+   GIVEAWAY BANNER
+   ======================================== */
+
+.giveaway-banner {
+  background: var(--gradient-primary);
+  border-radius: 16px;
+  box-shadow: var(--shadow-medium);
+}
+
+.giveaway-btn {
+  background: var(--sewrica-gold-light);
+  color: var(--color-dark);
+}
+
+.giveaway-btn:hover {
+  background: var(--sewrica-gold);
+  color: white;
+}
+
+.giveaway-badge {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ========================================
+   FOOTER
+   ======================================== */
+
+.footer {
+  background: var(--gradient-dark);
+  color: var(--sewrica-cream);
+  padding: 40px 0;
+}
+
+.footer a {
+  color: var(--sewrica-gold-light);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: white;
+}
+
+.footer .social-icon {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--sewrica-gold-light);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.footer .social-icon:hover {
+  background: var(--sewrica-gold-light);
+  color: var(--color-dark);
+}
+
+/* ========================================
+   TOAST NOTIFICATIONS
+   ======================================== */
+
+.Toastify__toast--success {
+  background: var(--gradient-primary);
+  color: white;
+}
+
+.Toastify__toast--error {
+  background: #8B0000;
+  color: white;
+}
+
+.Toastify__toast--info {
+  background: var(--gradient-warm);
+  color: var(--color-dark);
+}
+
+/* ========================================
+   MODALS
+   ======================================== */
+
+.modal-header {
+  background: var(--gradient-primary);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-header .btn-close {
+  color: white;
+}
+
+.modal-footer .btn-primary {
+  background: var(--sewrica-gold);
+  border-color: var(--sewrica-gold);
+}
+
+.modal-footer .btn-primary:hover {
+  background: var(--sewrica-brown);
+  border-color: var(--sewrica-brown);
+}
+
+/* ========================================
+   SCROLLBAR
+   ======================================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--sewrica-cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sewrica-gold);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sewrica-brown);
+}
+
+/* ========================================
+   SELECTION
+   ======================================== */
+
+::selection {
+  background: var(--sewrica-gold);
+  color: white;
+}
+
+::-moz-selection {
+  background: var(--sewrica-gold);
+  color: white;
+}
+
+/* ========================================
+   CONNECTION STATUS
+   ======================================== */
+
+.connection-status {
+  background: var(--color-white);
+  box-shadow: var(--shadow-light);
+}
+
+.connection-status.connected {
+  color: #27ae60;
+  border-left: 3px solid #27ae60;
+}
+
+.connection-status.disconnected {
+  color: #e74c3c;
+  border-left: 3px solid #e74c3c;
+}
+
+/* ========================================
+   RESPONSIVE ADJUSTMENTS
+   ======================================== */
+
+@media (max-width: 768px) {
+  .navbar .navbar-brand {
+    font-size: 20px;
+  }
+  
+  .hero-title {
+    font-size: 28px;
+  }
+  
+  .stat-card .stat-number {
+    font-size: 22px;
+  }
+}

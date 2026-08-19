@@ -112,17 +112,6 @@ const OrdersTab = () => {
     }
   };
 
-  const handleAcceptOrder = async (orderId) => {
-    try {
-      await adminService.updateOrderStatus(orderId, 'confirmed', 'Order accepted by admin');
-      toast.success('✅ Order accepted successfully');
-      fetchOrders();
-    } catch (error) {
-      console.error('Error accepting order:', error);
-      toast.error('Failed to accept order');
-    }
-  };
-
   const handleRejectOrder = async () => {
     if (!selectedOrder) return;
     
@@ -180,17 +169,6 @@ const OrdersTab = () => {
     } catch (error) {
       console.error('Error assigning delivery:', error);
       toast.error(error.message || 'Failed to assign delivery');
-    }
-  };
-
-  const updateOrderStatus = async (orderId, newStatus) => {
-    try {
-      await orderService.updateOrderStatus(orderId, newStatus);
-      toast.success(`Order status updated to ${newStatus}`);
-      fetchOrders();
-    } catch (error) {
-      console.error('Error updating order:', error);
-      toast.error('Failed to update order status');
     }
   };
 
@@ -359,7 +337,7 @@ const OrdersTab = () => {
                         <select
                           value=""
                           onChange={(e) => e.target.value && handleQuickAssignChef(order._id, e.target.value)}
-                          disabled={order.status === 'delivered' || order.status === 'cancelled'}
+                          disabled={Boolean(order.assignedChef) || order.status !== 'pending'}
                           className="quick-assign-select"
                         >
                           <option value="">👨‍🍳 Assign Chef</option>
@@ -381,7 +359,7 @@ const OrdersTab = () => {
                         <select
                           value=""
                           onChange={(e) => e.target.value && handleQuickAssignDelivery(order._id, e.target.value)}
-                          disabled={order.status === 'delivered' || order.status === 'cancelled'}
+                          disabled={Boolean(order.assignedDelivery) || order.status !== 'ready'}
                           className="quick-assign-select"
                         >
                           <option value="">🚚 Assign Delivery</option>
@@ -408,9 +386,7 @@ const OrdersTab = () => {
               <div className="order-card-footer">
                 {order.status === 'pending' && (
                   <div className="accept-reject-buttons">
-                    <button onClick={() => handleAcceptOrder(order._id)} className="btn-accept">
-                      ✓ Accept Order
-                    </button>
+                    <div className="workflow-note">Assign a chef to send this order to the kitchen.</div>
                     <button onClick={() => {
                       setSelectedOrder(order);
                       setShowRejectModal(true);
@@ -428,51 +404,28 @@ const OrdersTab = () => {
                     </span>
                   </div>
                   
-                  <div className="status-actions">
-                    {order.status === 'confirmed' && (
-                      <button className="btn-status-preparing" onClick={() => updateOrderStatus(order._id, 'preparing')}>
-                        👨‍🍳 Start Preparing
-                      </button>
-                    )}
-                    {order.status === 'preparing' && (
-                      <button className="btn-status-ready" onClick={() => updateOrderStatus(order._id, 'ready')}>
-                        ✅ Mark Ready
-                      </button>
-                    )}
-                    {order.status === 'ready' && (
-                      <button className="btn-status-delivered" onClick={() => updateOrderStatus(order._id, 'delivered')}>
-                        🚚 Mark Delivered
-                      </button>
-                    )}
-                    <div className="quick-status-control">
-                      <select
-                        value={order.status}
-                        onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                        className="status-dropdown"
-                      >
-                        <option value="pending">⏳ Pending</option>
-                        <option value="confirmed">✅ Confirmed</option>
-                        <option value="preparing">👨‍🍳 Preparing</option>
-                        <option value="ready">🍽️ Ready</option>
-                        <option value="delivered">🚚 Delivered</option>
-                        <option value="cancelled">❌ Cancelled</option>
-                      </select>
-                    </div>
-                  </div>
+                  <p className="workflow-hint">
+                    {order.status === 'confirmed' && 'Chef acceptance is next.'}
+                    {order.status === 'preparing' && 'Chef is preparing the order.'}
+                    {order.status === 'cooking' && 'Chef is cooking the order.'}
+                    {order.status === 'ready' && (order.assignedDelivery ? 'Waiting for delivery acceptance.' : 'Assign delivery to continue.')}
+                    {order.status === 'out-for-delivery' && 'Delivery is in progress.'}
+                    {order.status === 'delivered' && 'Customer delivery completed.'}
+                  </p>
                 </div>
 
                 <div className="assignment-buttons">
                   <button 
                     className="btn-assign-chef"
                     onClick={() => handleAssignChefClick(order)}
-                    disabled={order.status === 'delivered' || order.status === 'cancelled'}
+                    disabled={Boolean(order.assignedChef) || order.status !== 'pending'}
                   >
                     {order.assignedChef ? '🔄 Reassign Chef' : '👨‍🍳 Assign Chef'}
                   </button>
                   <button 
                     className="btn-assign-delivery"
                     onClick={() => handleAssignDeliveryClick(order)}
-                    disabled={order.status === 'delivered' || order.status === 'cancelled'}
+                    disabled={Boolean(order.assignedDelivery) || order.status !== 'ready'}
                   >
                     {order.assignedDelivery ? '🔄 Reassign Delivery' : '🚚 Assign Delivery'}
                   </button>

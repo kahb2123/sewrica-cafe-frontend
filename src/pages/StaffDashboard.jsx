@@ -245,7 +245,7 @@ const StaffDashboard = () => {
     }
   };
 
-  const handleTaskUpdate = (updatedOrder) => {
+  const handleTaskUpdate = () => {
     fetchTasks();
   };
 

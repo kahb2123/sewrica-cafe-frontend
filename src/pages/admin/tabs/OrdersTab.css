@@ -177,8 +177,20 @@
 
 .accept-reject-buttons {
   display: flex;
+  align-items: center;
   gap: 10px;
   width: 100%;
+}
+
+.workflow-note,
+.workflow-hint {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.workflow-note {
+  flex: 1;
 }
 
 .btn-accept {
@@ -434,4 +446,8 @@
   .assignment-buttons {
     flex-direction: column;
   }
+}
+
+.workflow-hint {
+  margin-top: 8px;
 }

@@ -9,16 +9,16 @@
 
 /* Ethiopian-inspired color palette */
 :root {
-  --ethiopian-gold: #D4AF37;
-  --ethiopian-green: #1E4D2B;
-  --ethiopian-red: #B22234;
-  --ethiopian-cream: #FDF5E6;
-  --ethiopian-brown: #8B4513;
-  --ethiopian-terracotta: #CD5C5C;
-  --ethiopian-charcoal: #2C3E50;
-  --ethiopian-sand: #C4A484;
-  --text-dark: #2C1810;
-  --text-light: #FDF5E6;
+  --ethiopian-gold: #ef9f22;
+  --ethiopian-green: #0b6965;
+  --ethiopian-red: #b84432;
+  --ethiopian-cream: #fff8e9;
+  --ethiopian-brown: #064b4a;
+  --ethiopian-terracotta: #d46d42;
+  --ethiopian-charcoal: #173d3a;
+  --ethiopian-sand: #e7c987;
+  --text-dark: #173d3a;
+  --text-light: #fff8e9;
 }
 
 /* Top Bar */

@@ -666,14 +666,15 @@ export const staffService = {
   },
 
   completeCooking: async (orderId) => {
-    try {
-      const response = await api.post(`/staff/complete-cooking/${orderId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error completing cooking:', error);
-      throw error.response?.data || { message: 'Failed to complete cooking' };
-    }
-  },
+  try {
+    // This sends the order to the backend to mark as 'ready'
+    const response = await api.post(`/staff/complete-cooking/${orderId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error completing cooking:', error);
+    throw error.response?.data || { message: 'Failed to complete cooking' };
+  }
+},
 
   startDelivery: async (orderId) => {
     try {

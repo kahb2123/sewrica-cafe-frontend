@@ -1,10 +1,10 @@
 .staff-dashboard {
   min-height: 100vh;
-  background: #f8f9fa;
+  background: var(--color-bg);
 }
 
 .dashboard-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-dark);
   color: white;
   padding: 30px;
   display: flex;
@@ -79,7 +79,7 @@
 }
 
 .stat-card {
-  background: white;
+  background: var(--color-white);
   border-radius: 12px;
   padding: 20px;
   display: flex;
@@ -106,14 +106,14 @@
 }
 
 .stat-details h3 {
-  color: #7f8c8d;
+  color: var(--color-text-muted);
   font-size: 14px;
   margin: 0 0 5px;
   font-weight: 500;
 }
 
 .stat-number {
-  color: #2c3e50;
+  color: var(--color-dark);
   font-size: 28px;
   font-weight: 700;
   margin: 0;
@@ -141,7 +141,7 @@
 }
 
 .tab-btn.active {
-  background: #667eea;
+  background: var(--gradient-primary);
   color: white;
 }
 

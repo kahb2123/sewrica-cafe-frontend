@@ -30,6 +30,9 @@
   font-family: 'Poppins', sans-serif;
   border-bottom: 3px solid var(--ethiopian-gold);
   letter-spacing: 0.3px;
+   position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .top-bar-container {
@@ -51,6 +54,7 @@
   color: var(--ethiopian-gold);
   font-size: 0.9rem;
 }
+
 
 /* Main Navbar */
 .navbar {

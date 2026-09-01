@@ -9,6 +9,7 @@ const GiveawayBanner = () => {
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
   const [isClosed, setIsClosed] = useState(false);
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const location = useLocation();
 
   useEffect(() => {
@@ -21,6 +22,31 @@ const GiveawayBanner = () => {
       setTimeout(() => setIsVisible(true), 100);
     }
   }, [loading, giveaway, isClosed]);
+
+  useEffect(() => {
+    if (!giveaway?.endDate) return undefined;
+
+    const updateCountdown = () => {
+      const distance = new Date(giveaway.endDate).getTime() - Date.now();
+
+      if (distance <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+
+      setTimeLeft({
+        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((distance % (1000 * 60)) / 1000)
+      });
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [giveaway]);
 
   const fetchActiveGiveaway = async () => {
     try {
@@ -72,21 +98,21 @@ const GiveawayBanner = () => {
                   <span className="prize-value">{giveaway.prize}</span>
                 </div>
               </div>
-              <div className="giveaway-timer" id="giveaway-timer">
+              <div className="giveaway-timer">
                 <div className="timer-block">
-                  <span className="timer-number" id="days">00</span>
+                  <span className="timer-number">{String(timeLeft.days).padStart(2, '0')}</span>
                   <span className="timer-label">Days</span>
                 </div>
                 <div className="timer-block">
-                  <span className="timer-number" id="hours">00</span>
+                  <span className="timer-number">{String(timeLeft.hours).padStart(2, '0')}</span>
                   <span className="timer-label">Hours</span>
                 </div>
                 <div className="timer-block">
-                  <span className="timer-number" id="minutes">00</span>
+                  <span className="timer-number">{String(timeLeft.minutes).padStart(2, '0')}</span>
                   <span className="timer-label">Mins</span>
                 </div>
                 <div className="timer-block">
-                  <span className="timer-number" id="seconds">00</span>
+                  <span className="timer-number">{String(timeLeft.seconds).padStart(2, '0')}</span>
                   <span className="timer-label">Secs</span>
                 </div>
               </div>
@@ -106,43 +132,5 @@ const GiveawayBanner = () => {
     </div>
   );
 };
-
-// Timer function
-const startTimer = (endDate) => {
-  const countDownDate = new Date(endDate).getTime();
-
-  const interval = setInterval(() => {
-    const now = new Date().getTime();
-    const distance = countDownDate - now;
-
-    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-    const daysElement = document.getElementById('days');
-    const hoursElement = document.getElementById('hours');
-    const minutesElement = document.getElementById('minutes');
-    const secondsElement = document.getElementById('seconds');
-
-    if (daysElement) daysElement.innerHTML = days.toString().padStart(2, '0');
-    if (hoursElement) hoursElement.innerHTML = hours.toString().padStart(2, '0');
-    if (minutesElement) minutesElement.innerHTML = minutes.toString().padStart(2, '0');
-    if (secondsElement) secondsElement.innerHTML = seconds.toString().padStart(2, '0');
-
-    if (distance < 0) {
-      clearInterval(interval);
-      if (daysElement) daysElement.innerHTML = '00';
-      if (hoursElement) hoursElement.innerHTML = '00';
-      if (minutesElement) minutesElement.innerHTML = '00';
-      if (secondsElement) secondsElement.innerHTML = '00';
-    }
-  }, 1000);
-};
-
-// Start timer when component mounts
-if (typeof window !== 'undefined') {
-  window.startGiveawayTimer = startTimer;
-}
 
 export default GiveawayBanner;

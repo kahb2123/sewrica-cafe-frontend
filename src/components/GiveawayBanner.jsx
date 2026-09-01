@@ -1,6 +1,6 @@
 // src/components/GiveawayBanner.jsx
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import './GiveawayBanner.css';
 
@@ -9,6 +9,7 @@ const GiveawayBanner = () => {
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
   const [isClosed, setIsClosed] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     fetchActiveGiveaway();
@@ -26,10 +27,7 @@ const GiveawayBanner = () => {
       const response = await api.get('/giveaway/active');
       const activeGiveaway = response.data.giveaway;
       setGiveaway(activeGiveaway);
-      setIsClosed(
-        Boolean(activeGiveaway) &&
-        localStorage.getItem('dismissedGiveaway') === activeGiveaway._id
-      );
+      setIsClosed(false);
     } catch (error) {
       console.error('Error fetching giveaway:', error);
     } finally {
@@ -41,14 +39,11 @@ const GiveawayBanner = () => {
     setIsVisible(false);
     setTimeout(() => {
       setIsClosed(true);
-      if (giveaway) {
-        localStorage.setItem('dismissedGiveaway', giveaway._id);
-      }
     }, 300);
   };
 
   if (loading) return null;
-  if (!giveaway || isClosed) return null;
+  if (location.pathname !== '/' || !giveaway || isClosed) return null;
 
   return (
     <div className={`giveaway-banner-wrapper ${isVisible ? 'visible' : ''}`}>

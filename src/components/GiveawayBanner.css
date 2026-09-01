@@ -24,9 +24,10 @@
 }
 
 .giveaway-banner-container {
+  position: relative;
   width: 100%;
-  max-width: 900px;
-  max-height: calc(100vh - 60px);
+  max-width: 680px;
+  max-height: calc(100vh - 40px);
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
@@ -43,7 +44,7 @@
 .giveaway-banner-image {
   position: relative;
   width: 100%;
-  height: min(620px, calc(100vh - 60px));
+  height: min(760px, calc(100vh - 40px));
   /* FIX: Use contain instead of cover to show full image */
   background-size: contain !important;
   background-position: center !important;
@@ -407,8 +408,8 @@
 /* ========== CLOSE BUTTON ========== */
 .giveaway-close-btn {
   position: absolute;
-  top: 15px;
-  right: 15px;
+  top: 12px;
+  right: 12px;
   z-index: 100;
   background: rgba(0, 0, 0, 0.7);
   border: 2px solid rgba(255, 255, 255, 0.3);
@@ -431,11 +432,12 @@
   }
 
   .giveaway-banner-container {
-    max-height: calc(100vh - 40px);
+    max-width: 620px;
+    max-height: calc(100vh - 30px);
   }
 
   .giveaway-banner-image {
-    height: min(560px, calc(100vh - 40px));
+    height: min(560px, calc(100vh - 30px));
   }
 
   .giveaway-banner-content {

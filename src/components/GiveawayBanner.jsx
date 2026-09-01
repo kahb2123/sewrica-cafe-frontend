@@ -47,15 +47,15 @@ const GiveawayBanner = () => {
 
   return (
     <div className={`giveaway-banner-wrapper ${isVisible ? 'visible' : ''}`}>
-      <button 
-        className="giveaway-close-btn" 
-        onClick={handleCloseBanner}
-        title="Close banner"
-        aria-label="Close giveaway banner"
-      >
-        ✕
-      </button>
       <div className="giveaway-banner-container">
+        <button 
+          className="giveaway-close-btn"
+          onClick={handleCloseBanner}
+          title="Close popup"
+          aria-label="Close giveaway popup"
+        >
+          ✕
+        </button>
         <div className="giveaway-banner-image" style={{ backgroundImage: `url(${giveaway.imageUrl})` }}>
           <div className="giveaway-banner-overlay">
             <div className="giveaway-banner-content">

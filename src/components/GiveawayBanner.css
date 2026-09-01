@@ -25,7 +25,7 @@
 
 .giveaway-banner-container {
   width: 100%;
-  max-width: 1100px;
+  max-width: 900px;
   max-height: calc(100vh - 60px);
   border-radius: 24px;
   overflow: hidden;
@@ -43,7 +43,7 @@
 .giveaway-banner-image {
   position: relative;
   width: 100%;
-  height: min(500px, calc(100vh - 60px));
+  height: min(620px, calc(100vh - 60px));
   /* FIX: Use contain instead of cover to show full image */
   background-size: contain !important;
   background-position: center !important;
@@ -94,6 +94,8 @@
 
 .giveaway-banner-content {
   max-width: 800px;
+  max-height: 100%;
+  overflow-y: auto;
   text-align: center;
   color: white;
   padding: 40px;
@@ -421,6 +423,67 @@
   justify-content: center;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
+}
+
+@media (max-height: 700px) and (min-width: 769px) {
+  .giveaway-banner-wrapper {
+    padding: 20px;
+  }
+
+  .giveaway-banner-container {
+    max-height: calc(100vh - 40px);
+  }
+
+  .giveaway-banner-image {
+    height: min(560px, calc(100vh - 40px));
+  }
+
+  .giveaway-banner-content {
+    padding: 22px 30px;
+  }
+
+  .giveaway-badge {
+    margin-bottom: 8px;
+    padding: 6px 16px;
+  }
+
+  .giveaway-title {
+    font-size: 36px;
+    margin: 10px 0;
+  }
+
+  .giveaway-description {
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+
+  .giveaway-prize-card {
+    padding: 10px 18px;
+    margin-bottom: 14px;
+  }
+
+  .giveaway-timer {
+    gap: 12px;
+    margin: 14px 0;
+  }
+
+  .timer-block {
+    min-width: 66px;
+    padding: 9px 12px;
+  }
+
+  .timer-number {
+    font-size: 26px;
+  }
+
+  .giveaway-actions {
+    margin-top: 10px;
+  }
+
+  .giveaway-btn {
+    padding: 11px 26px;
+    font-size: 16px;
+  }
 }
 
 .giveaway-close-btn:hover {

@@ -11,6 +11,7 @@ import { SocketProvider } from './context/SocketContext';
 // Import components
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import GiveawayBanner from './components/GiveawayBanner';
 import PrivateRoute from './components/PrivateRoute';
 import StaffPrivateRoute from './components/StaffPrivateRoute';
 
@@ -37,6 +38,7 @@ function App() {
         <SocketProvider>
           <div className="App">
             <Navbar />
+            <GiveawayBanner />
             <main className="main-content">
               <Routes>
                 {/* Public Routes */}

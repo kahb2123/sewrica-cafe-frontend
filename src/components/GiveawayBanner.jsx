@@ -11,11 +11,6 @@ const GiveawayBanner = () => {
   const [isClosed, setIsClosed] = useState(false);
 
   useEffect(() => {
-    // Check if giveaway was previously dismissed
-    const dismissedGiveawayId = localStorage.getItem('dismissedGiveaway');
-    if (dismissedGiveawayId) {
-      setIsClosed(true);
-    }
     fetchActiveGiveaway();
   }, []);
 
@@ -29,7 +24,12 @@ const GiveawayBanner = () => {
   const fetchActiveGiveaway = async () => {
     try {
       const response = await api.get('/giveaway/active');
-      setGiveaway(response.data.giveaway);
+      const activeGiveaway = response.data.giveaway;
+      setGiveaway(activeGiveaway);
+      setIsClosed(
+        Boolean(activeGiveaway) &&
+        localStorage.getItem('dismissedGiveaway') === activeGiveaway._id
+      );
     } catch (error) {
       console.error('Error fetching giveaway:', error);
     } finally {

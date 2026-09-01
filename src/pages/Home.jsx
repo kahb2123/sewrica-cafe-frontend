@@ -6,14 +6,13 @@ import {
   FaChevronRight, FaCheckCircle, FaCoffee, FaLeaf,
   FaUsers, FaTrophy, FaHeart, FaInstagram, FaTelegram,
   FaPizzaSlice, FaHamburger, FaDrumstickBite, FaFish,
-  FaPepperHot, FaCheese, FaEgg, FaBreadSlice, FaGift
+  FaPepperHot, FaCheese, FaEgg, FaBreadSlice
 } from 'react-icons/fa';
 import { GiMeat, GiBowlOfRice, GiChickenLeg, GiCoffeeBeans, GiFrenchFries } from 'react-icons/gi';
 import { MdDeliveryDining, MdRestaurantMenu, MdLocalPizza } from 'react-icons/md';
 import { RiRestaurantLine, RiTakeawayLine } from 'react-icons/ri';
 import { IoFastFoodOutline } from 'react-icons/io5';
 import { TbBread } from 'react-icons/tb';
-import api from '../services/api';
 import './Home.css';
 
 const Home = () => {
@@ -24,46 +23,9 @@ const Home = () => {
     dishes: 0,
     years: 0,
   });
-  const [activeGiveaway, setActiveGiveaway] = useState(null);
-
-  // Fetch active giveaway
-  useEffect(() => {
-    fetchActiveGiveaway();
-  }, []);
-
-  const fetchActiveGiveaway = async () => {
-    try {
-      const response = await api.get('/giveaway/active');
-      setActiveGiveaway(response.data.giveaway);
-    } catch (error) {
-      console.error('Error fetching giveaway:', error);
-    }
-  };
-
-  // Hero Slider Images with Giveaway as first slide
+  // Hero Slider Images
   const getHeroSlides = () => {
     const slides = [
-      // GIVEAWAY SLIDE - First and most prominent
-      activeGiveaway ? {
-        image: activeGiveaway.imageUrl || 'https://images.pexels.com/photos/958545/pexels-photo-958545.jpeg?auto=compress&cs=tinysrgb&w=1600',
-        title: '🎁 ' + activeGiveaway.title,
-        subtitle: 'Win Amazing Prizes!',
-        description: activeGiveaway.description,
-        buttonText: 'Participate Now →',
-        buttonLink: '/menu',
-        isGiveaway: true,
-        prize: activeGiveaway.prize,
-        endDate: activeGiveaway.endDate
-      } : {
-        image: 'https://images.pexels.com/photos/958545/pexels-photo-958545.jpeg?auto=compress&cs=tinysrgb&w=1600',
-        title: '🎁 Monthly Giveaway!',
-        subtitle: 'Win Amazing Prizes',
-        description: 'Every order automatically enters you into our monthly draw. Don\'t miss out on winning special prizes!',
-        buttonText: 'Order Now →',
-        buttonLink: '/menu',
-        isGiveaway: true,
-        prize: 'Special Surprise Gift'
-      },
       {
         image: 'https://images.pexels.com/photos/260922/pexels-photo-260922.jpeg?auto=compress&cs=tinysrgb&w=1600',
         title: 'Welcome to SEWRICA Cafe',
@@ -449,31 +411,6 @@ const Home = () => {
     return () => clearInterval(interval);
   }, [heroSlides.length]);
 
-  // Timer for giveaway slide
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    if (activeGiveaway && activeGiveaway.endDate) {
-      const interval = setInterval(() => {
-        const now = new Date().getTime();
-        const end = new Date(activeGiveaway.endDate).getTime();
-        const distance = end - now;
-
-        if (distance < 0) {
-          setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        } else {
-          setTimeLeft({
-            days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-            hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-            minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-            seconds: Math.floor((distance % (1000 * 60)) / 1000)
-          });
-        }
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [activeGiveaway]);
-
   // Render stars for rating
   const renderStars = (rating) => {
     const stars = [];
@@ -504,57 +441,15 @@ const Home = () => {
               style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${slide.image})` }}
             >
               <div className="hero-content">
-                {slide.isGiveaway && (
-                  <div className="giveaway-badge-hero">
-                    <span className="badge-icon">🎁</span>
-                    <span className="badge-text">LIMITED TIME OFFER</span>
-                  </div>
-                )}
                 <h1 className="hero-title">{slide.title}</h1>
                 <h2 className="hero-subtitle">{slide.subtitle}</h2>
                 <p className="hero-description">{slide.description}</p>
-                
-                {slide.isGiveaway && slide.prize && (
-                  <div className="giveaway-prize-hero">
-                    <span className="prize-icon">🏆</span>
-                    <span className="prize-text">Grand Prize: {slide.prize}</span>
-                  </div>
-                )}
-                
-                {slide.isGiveaway && activeGiveaway && activeGiveaway.endDate && (
-                  <div className="giveaway-timer-hero">
-                    <div className="timer-block">
-                      <span className="timer-number">{String(timeLeft.days).padStart(2, '0')}</span>
-                      <span className="timer-label">Days</span>
-                    </div>
-                    <div className="timer-block">
-                      <span className="timer-number">{String(timeLeft.hours).padStart(2, '0')}</span>
-                      <span className="timer-label">Hours</span>
-                    </div>
-                    <div className="timer-block">
-                      <span className="timer-number">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                      <span className="timer-label">Mins</span>
-                    </div>
-                    <div className="timer-block">
-                      <span className="timer-number">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                      <span className="timer-label">Secs</span>
-                    </div>
-                  </div>
-                )}
                 
                 <div className="hero-buttons">
                   <Link to={slide.buttonLink} className="btn-primary btn-large">
                     {slide.buttonText}
                   </Link>
-                  {slide.isGiveaway && (
-                    <Link to="/menu" className="btn-secondary btn-large">
-                      <FaGift /> Order to Participate
-                    </Link>
-                  )}
                 </div>
-                {slide.isGiveaway && (
-                  <p className="giveaway-terms-hero">*Every order automatically enters you into the draw</p>
-                )}
               </div>
             </div>
           ))}

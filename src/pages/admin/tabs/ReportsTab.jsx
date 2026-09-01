@@ -1,5 +1,5 @@
 // src/pages/admin/tabs/ReportsTab.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { adminService } from '../../../services/api';
 import { toast } from 'react-toastify';
 import './ReportsTab.css';
@@ -12,6 +12,11 @@ const ReportsTab = () => {
     start: new Date().toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0]
   });
+
+  // Auto-generate report on component mount
+  useEffect(() => {
+    generateReport();
+  }, []);
 
   const generateReport = async () => {
     try {
@@ -43,15 +48,15 @@ const ReportsTab = () => {
         totalRevenue: 12500,
         averageOrderValue: 278,
         categoryBreakdown: [
-          { category: 'Main Course', itemsSold: 28, revenue: 8400 },
-          { category: 'Appetizers', itemsSold: 12, revenue: 2160 },
-          { category: 'Desserts', itemsSold: 8, revenue: 960 },
-          { category: 'Beverages', itemsSold: 15, revenue: 980 },
+          { category: 'Main Course', itemsSold: 28, revenue: 8400, percentage: 67 },
+          { category: 'Appetizers', itemsSold: 12, revenue: 2160, percentage: 17 },
+          { category: 'Desserts', itemsSold: 8, revenue: 960, percentage: 8 },
+          { category: 'Beverages', itemsSold: 15, revenue: 980, percentage: 8 },
         ],
         deliveryBreakdown: [
-          { name: 'Abebe', ordersCount: 15, totalAmount: 4200 },
-          { name: 'Kebede', ordersCount: 12, totalAmount: 3600 },
-          { name: 'Almaz', ordersCount: 18, totalAmount: 4700 },
+          { name: 'Abebe', ordersCount: 15, totalAmount: 4200, percentage: 33 },
+          { name: 'Kebede', ordersCount: 12, totalAmount: 3600, percentage: 28 },
+          { name: 'Almaz', ordersCount: 18, totalAmount: 4700, percentage: 37 },
         ],
         topItems: [
           { name: 'Cheese Burger', quantity: 25, revenue: 6250 },
@@ -84,141 +89,168 @@ const ReportsTab = () => {
 
   return (
     <div className="reports-tab">
-      <h1 className="page-title">Sales Reports</h1>
+      <div className="reports-header">
+        <div>
+          <h1 className="page-title">📊 Sales Reports</h1>
+          <p className="page-subtitle">View detailed sales analytics and performance metrics</p>
+        </div>
+      </div>
       
       <div className="report-controls">
-        <div className="report-type-selector">
-          <button className={reportType === 'daily' ? 'active' : ''} onClick={() => setReportType('daily')}>
-            Daily
-          </button>
-          <button className={reportType === 'weekly' ? 'active' : ''} onClick={() => setReportType('weekly')}>
-            Weekly
-          </button>
-          <button className={reportType === 'monthly' ? 'active' : ''} onClick={() => setReportType('monthly')}>
-            Monthly
-          </button>
-          <button className={reportType === 'custom' ? 'active' : ''} onClick={() => setReportType('custom')}>
-            Custom Range
-          </button>
-        </div>
-
-        {reportType === 'custom' && (
-          <div className="date-range">
-            <input
-              type="date"
-              value={dateRange.start}
-              onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
-            />
-            <span>to</span>
-            <input
-              type="date"
-              value={dateRange.end}
-              onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
-            />
+        <div className="control-group">
+          <div className="report-type-selector">
+            <button className={reportType === 'daily' ? 'active' : ''} onClick={() => setReportType('daily')}>
+              📅 Daily
+            </button>
+            <button className={reportType === 'weekly' ? 'active' : ''} onClick={() => setReportType('weekly')}>
+              📆 Weekly
+            </button>
+            <button className={reportType === 'monthly' ? 'active' : ''} onClick={() => setReportType('monthly')}>
+              📋 Monthly
+            </button>
+            <button className={reportType === 'custom' ? 'active' : ''} onClick={() => setReportType('custom')}>
+              🎯 Custom Range
+            </button>
           </div>
-        )}
 
-        <div className="report-actions">
-          <button className="btn-generate" onClick={generateReport} disabled={loading}>
-            {loading ? 'Generating...' : 'Generate Report'}
-          </button>
-          {reportData && (
-            <div className="export-buttons">
-              <button className="btn-export" onClick={() => handleExport('csv')}>Export CSV</button>
-              <button className="btn-export" onClick={() => handleExport('pdf')}>Export PDF</button>
+          {reportType === 'custom' && (
+            <div className="date-range">
+              <div className="date-input-group">
+                <label>From</label>
+                <input
+                  type="date"
+                  value={dateRange.start}
+                  onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
+                />
+              </div>
+              <span className="date-range-separator">to</span>
+              <div className="date-input-group">
+                <label>To</label>
+                <input
+                  type="date"
+                  value={dateRange.end}
+                  onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
+                />
+              </div>
             </div>
           )}
+
+          <div className="report-actions">
+            <button className="btn-generate" onClick={generateReport} disabled={loading}>
+              {loading ? '⏳ Generating...' : '🔄 Generate Report'}
+            </button>
+            {reportData && (
+              <div className="export-buttons">
+                <button className="btn-export btn-csv" onClick={() => handleExport('csv')}>
+                  📥 CSV
+                </button>
+                <button className="btn-export btn-pdf" onClick={() => handleExport('pdf')}>
+                  📄 PDF
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {reportData && (
         <div className="report-results">
-          <h2>Report Summary - {reportType.charAt(0).toUpperCase() + reportType.slice(1)}</h2>
+          <h2>📈 Report Summary - {reportType.charAt(0).toUpperCase() + reportType.slice(1)}</h2>
           
           <div className="summary-cards">
-            <div className="summary-card">
+            <div className="summary-card primary">
+              <div className="card-icon">📦</div>
               <span className="label">Total Orders</span>
               <span className="value">{reportData.totalOrders}</span>
             </div>
-            <div className="summary-card">
+            <div className="summary-card success">
+              <div className="card-icon">💰</div>
               <span className="label">Total Revenue</span>
               <span className="value">{reportData.totalRevenue.toLocaleString()} ETB</span>
             </div>
-            <div className="summary-card">
-              <span className="label">Average Order</span>
+            <div className="summary-card warning">
+              <div className="card-icon">📊</div>
+              <span className="label">Average Order Value</span>
               <span className="value">{reportData.averageOrderValue.toLocaleString()} ETB</span>
             </div>
           </div>
 
-          <div className="report-section">
-            <h3>Sales by Category</h3>
-            <div className="table-responsive">
-              <table className="report-table">
-                <thead>
-                  <tr>
-                    <th>Category</th>
-                    <th>Items Sold</th>
-                    <th>Revenue</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reportData.categoryBreakdown?.map(cat => (
-                    <tr key={cat.category}>
-                      <td>{cat.category}</td>
-                      <td>{cat.itemsSold}</td>
-                      <td>{cat.revenue.toLocaleString()} ETB</td>
+          <div className="report-grid">
+            <div className="report-section">
+              <h3>📂 Sales by Category</h3>
+              <div className="category-breakdown">
+                {reportData.categoryBreakdown?.map((cat, idx) => (
+                  <div key={cat.category} className="breakdown-item">
+                    <div className="breakdown-header">
+                      <span className="category-name">{cat.category}</span>
+                      <span className="category-stats">
+                        <strong>{cat.itemsSold}</strong> items • <strong>{cat.revenue.toLocaleString()}</strong> ETB
+                      </span>
+                    </div>
+                    <div className="progress-bar-container">
+                      <div 
+                        className="progress-bar" 
+                        style={{ 
+                          width: `${(cat.revenue / Math.max(...reportData.categoryBreakdown.map(c => c.revenue))) * 100}%`,
+                          backgroundColor: ['#3498db', '#2ecc71', '#f39c12', '#e74c3c'][idx % 4]
+                        }}
+                      />
+                    </div>
+                    <div className="percentage">{cat.percentage || Math.round((cat.revenue / reportData.totalRevenue) * 100)}%</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="report-section">
+              <h3>🍽️ Top Selling Items</h3>
+              <div className="table-responsive">
+                <table className="report-table">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Quantity</th>
+                      <th>Revenue</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {reportData.topItems?.map((item, idx) => (
+                      <tr key={item.name} className={`rank-${idx + 1}`}>
+                        <td className="item-name">
+                          <span className="rank-badge">#{idx + 1}</span>
+                          {item.name}
+                        </td>
+                        <td className="quantity">{item.quantity}</td>
+                        <td className="revenue">{item.revenue.toLocaleString()} ETB</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
-          <div className="report-section">
-            <h3>Top Selling Items</h3>
-            <div className="table-responsive">
-              <table className="report-table">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th>Quantity Sold</th>
-                    <th>Revenue</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reportData.topItems?.map(item => (
-                    <tr key={item.name}>
-                      <td>{item.name}</td>
-                      <td>{item.quantity}</td>
-                      <td>{item.revenue.toLocaleString()} ETB</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="report-section">
-            <h3>Delivery Performance</h3>
-            <div className="table-responsive">
-              <table className="report-table">
-                <thead>
-                  <tr>
-                    <th>Delivery Person</th>
-                    <th>Orders Delivered</th>
-                    <th>Total Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reportData.deliveryBreakdown?.map(del => (
-                    <tr key={del.name}>
-                      <td>{del.name}</td>
-                      <td>{del.ordersCount}</td>
-                      <td>{del.totalAmount.toLocaleString()} ETB</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="report-section full-width">
+            <h3>🚚 Delivery Performance</h3>
+            <div className="delivery-breakdown">
+              {reportData.deliveryBreakdown?.map((del, idx) => (
+                <div key={del.name} className="delivery-card">
+                  <div className="delivery-header">
+                    <h4>{del.name}</h4>
+                    <span className="delivery-badge">{del.ordersCount} orders</span>
+                  </div>
+                  <div className="delivery-stats">
+                    <div className="stat">
+                      <span className="label">Total Amount</span>
+                      <span className="value">{del.totalAmount.toLocaleString()} ETB</span>
+                    </div>
+                    <div className="stat">
+                      <span className="label">Performance</span>
+                      <span className="percentage">{del.percentage || Math.round((del.totalAmount / reportData.deliveryBreakdown.reduce((sum, d) => sum + d.totalAmount, 0)) * 100)}%</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

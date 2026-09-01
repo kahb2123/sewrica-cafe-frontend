@@ -129,7 +129,7 @@ const Navbar = () => {
         <div className="top-bar-container">
           <div className="top-bar-info">
             <FaMapMarkerAlt className="top-bar-icon" />
-            <span>Megenagna, Metebaber Building, 2nd Floor</span>
+            <span>Megenagna, Metebaber Building, 2nd Floore</span>
           </div>
           <div className="top-bar-info">
             <FaPhone className="top-bar-icon" />

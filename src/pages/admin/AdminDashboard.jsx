@@ -21,6 +21,7 @@ import ReportsTab from './tabs/ReportsTab';
 import UsersTab from './tabs/UsersTab';
 import StaffReportsTab from './tabs/StaffReportsTab';
 import InventoryTab from './tabs/InventoryTab';
+import KitchenDisplayTab from './tabs/KitchenDisplayTab';
 
 const AdminDashboard = () => {
   const { user, isAuthenticated } = useAuth();
@@ -133,6 +134,8 @@ const AdminDashboard = () => {
         return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
       case 'orders':
         return <OrdersTab />;
+      case 'kitchen':
+        return <KitchenDisplayTab />;
       case 'staff':
         return <StaffTab />;
       case 'menu':

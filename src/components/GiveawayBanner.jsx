@@ -8,17 +8,23 @@ const GiveawayBanner = () => {
   const [giveaway, setGiveaway] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
+  const [isClosed, setIsClosed] = useState(false);
 
   useEffect(() => {
+    // Check if giveaway was previously dismissed
+    const dismissedGiveawayId = localStorage.getItem('dismissedGiveaway');
+    if (dismissedGiveawayId) {
+      setIsClosed(true);
+    }
     fetchActiveGiveaway();
   }, []);
 
   useEffect(() => {
     // Trigger animation after component mounts
-    if (!loading && giveaway) {
+    if (!loading && giveaway && !isClosed) {
       setTimeout(() => setIsVisible(true), 100);
     }
-  }, [loading, giveaway]);
+  }, [loading, giveaway, isClosed]);
 
   const fetchActiveGiveaway = async () => {
     try {
@@ -31,11 +37,29 @@ const GiveawayBanner = () => {
     }
   };
 
+  const handleCloseBanner = () => {
+    setIsVisible(false);
+    setTimeout(() => {
+      setIsClosed(true);
+      if (giveaway) {
+        localStorage.setItem('dismissedGiveaway', giveaway._id);
+      }
+    }, 300);
+  };
+
   if (loading) return null;
-  if (!giveaway) return null;
+  if (!giveaway || isClosed) return null;
 
   return (
     <div className={`giveaway-banner-wrapper ${isVisible ? 'visible' : ''}`}>
+      <button 
+        className="giveaway-close-btn" 
+        onClick={handleCloseBanner}
+        title="Close banner"
+        aria-label="Close giveaway banner"
+      >
+        ✕
+      </button>
       <div className="giveaway-banner-container">
         <div className="giveaway-banner-image" style={{ backgroundImage: `url(${giveaway.imageUrl})` }}>
           <div className="giveaway-banner-overlay">

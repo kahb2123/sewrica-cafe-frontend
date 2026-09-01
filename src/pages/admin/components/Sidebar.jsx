@@ -9,6 +9,7 @@ const Sidebar = ({ activeTab, onMenuClick, mobileMenuOpen, user, onClose }) => {
   const menuItems = [
     { id: 'overview', icon: '📊', label: 'Overview' },
     { id: 'orders', icon: '📦', label: 'Orders' },
+    { id: 'kitchen', icon: '🍳', label: 'Kitchen Display' },
     { id: 'staff', icon: '👨‍🍳', label: 'Staff' },
     { id: 'menu', icon: '🍽️', label: 'Menu Items' },
     { id: 'inventory', icon: '📦', label: 'Inventory' },

@@ -47,6 +47,7 @@
   color: var(--sewrica-cream);
   cursor: pointer;
   font-weight: 700;
+  transition: all 0.3s ease;
 }
 
 .inventory-refresh {
@@ -56,6 +57,7 @@
 .inventory-refresh:hover,
 .inventory-save:hover:not(:disabled) {
   background: var(--sewrica-dark);
+  transform: translateY(-2px);
 }
 
 .inventory-stats {
@@ -71,6 +73,12 @@
   border-radius: 8px;
   background: var(--color-white);
   box-shadow: var(--shadow-light);
+  transition: all 0.3s ease;
+}
+
+.inventory-stats > div:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
 }
 
 .inventory-stats span,
@@ -94,8 +102,31 @@
 
 .inventory-toolbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 12px;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.inventory-search {
+  flex: 1;
+  min-width: 250px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--sewrica-brown);
+  box-shadow: 0 0 0 3px rgba(139, 86, 42, 0.1);
 }
 
 .inventory-filters {
@@ -113,6 +144,13 @@
   color: var(--color-text-muted);
   cursor: pointer;
   padding: 8px 12px;
+  transition: all 0.3s ease;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.inventory-filters button:hover {
+  background: rgba(139, 86, 42, 0.08);
 }
 
 .inventory-filters button.active {
@@ -147,6 +185,23 @@
   font-size: 0.78rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  font-weight: 600;
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.3s ease;
+}
+
+.sortable:hover {
+  background: rgba(139, 86, 42, 0.15);
+}
+
+.sort-indicator {
+  margin-left: 6px;
+  font-size: 12px;
+  opacity: 0.7;
 }
 
 .inventory-table tbody tr:last-child td { border-bottom: 0; }

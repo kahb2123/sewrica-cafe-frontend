@@ -494,6 +494,12 @@ export const adminService = {
 
 // ========== ORDER SERVICES ==========
 export const orderService = {
+  // Compatibility wrapper for older kitchen bundles.
+  getAllOrders: async (status = 'all') => {
+    const orders = await adminService.getAllOrders(status);
+    return { data: Array.isArray(orders) ? orders : orders.data || orders.orders || [] };
+  },
+
   createOrder: async (orderData) => {
     try {
       const response = await api.post('/orders', orderData);

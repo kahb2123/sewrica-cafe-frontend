@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Login Test</title>
+</head>
+<body>
+    <h1>Setting Admin Authentication...</h1>
+    <script>
+        // Set admin authentication data
+        localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OTZmMmE5MzQxYmI4N2Q4NTgxYzAzNyIsImlhdCI6MTc3MTY1NTExNSwiZXhwIjoxNzc0MjQ3MTE1fQ.qsxrUPMzemUc13SptOdroOV5ZSN0qNLm_EtEnTZA0QY');
+        localStorage.setItem('user', JSON.stringify({
+            "_id": "6996f2a9341bb87d8581c037",
+            "name": "admin",
+            "email": "admin@sewrica.com",
+            "phone": "0703760320",
+            "role": "admin"
+        }));
+
+        // Redirect to admin dashboard
+        window.location.href = '/admin';
+    </script>
+</body>
+</html>

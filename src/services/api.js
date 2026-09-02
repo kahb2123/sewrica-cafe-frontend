@@ -295,6 +295,11 @@ export const menuService = {
       const response = await api.get('/menu/inventory');
       return response.data;
     } catch (error) {
+      const message = error.response?.data?.message || '';
+      if (message.includes('Cast to ObjectId') && message.includes('inventory')) {
+        const fallbackResponse = await api.get('/menu?includeUnavailable=true');
+        return fallbackResponse.data;
+      }
       throw error.response?.data || { message: 'Failed to fetch inventory' };
     }
   },

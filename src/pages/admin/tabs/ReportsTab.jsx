@@ -40,7 +40,7 @@ const ReportsTab = () => {
           data = await adminService.getDailyReport();
       }
       
-      setReportData(data);
+      setReportData(data?.data || data);
     } catch (error) {
       console.error('Error generating report:', error);
       setReportData(null);

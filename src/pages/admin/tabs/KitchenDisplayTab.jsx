@@ -1,7 +1,7 @@
 // src/pages/admin/tabs/KitchenDisplayTab.jsx
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { staffService, orderService } from '../../../services/api';
+import { adminService, staffService, orderService } from '../../../services/api';
 import { useSocket } from '../../../context/SocketContext';
 import './KitchenDisplayTab.css';
 
@@ -10,17 +10,17 @@ const KitchenDisplayTab = () => {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [chefs, setChefs] = useState([]);
-  const [activeChef, setActiveChef] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const { connected, socket } = useSocket();
 
   const loadOrders = async () => {
     try {
       setLoading(true);
-      const response = await orderService.getAllOrders();
+      const response = await adminService.getAllOrders();
+      const allOrders = Array.isArray(response) ? response : response.data || response.orders || [];
       // Filter only orders that are being prepared or in kitchen
-      const kitchenOrders = response.data?.filter(order =>
-        ['pending', 'preparing', 'ready'].includes(order.status)
+      const kitchenOrders = allOrders.filter(order =>
+        ['pending', 'confirmed', 'preparing', 'cooking', 'ready'].includes(order.status)
       ) || [];
       setOrders(kitchenOrders);
     } catch (error) {
@@ -68,10 +68,10 @@ const KitchenDisplayTab = () => {
     };
   }, [connected, socket]);
 
-  const markItemReady = async (orderId, itemId) => {
+  const markItemReady = async (orderId) => {
     try {
-      const response = await orderService.updateOrderItemStatus(orderId, itemId, 'ready');
-      setOrders(prev => prev.map(o => o._id === orderId ? response.data : o));
+      const response = await orderService.updateOrderStatus(orderId, 'ready');
+      setOrders(prev => prev.map(o => o._id === orderId ? (response.order || response.data) : o));
       toast.success('Item marked as ready!');
     } catch (error) {
       console.error('Error updating item status:', error);
@@ -81,8 +81,8 @@ const KitchenDisplayTab = () => {
 
   const completeOrder = async (orderId) => {
     try {
-      const response = await orderService.updateOrder(orderId, { status: 'ready' });
-      setOrders(prev => prev.map(o => o._id === orderId ? response.data : o));
+      const response = await orderService.updateOrderStatus(orderId, 'ready');
+      setOrders(prev => prev.map(o => o._id === orderId ? (response.order || response.data) : o));
       toast.success('Order marked as ready for pickup!');
       setSelectedOrder(null);
     } catch (error) {
@@ -93,8 +93,8 @@ const KitchenDisplayTab = () => {
 
   const assignChefToOrder = async (orderId, chefId) => {
     try {
-      const response = await orderService.assignChef(orderId, chefId);
-      setOrders(prev => prev.map(o => o._id === orderId ? response.data : o));
+      const response = await adminService.assignChef(orderId, chefId);
+      setOrders(prev => prev.map(o => o._id === orderId ? (response.order || response.data) : o));
       toast.success('Chef assigned successfully!');
     } catch (error) {
       console.error('Error assigning chef:', error);
@@ -340,7 +340,7 @@ const KitchenDisplayTab = () => {
                         {item.status !== 'ready' && (
                           <button
                             className="item-ready-btn"
-                            onClick={() => markItemReady(selectedOrder._id, item._id || idx)}
+                            onClick={() => markItemReady(selectedOrder._id)}
                           >
                             Mark Ready
                           </button>

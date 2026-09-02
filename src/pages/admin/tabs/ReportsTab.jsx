@@ -43,28 +43,8 @@ const ReportsTab = () => {
       setReportData(data);
     } catch (error) {
       console.error('Error generating report:', error);
-      setReportData({
-        totalOrders: 45,
-        totalRevenue: 12500,
-        averageOrderValue: 278,
-        categoryBreakdown: [
-          { category: 'Main Course', itemsSold: 28, revenue: 8400, percentage: 67 },
-          { category: 'Appetizers', itemsSold: 12, revenue: 2160, percentage: 17 },
-          { category: 'Desserts', itemsSold: 8, revenue: 960, percentage: 8 },
-          { category: 'Beverages', itemsSold: 15, revenue: 980, percentage: 8 },
-        ],
-        deliveryBreakdown: [
-          { name: 'Abebe', ordersCount: 15, totalAmount: 4200, percentage: 33 },
-          { name: 'Kebede', ordersCount: 12, totalAmount: 3600, percentage: 28 },
-          { name: 'Almaz', ordersCount: 18, totalAmount: 4700, percentage: 37 },
-        ],
-        topItems: [
-          { name: 'Cheese Burger', quantity: 25, revenue: 6250 },
-          { name: 'Doro Wat', quantity: 18, revenue: 5040 },
-          { name: 'Pizza', quantity: 15, revenue: 5250 },
-        ]
-      });
-      toast.error('Using mock data - backend not connected');
+      setReportData(null);
+      toast.error(error.message || 'Failed to generate report');
     } finally {
       setLoading(false);
     }
@@ -233,7 +213,7 @@ const ReportsTab = () => {
           <div className="report-section full-width">
             <h3>🚚 Delivery Performance</h3>
             <div className="delivery-breakdown">
-              {reportData.deliveryBreakdown?.map((del, idx) => (
+              {reportData.deliveryBreakdown?.map(del => (
                 <div key={del.name} className="delivery-card">
                   <div className="delivery-header">
                     <h4>{del.name}</h4>

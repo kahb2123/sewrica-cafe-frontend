@@ -13,7 +13,6 @@ const StaffKitchenDisplay = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [myOrders, setMyOrders] = useState(0);
   const { connected, socket } = useSocket();
 
   useEffect(() => {
@@ -27,17 +26,12 @@ const StaffKitchenDisplay = () => {
   const loadOrders = async () => {
     try {
       setLoading(true);
-      const response = await orderService.getAllOrders();
-      const kitchenOrders = response.data?.filter(order =>
-        ['pending', 'preparing', 'ready'].includes(order.status)
+      const response = await staffService.getMyCookingOrders();
+      const kitchenOrders = response.filter(order =>
+        ['pending', 'confirmed', 'preparing', 'cooking', 'ready'].includes(order.status)
       ) || [];
       setOrders(kitchenOrders);
       
-      // Count orders assigned to current chef
-      const assignedToMe = kitchenOrders.filter(order => 
-        order.assignedChef?._id === user._id || order.assignedChef?.email === user.email
-      ).length;
-      setMyOrders(assignedToMe);
     } catch (error) {
       console.error('Error loading orders:', error);
       toast.error('Failed to load orders');
@@ -76,10 +70,10 @@ const StaffKitchenDisplay = () => {
     };
   }, [connected, socket, user]);
 
-  const markItemReady = async (orderId, itemId) => {
+  const markItemReady = async (orderId) => {
     try {
-      const response = await orderService.updateOrderItemStatus(orderId, itemId, 'ready');
-      setOrders(prev => prev.map(o => o._id === orderId ? response.data : o));
+      const response = await orderService.updateOrderStatus(orderId, 'ready');
+      setOrders(prev => prev.map(o => o._id === orderId ? (response.order || response.data) : o));
       toast.success('Item marked as ready!');
     } catch (error) {
       console.error('Error updating item status:', error);
@@ -89,8 +83,8 @@ const StaffKitchenDisplay = () => {
 
   const completeOrder = async (orderId) => {
     try {
-      const response = await orderService.updateOrder(orderId, { status: 'ready' });
-      setOrders(prev => prev.map(o => o._id === orderId ? response.data : o));
+      const response = await orderService.updateOrderStatus(orderId, 'ready');
+      setOrders(prev => prev.map(o => o._id === orderId ? (response.order || response.data) : o));
       toast.success('Order marked as ready for pickup!');
       setSelectedOrder(null);
     } catch (error) {
@@ -101,8 +95,8 @@ const StaffKitchenDisplay = () => {
 
   const assignOrderToMe = async (orderId) => {
     try {
-      const response = await orderService.assignChef(orderId, user._id);
-      setOrders(prev => prev.map(o => o._id === orderId ? response.data : o));
+      const response = await staffService.assignChef(orderId, user._id);
+      setOrders(prev => prev.map(o => o._id === orderId ? (response.order || response.data) : o));
       loadOrders();
       toast.success('Order assigned to you!');
     } catch (error) {
@@ -332,7 +326,7 @@ const StaffKitchenDisplay = () => {
                       {item.status !== 'ready' && (
                         <button
                           className="mark-ready-btn"
-                          onClick={() => markItemReady(selectedOrder._id, item._id || idx)}
+                          onClick={() => markItemReady(selectedOrder._id)}
                         >
                           Mark Ready
                         </button>

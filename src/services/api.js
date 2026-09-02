@@ -465,6 +465,16 @@ export const adminService = {
     }
   },
 
+  getReport: async (type, startDate, endDate) => {
+    try {
+      const response = await api.get(`/admin/reports/${type}?start=${startDate}&end=${endDate}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching report:', error);
+      throw error.response?.data || { message: 'Failed to fetch report' };
+    }
+  },
+
   exportReport: async (type, format = 'csv', startDate = null, endDate = null) => {
     try {
       let url = `/admin/reports/export/${type}?format=${format}`;

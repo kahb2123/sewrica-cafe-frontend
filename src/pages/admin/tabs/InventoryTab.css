@@ -307,4 +307,10 @@
   .inventory-header { align-items: flex-start; flex-direction: column; }
   .inventory-stats { grid-template-columns: repeat(2, 1fr); }
   .inventory-toolbar { justify-content: flex-start; }
+  .ingredient-form,
+  .purchase-form { grid-template-columns: 1fr; }
+  .ingredient-form button,
+  .purchase-form button { width: 100%; }
+  .ingredient-row { grid-template-columns: 1fr 1fr; }
+  .ingredient-row small { grid-column: 1 / -1; }
 }

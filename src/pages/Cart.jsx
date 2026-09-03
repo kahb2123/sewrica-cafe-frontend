@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 // NEW: Import Stripe hooks
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
@@ -24,6 +24,7 @@ const Cart = () => {
   const elements = useElements();
   // NEW: Add processing state for payments
   const [processing, setProcessing] = useState(false);
+  const placingOrderRef = useRef(false);
   
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -356,6 +357,8 @@ const Cart = () => {
 
   // ========== ✅ UPDATED: Place order function ==========
   const placeOrder = async () => {
+    if (placingOrderRef.current) return;
+
     // Check if user is logged in
     if (!user) {
       toast.error('Please login to place an order');
@@ -379,6 +382,7 @@ const Cart = () => {
     }
 
     try {
+      placingOrderRef.current = true;
       setProcessing(true);
       setPaymentError('');
 
@@ -443,8 +447,9 @@ const Cart = () => {
 
     } catch (error) {
       console.error('Order placement error:', error);
-      toast.error(error.message || 'Failed to place order. Please try again.');
+      toast.error(error.message || error.response?.data?.message || 'Failed to place order. Please try again.');
     } finally {
+      placingOrderRef.current = false;
       setProcessing(false);
     }
   };

@@ -49,12 +49,10 @@
   align-items: center;
   gap: 10px;
 }
-
 .top-bar-icon {
   color: var(--ethiopian-gold);
   font-size: 0.9rem;
 }
-
 
 /* Main Navbar */
 .navbar {
@@ -66,14 +64,8 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   font-family: 'Poppins', sans-serif;
   transition: all 0.3s ease;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-}
 
-.navbar.scrolled {
-  height: 80px;
-  background: rgba(253, 245, 230, 0.98);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
 }
 
 .navbar-container {
@@ -97,7 +89,8 @@
   align-items: center;
   text-decoration: none;
   gap: 12px;
-  min-width: 200px;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 /* New styles for image logo */
@@ -226,7 +219,8 @@
   display: flex;
   align-items: center;
   gap: 20px;
-  min-width: 200px;
+  min-width: 0;
+  flex-shrink: 0;
   justify-content: flex-end;
 }
 
@@ -415,6 +409,14 @@
   .nav-menu-desktop {
     gap: 20px;
   }
+
+  .navbar-logo {
+    max-width: 34%;
+  }
+
+  .nav-right {
+    gap: 12px;
+  }
 }
 
 @media screen and (max-width: 968px) {
@@ -566,6 +568,25 @@
     width: 32px;
     height: 32px;
     font-size: 0.9rem;
+  }
+
+  .navbar-container {
+    padding: 0 12px;
+  }
+
+  .logo-text {
+    min-width: 0;
+  }
+
+  .restaurant-name,
+  .restaurant-cuisine {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-link {
+    display: none;
   }
 
   .cart-badge-nav {

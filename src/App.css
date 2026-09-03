@@ -77,3 +77,44 @@ body {
 .page-enter {
   animation: fadeIn 0.5s ease forwards;
 }
+
+/* Shared bounds keep every page inside the viewport on narrow screens. */
+img,
+video,
+canvas {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .Toastify__toast-container {
+    width: calc(100vw - 24px);
+    left: 12px;
+    right: 12px;
+    top: 12px;
+  }
+
+  .Toastify__toast {
+    margin-bottom: 8px;
+    min-height: 48px;
+  }
+
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-content {
+    width: min(100%, 520px);
+    max-height: calc(100vh - 24px);
+  }
+}

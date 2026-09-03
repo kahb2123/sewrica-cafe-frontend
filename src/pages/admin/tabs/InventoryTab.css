@@ -257,6 +257,51 @@
 .inventory-save:disabled { cursor: wait; opacity: 0.65; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
+.ingredient-panel {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 20px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--color-white);
+  box-shadow: var(--shadow-light);
+}
+
+.ingredient-panel h2 { margin: 0; color: var(--sewrica-dark); font-size: 1.25rem; }
+.ingredient-panel p { margin: 5px 0 0; color: var(--color-text-muted); }
+.ingredient-form,
+.purchase-form { display: grid; grid-template-columns: 1.5fr repeat(4, 1fr) auto; gap: 8px; }
+.purchase-form { grid-template-columns: 1.5fr repeat(3, 1fr) auto; }
+.ingredient-form input,
+.ingredient-form select,
+.purchase-form input,
+.purchase-form select {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border-light);
+  border-radius: 5px;
+  background: var(--sewrica-cream);
+  color: var(--color-text);
+}
+.ingredient-form button,
+.purchase-form button {
+  border: 0;
+  border-radius: 5px;
+  padding: 9px 12px;
+  background: var(--sewrica-brown);
+  color: var(--sewrica-cream);
+  cursor: pointer;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.ingredient-form button:disabled,
+.purchase-form button:disabled { cursor: wait; opacity: 0.65; }
+.ingredient-list { display: grid; gap: 7px; }
+.ingredient-row { display: grid; grid-template-columns: 1.2fr 1fr 1.5fr; gap: 12px; padding: 10px 12px; border-top: 1px solid var(--border-light); }
+.ingredient-row span { color: var(--sewrica-dark); }
+.ingredient-row small { color: var(--color-text-muted); }
+
 @media (max-width: 800px) {
   .inventory-tab { padding: 18px 12px; }
   .inventory-header { align-items: flex-start; flex-direction: column; }

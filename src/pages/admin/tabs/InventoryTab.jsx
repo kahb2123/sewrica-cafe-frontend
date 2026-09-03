@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
-import { menuService } from '../../../services/api';
+import { ingredientService, menuService } from '../../../services/api';
 import './InventoryTab.css';
 
 const InventoryTab = () => {
@@ -11,16 +11,59 @@ const InventoryTab = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
+  const [ingredients, setIngredients] = useState([]);
+  const [ingredientForm, setIngredientForm] = useState({ name: '', unit: 'piece', quantity: '', reorderLevel: '0', supplier: '' });
+  const [purchase, setPurchase] = useState({ ingredientId: '', quantity: '', unitCost: '', supplier: '' });
+  const [savingIngredient, setSavingIngredient] = useState(false);
 
   const loadInventory = async () => {
     try {
       setLoading(true);
-      const response = await menuService.getInventory();
+      const [response, ingredientResponse] = await Promise.all([menuService.getInventory(), ingredientService.getAll()]);
       setItems(response.data || []);
+      setIngredients(ingredientResponse.data || []);
     } catch (error) {
       toast.error(error.message || 'Failed to load inventory');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createIngredient = async (event) => {
+    event.preventDefault();
+    if (!ingredientForm.name.trim() || Number(ingredientForm.quantity) < 0 || Number(ingredientForm.reorderLevel) < 0) {
+      toast.error('Enter an ingredient name and valid stock values');
+      return;
+    }
+    try {
+      setSavingIngredient(true);
+      const response = await ingredientService.create({ ...ingredientForm, quantity: Number(ingredientForm.quantity || 0), reorderLevel: Number(ingredientForm.reorderLevel || 0) });
+      setIngredients(current => [...current, response.data].sort((a, b) => a.name.localeCompare(b.name)));
+      setIngredientForm({ name: '', unit: 'piece', quantity: '', reorderLevel: '0', supplier: '' });
+      toast.success('Ingredient added');
+    } catch (error) {
+      toast.error(error.message || 'Failed to add ingredient');
+    } finally {
+      setSavingIngredient(false);
+    }
+  };
+
+  const recordPurchase = async (event) => {
+    event.preventDefault();
+    if (!purchase.ingredientId || Number(purchase.quantity) <= 0) {
+      toast.error('Select an ingredient and enter a purchase quantity');
+      return;
+    }
+    try {
+      setSavingIngredient(true);
+      const response = await ingredientService.recordPurchase(purchase.ingredientId, { quantity: Number(purchase.quantity), unitCost: Number(purchase.unitCost || 0), supplier: purchase.supplier });
+      setIngredients(current => current.map(item => item._id === response.data._id ? response.data : item));
+      setPurchase({ ingredientId: '', quantity: '', unitCost: '', supplier: '' });
+      toast.success('Purchase recorded and stock increased');
+    } catch (error) {
+      toast.error(error.message || 'Failed to record purchase');
+    } finally {
+      setSavingIngredient(false);
     }
   };
 
@@ -156,6 +199,29 @@ const InventoryTab = () => {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="ingredient-panel">
+        <div>
+          <h2>Ingredients & supplies</h2>
+          <p>Add cafe ingredients, then record each supplier purchase to increase stock.</p>
+        </div>
+        <form className="ingredient-form" onSubmit={createIngredient}>
+          <input aria-label="Ingredient name" placeholder="Ingredient, e.g. Eggs" value={ingredientForm.name} onChange={e => setIngredientForm({ ...ingredientForm, name: e.target.value })} />
+          <select aria-label="Ingredient unit" value={ingredientForm.unit} onChange={e => setIngredientForm({ ...ingredientForm, unit: e.target.value })}>{['piece', 'kg', 'g', 'liter', 'ml', 'pack', 'box'].map(unit => <option key={unit}>{unit}</option>)}</select>
+          <input aria-label="Opening quantity" type="number" min="0" step="0.01" placeholder="Opening qty" value={ingredientForm.quantity} onChange={e => setIngredientForm({ ...ingredientForm, quantity: e.target.value })} />
+          <input aria-label="Ingredient reorder level" type="number" min="0" step="0.01" placeholder="Reorder at" value={ingredientForm.reorderLevel} onChange={e => setIngredientForm({ ...ingredientForm, reorderLevel: e.target.value })} />
+          <input aria-label="Ingredient supplier" placeholder="Supplier" value={ingredientForm.supplier} onChange={e => setIngredientForm({ ...ingredientForm, supplier: e.target.value })} />
+          <button type="submit" disabled={savingIngredient}>Add ingredient</button>
+        </form>
+        <form className="purchase-form" onSubmit={recordPurchase}>
+          <select aria-label="Purchase ingredient" value={purchase.ingredientId} onChange={e => setPurchase({ ...purchase, ingredientId: e.target.value })}><option value="">Record purchase for...</option>{ingredients.map(item => <option key={item._id} value={item._id}>{item.name} ({item.unit})</option>)}</select>
+          <input aria-label="Purchase quantity" type="number" min="0.01" step="0.01" placeholder="Quantity purchased" value={purchase.quantity} onChange={e => setPurchase({ ...purchase, quantity: e.target.value })} />
+          <input aria-label="Purchase unit cost" type="number" min="0" step="0.01" placeholder="Unit cost" value={purchase.unitCost} onChange={e => setPurchase({ ...purchase, unitCost: e.target.value })} />
+          <input aria-label="Purchase supplier" placeholder="Supplier" value={purchase.supplier} onChange={e => setPurchase({ ...purchase, supplier: e.target.value })} />
+          <button type="submit" disabled={savingIngredient}>Add purchased stock</button>
+        </form>
+        <div className="ingredient-list">{ingredients.map(item => <div className="ingredient-row" key={item._id}><strong>{item.name}</strong><span>{item.quantity} {item.unit}</span><small>{item.quantity <= item.reorderLevel ? 'Reorder soon' : item.supplier || 'No supplier recorded'}</small></div>)}</div>
       </div>
 
       <div className="inventory-table-wrap">

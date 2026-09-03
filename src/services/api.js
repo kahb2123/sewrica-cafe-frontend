@@ -323,6 +323,44 @@ export const menuService = {
   }
 };
 
+export const ingredientService = {
+  getAll: async () => {
+    try {
+      const response = await api.get('/ingredients');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch ingredients' };
+    }
+  },
+
+  create: async (ingredientData) => {
+    try {
+      const response = await api.post('/ingredients', ingredientData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to create ingredient' };
+    }
+  },
+
+  recordPurchase: async (id, purchaseData) => {
+    try {
+      const response = await api.post(`/ingredients/${id}/purchases`, purchaseData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to record purchase' };
+    }
+  },
+
+  update: async (id, ingredientData) => {
+    try {
+      const response = await api.patch(`/ingredients/${id}`, ingredientData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update ingredient' };
+    }
+  }
+};
+
 // ========== ADMIN SERVICES ==========
 export const adminService = {
   getStats: async () => {

@@ -13,17 +13,20 @@ const ReportsTab = () => {
     end: new Date().toISOString().split('T')[0]
   });
 
+  const formatNumber = (value) => (Number(value) || 0).toLocaleString();
+  const list = (value) => (Array.isArray(value) ? value : []);
+
   // Auto-generate report on component mount
   useEffect(() => {
     generateReport();
   }, []);
 
-  const generateReport = async () => {
+  const generateReport = async (requestedType = reportType) => {
     try {
       setLoading(true);
       let data;
       
-      switch(reportType) {
+      switch(requestedType) {
         case 'daily':
           data = await adminService.getDailyReport(dateRange.start);
           break;
@@ -48,6 +51,11 @@ const ReportsTab = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const selectReportType = (type) => {
+    setReportType(type);
+    generateReport(type);
   };
 
   const handleExport = async (format) => {
@@ -79,13 +87,13 @@ const ReportsTab = () => {
       <div className="report-controls">
         <div className="control-group">
           <div className="report-type-selector">
-            <button className={reportType === 'daily' ? 'active' : ''} onClick={() => setReportType('daily')}>
+            <button className={reportType === 'daily' ? 'active' : ''} onClick={() => selectReportType('daily')}>
               📅 Daily
             </button>
-            <button className={reportType === 'weekly' ? 'active' : ''} onClick={() => setReportType('weekly')}>
+            <button className={reportType === 'weekly' ? 'active' : ''} onClick={() => selectReportType('weekly')}>
               📆 Weekly
             </button>
-            <button className={reportType === 'monthly' ? 'active' : ''} onClick={() => setReportType('monthly')}>
+            <button className={reportType === 'monthly' ? 'active' : ''} onClick={() => selectReportType('monthly')}>
               📋 Monthly
             </button>
             <button className={reportType === 'custom' ? 'active' : ''} onClick={() => setReportType('custom')}>
@@ -146,12 +154,12 @@ const ReportsTab = () => {
             <div className="summary-card success">
               <div className="card-icon">💰</div>
               <span className="label">Total Revenue</span>
-              <span className="value">{reportData.totalRevenue.toLocaleString()} ETB</span>
+              <span className="value">{formatNumber(reportData.totalRevenue)} ETB</span>
             </div>
             <div className="summary-card warning">
               <div className="card-icon">📊</div>
               <span className="label">Average Order Value</span>
-              <span className="value">{reportData.averageOrderValue.toLocaleString()} ETB</span>
+              <span className="value">{formatNumber(reportData.averageOrderValue)} ETB</span>
             </div>
           </div>
 
@@ -159,24 +167,24 @@ const ReportsTab = () => {
             <div className="report-section">
               <h3>📂 Sales by Category</h3>
               <div className="category-breakdown">
-                {reportData.categoryBreakdown?.map((cat, idx) => (
+                {list(reportData.categoryBreakdown).map((cat, idx) => (
                   <div key={cat.category} className="breakdown-item">
                     <div className="breakdown-header">
                       <span className="category-name">{cat.category}</span>
                       <span className="category-stats">
-                        <strong>{cat.itemsSold}</strong> items • <strong>{cat.revenue.toLocaleString()}</strong> ETB
+                        <strong>{cat.itemsSold || 0}</strong> items • <strong>{formatNumber(cat.revenue)}</strong> ETB
                       </span>
                     </div>
                     <div className="progress-bar-container">
                       <div 
                         className="progress-bar" 
                         style={{ 
-                          width: `${(cat.revenue / Math.max(...reportData.categoryBreakdown.map(c => c.revenue))) * 100}%`,
+                          width: `${Math.max(...list(reportData.categoryBreakdown).map(c => Number(c.revenue) || 0), 0) ? ((Number(cat.revenue) || 0) / Math.max(...list(reportData.categoryBreakdown).map(c => Number(c.revenue) || 0))) * 100 : 0}%`,
                           backgroundColor: ['#3498db', '#2ecc71', '#f39c12', '#e74c3c'][idx % 4]
                         }}
                       />
                     </div>
-                    <div className="percentage">{cat.percentage || Math.round((cat.revenue / reportData.totalRevenue) * 100)}%</div>
+                    <div className="percentage">{cat.percentage ?? (reportData.totalRevenue ? Math.round((cat.revenue / reportData.totalRevenue) * 100) : 0)}%</div>
                   </div>
                 ))}
               </div>
@@ -194,14 +202,14 @@ const ReportsTab = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {reportData.topItems?.map((item, idx) => (
+                    {list(reportData.topItems).map((item, idx) => (
                       <tr key={item.name} className={`rank-${idx + 1}`}>
                         <td className="item-name">
                           <span className="rank-badge">#{idx + 1}</span>
                           {item.name}
                         </td>
                         <td className="quantity">{item.quantity}</td>
-                        <td className="revenue">{item.revenue.toLocaleString()} ETB</td>
+                        <td className="revenue">{formatNumber(item.revenue)} ETB</td>
                       </tr>
                     ))}
                   </tbody>
@@ -213,7 +221,7 @@ const ReportsTab = () => {
           <div className="report-section full-width">
             <h3>🚚 Delivery Performance</h3>
             <div className="delivery-breakdown">
-              {reportData.deliveryBreakdown?.map(del => (
+              {list(reportData.deliveryBreakdown).map(del => (
                 <div key={del.name} className="delivery-card">
                   <div className="delivery-header">
                     <h4>{del.name}</h4>
@@ -222,11 +230,11 @@ const ReportsTab = () => {
                   <div className="delivery-stats">
                     <div className="stat">
                       <span className="label">Total Amount</span>
-                      <span className="value">{del.totalAmount.toLocaleString()} ETB</span>
+                      <span className="value">{formatNumber(del.totalAmount)} ETB</span>
                     </div>
                     <div className="stat">
                       <span className="label">Performance</span>
-                      <span className="percentage">{del.percentage || Math.round((del.totalAmount / reportData.deliveryBreakdown.reduce((sum, d) => sum + d.totalAmount, 0)) * 100)}%</span>
+                      <span className="percentage">{del.percentage ?? (() => { const total = list(reportData.deliveryBreakdown).reduce((sum, d) => sum + (Number(d.totalAmount) || 0), 0); return total ? Math.round((del.totalAmount / total) * 100) : 0; })()}%</span>
                     </div>
                   </div>
                 </div>

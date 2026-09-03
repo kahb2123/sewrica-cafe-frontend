@@ -190,6 +190,7 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
               <option value="cook">👨‍🍳 Chef / Cook</option>
               <option value="delivery">🚚 Delivery Person</option>
               <option value="cashier">💰 Cashier</option>
+              <option value="supply_chain">📦 Supply Chain</option>
               <option value="admin">👑 Admin</option>
             </select>
           </div>

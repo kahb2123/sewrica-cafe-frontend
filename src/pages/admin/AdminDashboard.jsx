@@ -75,7 +75,7 @@ const AdminDashboard = () => {
       return;
     }
     
-    if (user.role !== 'admin') {
+    if (!['admin', 'supply_chain'].includes(user.role)) {
       console.log('❌ User is not admin. Role:', user.role);
       toast.error('Admin access required');
       navigate('/');

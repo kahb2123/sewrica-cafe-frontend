@@ -16,7 +16,7 @@ const PrivateRoute = ({ children, adminOnly = false }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (adminOnly && user.role !== 'admin') {
+  if (adminOnly && !['admin', 'supply_chain'].includes(user.role)) {
     return <Navigate to="/" replace />;
   }
 

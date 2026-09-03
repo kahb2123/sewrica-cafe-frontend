@@ -20,6 +20,10 @@ const Sidebar = ({ activeTab, onMenuClick, mobileMenuOpen, user, onClose }) => {
     { id: 'giveaway', icon: '🎁', label: 'Giveaway' }
   ];
 
+  const visibleMenuItems = user?.role === 'supply_chain'
+    ? menuItems.filter(item => ['inventory'].includes(item.id))
+    : menuItems;
+
   return (
     <>
       <div className={`admin-sidebar ${mobileMenuOpen ? 'open' : ''}`}>
@@ -29,7 +33,7 @@ const Sidebar = ({ activeTab, onMenuClick, mobileMenuOpen, user, onClose }) => {
         </div>
         
         <ul className="sidebar-menu">
-          {menuItems.map(item => (
+          {visibleMenuItems.map(item => (
             <li 
               key={item.id}
               className={activeTab === item.id ? 'active' : ''} 

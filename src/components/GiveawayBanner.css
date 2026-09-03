@@ -321,16 +321,31 @@
 
 @media (max-width: 768px) {
   .giveaway-banner-wrapper {
-    padding: 0 15px;
-    margin: 15px auto;
+    align-items: flex-start;
+    padding: 12px;
+    margin: 0;
+  }
+  
+  .giveaway-banner-container {
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   
   .giveaway-banner-image {
-    height: 400px;
+    height: auto;
+    min-height: calc(100vh - 24px);
   }
-  
+
+  .giveaway-banner-overlay {
+    position: relative;
+    min-height: calc(100vh - 24px);
+  }
+
   .giveaway-banner-content {
-    padding: 20px;
+    max-height: none;
+    overflow: visible;
+    padding: 58px 20px 24px;
   }
   
   .giveaway-title {
@@ -375,11 +390,26 @@
 
 @media (max-width: 480px) {
   .giveaway-banner-image {
-    height: 350px;
+    min-height: calc(100vh - 16px);
+  }
+
+  .giveaway-banner-wrapper {
+    padding: 8px;
+  }
+
+  .giveaway-banner-container,
+  .giveaway-banner-overlay {
+    min-height: calc(100vh - 16px);
+    max-height: calc(100vh - 16px);
+  }
+
+  .giveaway-banner-content {
+    padding: 54px 14px 18px;
   }
   
   .giveaway-title {
-    font-size: 22px;
+    font-size: 24px;
+    margin: 14px 0;
   }
   
   .timer-block {
@@ -397,6 +427,7 @@
   
   .giveaway-description {
     font-size: 12px;
+    margin-bottom: 18px;
   }
 }
 

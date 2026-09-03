@@ -47,8 +47,8 @@ const Home = () => {
         title: 'Cozy Atmosphere',
         subtitle: 'Perfect for Any Occasion',
         description: 'Whether it\'s a romantic dinner or family gathering, we have the perfect setting for you',
-        buttonText: 'Book a Table →',
-        buttonLink: '/contact'
+        buttonText: 'View Menu →',
+        buttonLink: '/menu'
       }
     ];
     return slides;

@@ -42,8 +42,8 @@ const Contact = () => {
   const socialLinks = [
     { icon: <FaFacebook />, name: 'Facebook', link: 'https://facebook.com/sewricacafe', color: '#1877f2', username: '@sewricacafe' },
     { icon: <FaInstagram />, name: 'Instagram', link: 'https://instagram.com/sewricacafe', color: '#e4405f', username: '@sewricacafe' },
-    { icon: <FaTelegram />, name: 'Telegram', link: 'https://t.me/sewricacafe', color: '#0088cc', username: '@sewricacafe' },
-    { icon: <FaTiktok />, name: 'TikTok', link: 'https://tiktok.com/@sewricacafe', color: '#000000', username: '@sewricacafe' },
+    { icon: <FaTelegram />, name: 'Telegram', link: 'https://t.me/sewrica', color: '#0088cc', username: '@sewrica' },
+    { icon: <FaTiktok />, name: 'TikTok', link: 'https://tiktok.com/@sewrica', color: '#000000', username: '@sewrica' },
     { icon: <FaLinkedin />, name: 'LinkedIn', link: 'https://linkedin.com/company/sewricacafe', color: '#0077b5', username: 'SEWRICA Cafe' },
     { icon: <FaWhatsapp />, name: 'WhatsApp', link: 'https://wa.me/251911234567', color: '#25D366', username: '+251 911060930' }
   ];

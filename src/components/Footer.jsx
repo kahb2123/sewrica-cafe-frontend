@@ -32,8 +32,8 @@ const Footer = () => {
   const socialLinks = [
     { icon: <FaLinkedin />, name: 'LinkedIn', link: 'https://linkedin.com/company/megenagnarestaurant', color: '#0077b5' },
     { icon: <FaWhatsapp />, name: 'WhatsApp', link: 'https://wa.me/251911234567', color: '#25D366' },
-    { icon: <FaTelegram />, name: 'Telegram', link: 'https://t.me/megenagnarestaurant', color: '#0088cc' },
-    { icon: <FaTiktok />, name: 'TikTok', link: 'https://tiktok.com/@megenagnarestaurant', color: '#000000' },
+    { icon: <FaTelegram />, name: 'Telegram', link: 'https://t.me/sewrica', color: '#0088cc' },
+    { icon: <FaTiktok />, name: 'TikTok', link: 'https://tiktok.com/@sewrica', color: '#000000' },
   ];
 
   return (

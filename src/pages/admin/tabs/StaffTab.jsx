@@ -122,7 +122,7 @@ const StaffTab = () => {
       const response = await fetch(`/api/admin/staff/${staffId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
         }
       });
       

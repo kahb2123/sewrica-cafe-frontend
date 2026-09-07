@@ -474,61 +474,7 @@ const Home = () => {
       </section>
 
       {/* Welcome Section */}
-      <section className="welcome-section">
-        <div className="container">
-          <div className="welcome-content">
-            <div className="welcome-text">
-              <span className="section-subtitle">ሰላም! Welcome to</span>
-              <h2 className="section-title">SEWRICA Cafe</h2>
-              <div className="title-underline"></div>
-              <p className="welcome-description">
-                <strong>Enjoy with Best City View and Delicious Food</strong>
-              </p>
-              <p className="welcome-description">
-                Located in the heart of Addis Ababa at Megenagna's Metebaber Building on the 2nd floor, 
-                SEWRICA Cafe offers you the perfect combination of breathtaking city views and exceptional cuisine.
-              </p>
-              <p className="welcome-description">
-                From our signature Sewrica Burger and Sewrica Pizza to traditional Ethiopian dishes like 
-                Beyaynet and Chechebsa, we have something for everyone. Order your favorites online for 
-                delivery or take-out, or join us in person for an unforgettable dining experience.
-              </p>
-              <div className="welcome-features">
-                <div className="welcome-feature">
-                  <FaCheckCircle className="feature-icon" />
-                  <span>Best City View</span>
-                </div>
-                <div className="welcome-feature">
-                  <FaCheckCircle className="feature-icon" />
-                  <span>Signature Burgers</span>
-                </div>
-                <div className="welcome-feature">
-                  <FaCheckCircle className="feature-icon" />
-                  <span>Traditional Cuisine</span>
-                </div>
-                <div className="welcome-feature">
-                  <FaCheckCircle className="feature-icon" />
-                  <span>Free Delivery</span>
-                </div>
-              </div>
-              <Link to="/menu" className="btn-primary">
-                Order Now
-              </Link>
-            </div>
-            <div className="welcome-image">
-              <img 
-                src="https://images.pexels.com/photos/260922/pexels-photo-260922.jpeg?auto=compress&cs=tinysrgb&w=800" 
-                alt="SEWRICA Cafe City View"
-              />
-              <div className="image-badge">
-                <FaCoffee />
-                <span>Best City View</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      ?
       {/* Category Filter */}
       <section className="categories-section">
         <div className="container">

@@ -51,7 +51,7 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       
       if (!token) {
         toast.error('You must be logged in as admin');

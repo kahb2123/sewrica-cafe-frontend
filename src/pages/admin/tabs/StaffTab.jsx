@@ -1,6 +1,6 @@
 // src/pages/admin/tabs/StaffTab.jsx
 import React, { useState, useEffect } from 'react';
-import { staffService } from '../../../services/api';
+import { adminService, staffService } from '../../../services/api';
 import { toast } from 'react-toastify';
 import AddStaffModal from '../../../components/AddStaffModal';
 import './StaffTab.css';
@@ -119,22 +119,12 @@ const StaffTab = () => {
     if (!window.confirm('Are you sure you want to remove this staff member?')) return;
     
     try {
-      const response = await fetch(`/api/admin/staff/${staffId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
-        }
-      });
-      
-      if (response.ok) {
-        toast.success('Staff member removed');
-        fetchStaff();
-      } else {
-        toast.error('Failed to remove staff');
-      }
+      await adminService.deleteStaff(staffId);
+      toast.success('Staff member removed');
+      fetchStaff();
     } catch (error) {
       console.error('Error deleting staff:', error);
-      toast.error('Network error');
+      toast.error(error.message || 'Failed to remove staff');
     }
   };
 

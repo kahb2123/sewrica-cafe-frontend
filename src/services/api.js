@@ -381,6 +381,15 @@ export const adminService = {
       throw error.response?.data || { message: 'Failed to create staff' };
     }
   },
+
+  deleteStaff: async (staffId) => {
+    try {
+      const response = await api.delete(`/admin/staff/${staffId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to delete staff' };
+    }
+  },
   
   getRecentOrders: async () => {
     try {

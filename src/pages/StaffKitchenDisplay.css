@@ -2,8 +2,8 @@
 
 .staff-kitchen-display {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #dff4f0 100%);
+  padding: clamp(12px, 3vw, 32px);
   font-family: inherit;
 }
 
@@ -27,7 +27,7 @@
 }
 
 .skd-title-section h1 {
-  font-size: 32px;
+  font-size: clamp(24px, 4vw, 36px);
   color: #2c3e50;
   margin: 0 0 5px;
   font-weight: 700;
@@ -40,8 +40,9 @@
 }
 
 .skd-back-btn {
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 44px;
+  padding: 11px 18px;
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -99,7 +100,7 @@
   display: block;
   font-size: 32px;
   font-weight: 700;
-  color: #667eea;
+  color: #0f766e;
 }
 
 /* Main Content */
@@ -112,7 +113,7 @@
 .orders-section {
   background: white;
   border-radius: 12px;
-  padding: 25px;
+  padding: clamp(16px, 3vw, 28px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
@@ -157,7 +158,7 @@
 /* Orders Grid */
 .orders-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
   gap: 20px;
 }
 
@@ -305,6 +306,7 @@
 
 /* Action Buttons */
 .action-btn {
+  min-height: 42px;
   padding: 10px 16px;
   border: none;
   border-radius: 8px;
@@ -582,6 +584,10 @@
     align-items: flex-start;
   }
 
+  .skd-back-btn {
+    width: 100%;
+  }
+
   .skd-quick-stats {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
@@ -597,6 +603,10 @@
 
   .info-grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .section-header h2 {
+    font-size: 17px;
   }
 }
 
@@ -635,5 +645,16 @@
   .item-card {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .item-card .mark-ready-btn,
+  .item-card .ready-badge {
+    width: 100%;
+    text-align: center;
+  }
+
+  .modal-content {
+    width: calc(100% - 20px);
+    max-height: calc(100vh - 20px);
   }
 }

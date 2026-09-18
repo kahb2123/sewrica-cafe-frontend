@@ -182,7 +182,7 @@ const KitchenDisplayTab = () => {
       </div>
 
       {/* Kitchen Orders Display */}
-      <div className="kds-container">
+      <div className={`kds-container ${selectedOrder ? 'has-detail-panel' : ''}`}>
         <div className="kds-board">
           {filteredOrders.length === 0 ? (
             <div className="kds-empty">

@@ -1,9 +1,18 @@
 /* src/pages/admin/tabs/KitchenDisplayTab.css */
 
 .kitchen-display-tab {
+  box-sizing: border-box;
   padding: clamp(16px, 3vw, 32px);
   background: linear-gradient(135deg, #f8fafc 0%, #eef6f5 100%);
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.kitchen-display-tab *,
+.kitchen-display-tab *::before,
+.kitchen-display-tab *::after {
+  box-sizing: border-box;
 }
 
 .kds-loading {
@@ -22,6 +31,7 @@
   margin: 0 auto 30px;
   gap: 20px;
   max-width: 1600px;
+  width: 100%;
 }
 
 .kds-title {
@@ -65,6 +75,7 @@
   max-width: 1600px;
   margin-left: auto;
   margin-right: auto;
+  width: 100%;
 }
 
 .stat-card {
@@ -127,6 +138,7 @@
   max-width: 1600px;
   margin-left: auto;
   margin-right: auto;
+  width: 100%;
 }
 
 .filter-group {
@@ -175,11 +187,16 @@
 /* Main Container */
 .kds-container {
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 25px;
   max-width: 1600px;
   margin: 0 auto;
   align-items: start;
+  width: 100%;
+}
+
+.kds-container.has-detail-panel {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
 }
 
 .kds-empty {
@@ -197,6 +214,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
   gap: 20px;
+  min-width: 0;
 }
 
 .kds-order-card {
@@ -594,6 +612,10 @@
     grid-template-columns: 1fr;
   }
 
+  .kds-container.has-detail-panel {
+    grid-template-columns: 1fr;
+  }
+
   .kds-detail-panel {
     position: fixed;
     top: 0;
@@ -621,6 +643,11 @@
     align-items: flex-start;
   }
 
+  .kds-title,
+  .kds-subtitle {
+    overflow-wrap: anywhere;
+  }
+
   .kds-refresh {
     width: 100%;
   }
@@ -640,6 +667,16 @@
 
   .filter-btn {
     width: 100%;
+  }
+
+  .order-card-header {
+    gap: 8px;
+  }
+
+  .order-number,
+  .status-badge,
+  .detail-row .value {
+    overflow-wrap: anywhere;
   }
 }
 

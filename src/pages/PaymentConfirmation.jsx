@@ -13,6 +13,8 @@ import OrderTracker from '../components/OrderTracker';
 import { useSocket } from '../context/SocketContext';
 import './PaymentConfirmation.css';
 
+const ORDER_REFRESH_INTERVAL_MS = 30000;
+
 const PaymentConfirmation = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
@@ -25,6 +27,14 @@ const PaymentConfirmation = () => {
 
   useEffect(() => {
     fetchOrderDetails();
+  }, [orderId]);
+
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      fetchOrderDetails(false);
+    }, ORDER_REFRESH_INTERVAL_MS);
+
+    return () => clearInterval(refreshInterval);
   }, [orderId]);
 
   // Register order for real-time updates and listen for changes
@@ -63,9 +73,9 @@ const PaymentConfirmation = () => {
     }
   }, [order, orderId, connected, registerOrder, onOrderStatusUpdate]);
 
-  const fetchOrderDetails = async () => {
+  const fetchOrderDetails = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const response = await orderService.getOrder(orderId);
       const orderData = response.data || response.order || response;
       setOrder(orderData);
@@ -80,10 +90,12 @@ const PaymentConfirmation = () => {
       }
     } catch (error) {
       console.error('Error fetching order:', error);
-      setError('Failed to load order details');
-      toast.error('Could not load order confirmation');
+      if (showLoading) {
+        setError('Failed to load order details');
+        toast.error('Could not load order confirmation');
+      }
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 

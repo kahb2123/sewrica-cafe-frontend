@@ -7,6 +7,8 @@ import { useSocket } from '../context/SocketContext';
 import { toast } from 'react-toastify';
 import './StaffKitchenDisplay.css';
 
+const KITCHEN_REFRESH_INTERVAL_MS = 30000;
+
 const StaffKitchenDisplay = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -23,9 +25,9 @@ const StaffKitchenDisplay = () => {
     }
   }, [isAuthenticated, user, navigate]);
 
-  const loadOrders = async () => {
+  const loadOrders = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const response = await staffService.getMyCookingOrders();
       const kitchenOrders = response.filter(order =>
         ['pending', 'confirmed', 'preparing', 'cooking', 'ready'].includes(order.status)
@@ -36,9 +38,16 @@ const StaffKitchenDisplay = () => {
       console.error('Error loading orders:', error);
       toast.error('Failed to load orders');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!isAuthenticated || !user || user.role !== 'cook') return undefined;
+
+    const refreshInterval = setInterval(() => loadOrders(false), KITCHEN_REFRESH_INTERVAL_MS);
+    return () => clearInterval(refreshInterval);
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
     if (connected && socket) {

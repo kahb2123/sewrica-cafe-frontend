@@ -5,6 +5,8 @@ import { adminService, staffService, orderService } from '../../../services/api'
 import { useSocket } from '../../../context/SocketContext';
 import './KitchenDisplayTab.css';
 
+const KITCHEN_REFRESH_INTERVAL_MS = 30000;
+
 const KitchenDisplayTab = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,9 +15,9 @@ const KitchenDisplayTab = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const { connected, socket } = useSocket();
 
-  const loadOrders = async () => {
+  const loadOrders = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const response = await adminService.getAllOrders();
       const allOrders = Array.isArray(response) ? response : response.data || response.orders || [];
       // Filter only orders that are being prepared or in kitchen
@@ -27,7 +29,7 @@ const KitchenDisplayTab = () => {
       console.error('Error loading orders:', error);
       toast.error('Failed to load orders');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -43,6 +45,9 @@ const KitchenDisplayTab = () => {
   useEffect(() => {
     loadOrders();
     loadChefs();
+
+    const refreshInterval = setInterval(() => loadOrders(false), KITCHEN_REFRESH_INTERVAL_MS);
+    return () => clearInterval(refreshInterval);
   }, []);
 
   // Listen for real-time order updates

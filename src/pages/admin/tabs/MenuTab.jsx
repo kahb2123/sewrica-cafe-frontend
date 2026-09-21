@@ -249,6 +249,13 @@ const MenuTab = () => {
     setActiveSearch(searchTerm.trim());
   };
 
+  const handleModalOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      setShowForm(false);
+      resetForm();
+    }
+  };
+
   // Show loading while auth is initializing
   if (authLoading) {
     return (
@@ -323,7 +330,7 @@ const MenuTab = () => {
       </div>
 
       {showForm && (
-        <div className="modal-overlay">
+        <div className="modal-overlay" onMouseDown={handleModalOverlayClick}>
           <div className="modal-content menu-form-modal">
             <h2>{editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}</h2>
             <form onSubmit={handleSubmit}>

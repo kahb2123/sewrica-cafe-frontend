@@ -15,6 +15,8 @@ const MenuTab = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
@@ -233,6 +235,20 @@ const MenuTab = () => {
     return emojis[category] || '🍽️';
   };
 
+  const filteredMenuItems = menuItems.filter(item => {
+    const searchableText = [item.name, item.nameAm, item.description, item.category]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    return searchableText.includes(activeSearch.toLowerCase());
+  });
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setActiveSearch(searchTerm.trim());
+  };
+
   // Show loading while auth is initializing
   if (authLoading) {
     return (
@@ -260,13 +276,50 @@ const MenuTab = () => {
   return (
     <div className="menu-tab">
       <div className="tab-header">
-        <h1 className="page-title">Menu Management</h1>
+        <div>
+          <p className="eyebrow">Catalog administration</p>
+          <h1 className="page-title">Menu Management</h1>
+          <p className="page-subtitle">Manage your dishes, pricing, availability, and categories.</p>
+        </div>
         <button className="btn-primary" onClick={() => {
           resetForm();
           setShowForm(true);
         }}>
-          + Add New Item
+          <span aria-hidden="true">+</span> Add New Item
         </button>
+      </div>
+
+      <div className="menu-toolbar">
+        <form className="menu-search" onSubmit={handleSearch} role="search">
+          <label htmlFor="menu-search-input">Search menu</label>
+          <div className="search-input-wrap">
+            <span className="search-icon" aria-hidden="true">⌕</span>
+            <input
+              id="menu-search-input"
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by name, description, or category"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                className="clear-search"
+                onClick={() => {
+                  setSearchTerm('');
+                  setActiveSearch('');
+                }}
+                aria-label="Clear search"
+              >
+                ×
+              </button>
+            )}
+          </div>
+          <button className="search-button" type="submit">Search</button>
+        </form>
+        <span className="menu-count">
+          {activeSearch ? `${filteredMenuItems.length} result${filteredMenuItems.length === 1 ? '' : 's'}` : `${menuItems.length} items`}
+        </span>
       </div>
 
       {showForm && (
@@ -423,9 +476,21 @@ const MenuTab = () => {
             + Add Your First Item
           </button>
         </div>
+      ) : !filteredMenuItems.length ? (
+        <div className="empty-state search-empty-state">
+          <div className="empty-icon">⌕</div>
+          <h3>No matching menu items</h3>
+          <p>Try a different name, description, or category.</p>
+          <button className="btn-secondary" onClick={() => {
+            setSearchTerm('');
+            setActiveSearch('');
+          }}>
+            Clear Search
+          </button>
+        </div>
       ) : (
         <div className="menu-items-grid">
-          {menuItems.map(item => (
+          {filteredMenuItems.map(item => (
             <div key={item._id} className="menu-item-card">
               <div className="menu-item-image">
                 {item.image && item.image !== 'default-food.jpg' ? (

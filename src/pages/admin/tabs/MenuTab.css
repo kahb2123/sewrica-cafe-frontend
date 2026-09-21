@@ -225,10 +225,35 @@
 }
 
 /* Modal Styles */
-.menu-form-modal {
-  max-width: 600px;
-  max-height: 90vh;
+.menu-tab .modal-overlay {
+  align-items: flex-start;
   overflow-y: auto;
+  padding: 28px 20px;
+  background: rgba(20, 35, 43, 0.58);
+  backdrop-filter: blur(5px);
+}
+
+.menu-form-modal {
+  width: min(600px, 100%);
+  max-width: 600px;
+  max-height: calc(100vh - 56px);
+  margin: 0 auto;
+  padding: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-top: 4px solid #16805b;
+  border-radius: 12px;
+  box-shadow: 0 24px 70px rgba(15, 31, 39, 0.32);
+  overflow-y: auto;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+}
+
+.menu-form-modal h2 {
+  padding-bottom: 16px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid #e5e9ed;
+  color: #243447;
+  font-size: 22px;
 }
 
 .form-group {
@@ -442,6 +467,15 @@
 @media (max-width: 768px) {
   .menu-tab {
     padding: 4px;
+  }
+
+  .menu-tab .modal-overlay {
+    padding: 12px;
+  }
+
+  .menu-form-modal {
+    max-height: calc(100vh - 24px);
+    padding: 22px 18px;
   }
   
   .menu-items-grid {

@@ -48,10 +48,10 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       console.log('🔐 Login attempt:', email);
-      const data = await authService.login({ email, password });
+      const data = await authService.login(email, password);
       console.log('🔐 Login response:', data);
       
-      if (data && data.token) {
+      if (data && data.success && data.token) {
         const userData = data.user || data;
         const normalized = {
           _id: userData.id || userData._id,
@@ -65,14 +65,12 @@ export const AuthProvider = ({ children }) => {
         console.log('🔐 Login - Normalized user:', normalized);
         console.log('🔐 Login - User role:', normalized.role);
         
-        // Store in sessionStorage (tab-specific)
         storage.setItem('token', data.token);
         storage.setItem('user', JSON.stringify(normalized));
-        
         setUser(normalized);
         return { success: true, user: normalized };
       }
-      return { success: false, error: data.message || 'Login failed' };
+      return { success: false, error: data?.error || data?.message || 'Login failed' };
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error: error.message || 'Network error' };

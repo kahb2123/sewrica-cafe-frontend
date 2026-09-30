@@ -488,6 +488,46 @@
   margin: 0;
 }
 
+.order-step-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #fff8e6;
+  border: 1px solid #f0d98a;
+  color: #6a4a00;
+  padding: 16px 18px;
+  border-radius: 12px;
+  margin-bottom: 22px;
+  font-size: 0.95rem;
+}
+
+.order-step-banner.compact {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.step-banner-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.step-banner-actions button {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: var(--ethiopian-gold);
+  color: var(--ethiopian-charcoal);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.step-banner-actions button.secondary {
+  background: transparent;
+  color: var(--ethiopian-charcoal);
+  border: 1px solid var(--ethiopian-gold);
+}
+
 .checkout-btn {
   width: 100%;
   padding: 15px;

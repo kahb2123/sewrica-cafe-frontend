@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   FaEnvelope, FaLock, FaUser, FaEye, 
   FaEyeSlash, FaGoogle, FaFacebook, 
@@ -14,8 +14,11 @@ import './Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth(); // ✅ GET USER FROM AUTH CONTEXT
-  const [isLogin, setIsLogin] = useState(true);
+  const location = useLocation();
+  const { user, loading: authLoading, login } = useAuth();
+  const params = new URLSearchParams(location.search);
+  const returnTo = params.get('returnTo') || '/';
+  const [isLogin, setIsLogin] = useState(params.get('mode') !== 'signup');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -35,30 +38,24 @@ const Login = () => {
 
   // ✅ EFFECT TO HANDLE REDIRECT WHEN USER STATE CHANGES
   useEffect(() => {
-    // Only redirect if we have a user and not loading
     if (user && !authLoading && !loading) {
       console.log('User state updated, redirecting based on role:', user.role);
-      
-      // Redirect based on user role
+
       if (user.role === 'admin') {
-        console.log('Redirecting to admin dashboard');
         navigate('/admin', { replace: true });
       } else if (user.role === 'cook') {
-        console.log('Redirecting to kitchen');
         navigate('/staff/kitchen', { replace: true });
       } else if (user.role === 'delivery') {
-        console.log('Redirecting to delivery dashboard');
         navigate('/staff/delivery', { replace: true });
       } else if (user.role === 'cashier') {
-        console.log('Redirecting to cashier dashboard');
         navigate('/staff/cashier', { replace: true });
+      } else if (returnTo && returnTo !== '/') {
+        navigate(returnTo, { replace: true });
       } else {
-        // Regular customer
-        console.log('Redirecting to home');
         navigate('/', { replace: true });
       }
     }
-  }, [user, authLoading, loading, navigate]);
+  }, [user, authLoading, loading, navigate, returnTo]);
 
   // Handle input change
   const handleInputChange = (e) => {
@@ -142,24 +139,19 @@ const Login = () => {
     
     try {
       if (isLogin) {
-        // LOGIN - using your backend API
-        const result = await authService.login(formData.email, formData.password);
+        const result = await login(formData.email, formData.password);
         
         if (result && result.success) {
           toast.success(`Welcome back, ${result.user.name || 'User'}!`);
-          
-          // Don't redirect immediately - let the useEffect handle it
           console.log('Login successful, waiting for auth context to update...');
-          
-          // FALLBACK: If still on login page after 3 seconds, force redirect
           setTimeout(() => {
             if (window.location.pathname.includes('login')) {
-              console.log('Fallback redirect triggered');
               const role = result.user.role;
               if (role === 'admin') window.location.href = '/admin';
               else if (role === 'cook') window.location.href = '/staff/kitchen';
               else if (role === 'delivery') window.location.href = '/staff/delivery';
               else if (role === 'cashier') window.location.href = '/staff/cashier';
+              else if (returnTo && returnTo !== '/') window.location.href = returnTo;
               else window.location.href = '/';
             }
           }, 3000);
@@ -198,7 +190,8 @@ const Login = () => {
 
   // Toggle between login and signup
   const toggleMode = () => {
-    setIsLogin(!isLogin);
+    const nextMode = !isLogin;
+    setIsLogin(nextMode);
     setErrors({});
     setFormData({
       name: '',
@@ -207,6 +200,10 @@ const Login = () => {
       confirmPassword: '',
       phone: ''
     });
+
+    const nextQuery = new URLSearchParams(location.search);
+    nextQuery.set('mode', nextMode ? 'login' : 'signup');
+    navigate(`${location.pathname}?${nextQuery.toString()}`, { replace: true });
   };
 
   return (

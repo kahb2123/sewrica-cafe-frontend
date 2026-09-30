@@ -226,12 +226,25 @@ const Cart = () => {
       toast.warning('Your cart is empty');
       return;
     }
+
+    if (!user) {
+      toast.info('Please sign in to continue your order.');
+      navigate('/login?returnTo=/cart&mode=login');
+      return;
+    }
+
     setCheckoutStep(2);
     window.scrollTo(0, 0);
   };
 
   // Proceed to payment
   const proceedToPayment = () => {
+    if (!user) {
+      toast.info('Please sign in before finishing your order.');
+      navigate('/login?returnTo=/cart&mode=login');
+      return;
+    }
+
     const errors = validateCheckoutForm();
     
     if (Object.keys(errors).length > 0) {
@@ -530,6 +543,15 @@ const Cart = () => {
               // Step 1: Cart Review
               <div className="cart-grid">
                 <div className="cart-items">
+                  {!user && (
+                    <div className="order-step-banner">
+                      <strong>Step 1 of 3:</strong> Please sign in to confirm your order and receive updates.
+                      <div className="step-banner-actions">
+                        <button type="button" onClick={() => navigate('/login?returnTo=/cart&mode=login')}>Sign in</button>
+                        <button type="button" className="secondary" onClick={() => navigate('/login?returnTo=/cart&mode=signup')}>Create account</button>
+                      </div>
+                    </div>
+                  )}
                   <h2>Cart Items ({getItemCount()})</h2>
                   {cartItems.map(item => (
                     <div key={item.id} className="cart-item">
@@ -649,6 +671,9 @@ const Cart = () => {
               // Step 2: Checkout Information
               <div className="checkout-grid">
                 <div className="checkout-form">
+                  <div className="order-step-banner compact">
+                    <strong>Step 2 of 3:</strong> Confirm your delivery details before payment.
+                  </div>
                   <h2>Contact Information</h2>
                   
                   <div className="delivery-method">
@@ -839,6 +864,9 @@ const Cart = () => {
               // Step 3: Payment
               <div className="payment-grid">
                 <div className="payment-methods">
+                  <div className="order-step-banner compact">
+                    <strong>Step 3 of 3:</strong> Choose your payment method and confirm your order.
+                  </div>
                   <h2>Payment Method</h2>
                   
                   <div className="payment-options">

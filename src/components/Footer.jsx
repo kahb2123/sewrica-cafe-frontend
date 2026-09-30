@@ -26,7 +26,7 @@ const Footer = () => {
   const contactInfo = [
     { icon: <FaMapMarkerAlt />, text: 'Megenagna, Metebaber Building, 2nd Floor', link: 'https://maps.google.com/?q=Megenagna+Addis+Ababa' },
     { icon: <FaPhone />, text: '+251 911060930', link: 'tel:+251911060930' },
-    { icon: <FaEnvelope />, text: 'info@megenagnarestaurant.com', link: 'mailto:info@megenagnarestaurant.com' },
+    { icon: <FaEnvelope />, text: 'info@sewricacafe.com', link: 'mailto:info@sewricacafe.com' },
   ];
 
   const socialLinks = [
@@ -48,12 +48,12 @@ const Footer = () => {
                 <FaUtensils className="footer-logo-icon" />
               </div>
               <div className="footer-logo-text">
-                <span className="footer-restaurant-name">Megenagna</span>
-                <span className="footer-restaurant-cuisine">Ethiopian Cuisine</span>
+                                <span className="footer-restaurant-name">Sewrica</span>
+                <span className="footer-restaurant-cuisine">Cafe & Restaurant</span>
               </div>
             </div>
-            <p className="footer-description">
-              Experience the authentic taste of Ethiopia in the heart of Addis Ababa. 
+                        <p className="footer-description">
+              Experience the authentic taste of Ethiopia at Sewrica Cafe. 
               Our restaurant brings you traditional flavors passed down through generations, 
               prepared with love and served with a smile.
             </p>
@@ -130,8 +130,8 @@ const Footer = () => {
       {/* Map Section */}
       {/* Map Section - Megenagna Metebaber Building Exact Location */}
 <div className="footer-map">
-  <iframe
-    title="Megenagna Metebaber Building Location"
+    <iframe
+    title="Sewrica Cafe & Restaurant Location"
     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.7634!2d38.80108!3d9.02024!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b9a7b3c5b3c5b%3A0x3c5b3c5b3c5b3c5b!2sMetebaber%20Building!5e0!3m2!1sen!2set!4v1700000000000!5m2!1sen!2set"
     allowFullScreen=""
     loading="lazy"
@@ -142,8 +142,8 @@ const Footer = () => {
       {/* Bottom Bar */}
       <div className="footer-bottom">
         <div className="footer-bottom-container">
-          <div className="copyright">
-            © {currentYear} Megenagna Ethiopian Cuisine. All rights reserved.
+                    <div className="copyright">
+            © {currentYear} Sewrica Cafe & Restaurant. All rights reserved.
           </div>
           <div className="made-with">
             Made with <FaHeart className="heart-icon" /> in Addis Ababa

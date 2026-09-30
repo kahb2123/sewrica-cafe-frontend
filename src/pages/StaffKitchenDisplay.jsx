@@ -1,124 +1,176 @@
 // src/pages/StaffKitchenDisplay.jsx
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { orderService, staffService } from '../services/api';
-import { useSocket } from '../context/SocketContext';
 import { toast } from 'react-toastify';
+import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
+import { staffService } from '../services/api';
 import './StaffKitchenDisplay.css';
 
-const KITCHEN_REFRESH_INTERVAL_MS = 30000;
+const KITCHEN_REFRESH_INTERVAL_MS = 15000;
+const TICK_INTERVAL_MS = 1000;
+const COOK_ROLES = ['cook', 'chef'];
+const QUEUE_STATUSES = ['pending', 'confirmed', 'preparing', 'cooking'];
+const WARN_AFTER_MINUTES = 10;
+const URGENT_AFTER_MINUTES = 20;
+
+const STATUS_LABELS = {
+  pending: '⏳ Pending',
+  confirmed: '📋 Confirmed',
+  preparing: '🔥 Preparing',
+  cooking: '🔥 Cooking'
+};
+
+const statusLabel = (status) => STATUS_LABELS[status] || status;
+
+const formatClock = (value) => {
+  if (!value) return '--:--';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '--:--';
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+const formatElapsed = (startMs, nowMs) => {
+  const totalSeconds = Math.max(0, Math.floor((nowMs - startMs) / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (value) => String(value).padStart(2, '0');
+  return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${pad(minutes)}:${pad(seconds)}`;
+};
+
+const urgencyLevel = (startMs, nowMs) => {
+  const minutes = (nowMs - startMs) / 60000;
+  if (minutes >= URGENT_AFTER_MINUTES) return 'urgent';
+  if (minutes >= WARN_AFTER_MINUTES) return 'warn';
+  return 'normal';
+};
 
 const StaffKitchenDisplay = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState(null);
   const { connected, socket } = useSocket();
 
-  useEffect(() => {
-    if (!isAuthenticated || !user || user.role !== 'cook') {
-      navigate('/staff/login');
-    } else {
-      loadOrders();
-    }
-  }, [isAuthenticated, user, navigate]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [completingId, setCompletingId] = useState(null);
+  const [now, setNow] = useState(() => Date.now());
 
-  const loadOrders = async (showLoading = true) => {
+  const userRole = user?.role ? String(user.role).toLowerCase() : null;
+  const isCook = Boolean(user) && COOK_ROLES.includes(userRole);
+
+  const loadOrders = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
       const response = await staffService.getMyCookingOrders();
-      const kitchenOrders = response.filter(order =>
-        ['pending', 'confirmed', 'preparing', 'cooking', 'ready'].includes(order.status)
-      ) || [];
-      setOrders(kitchenOrders);
-      
+      const list = Array.isArray(response) ? response : response?.orders || [];
+      setOrders(list.filter((order) => QUEUE_STATUSES.includes(order.status)));
     } catch (error) {
-      console.error('Error loading orders:', error);
-      toast.error('Failed to load orders');
+      console.error('Kitchen: failed to load orders', error);
+      toast.error('Failed to load kitchen orders');
     } finally {
       if (showLoading) setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (!isAuthenticated || !user || user.role !== 'cook') return undefined;
-
-    const refreshInterval = setInterval(() => loadOrders(false), KITCHEN_REFRESH_INTERVAL_MS);
-    return () => clearInterval(refreshInterval);
-  }, [isAuthenticated, user]);
-
-  useEffect(() => {
-    if (connected && socket) {
-      socket.on('orderUpdated', (data) => {
-        setOrders(prev => prev.map(o => o._id === data._id ? data : o));
-      });
-
-      socket.on('newOrder', (data) => {
-        if (['pending', 'preparing', 'ready'].includes(data.status)) {
-          setOrders(prev => [data, ...prev]);
-          toast.info(`🆕 New order #${data.orderNumber} in kitchen!`);
-        }
-      });
-
-      socket.on('orderAssigned', (data) => {
-        if (data.assignedChef?._id === user._id) {
-          toast.info(`📝 Order #${data.orderNumber} assigned to you!`);
-          loadOrders();
-        }
-      });
+    if (authLoading) return;
+    if (!isAuthenticated || !isCook) {
+      navigate('/staff/login', { replace: true });
+      return;
     }
+    loadOrders();
+  }, [authLoading, isAuthenticated, isCook, navigate, loadOrders]);
 
-    return () => {
-      if (socket) {
-        socket.off('orderUpdated');
-        socket.off('newOrder');
-        socket.off('orderAssigned');
+  useEffect(() => {
+    if (!isCook) return undefined;
+    const interval = setInterval(() => loadOrders(false), KITCHEN_REFRESH_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [isCook, loadOrders]);
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), TICK_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (!connected || !socket || !isCook) return undefined;
+
+    const handleOrderAssigned = (data) => {
+      const assignedToMe = data?.assignedChef?._id === user?._id || data?.chefId === user?._id;
+      if (assignedToMe) {
+        toast.info(`📝 Order #${data.orderNumber} assigned to you`);
+        loadOrders(false);
       }
     };
-  }, [connected, socket, user]);
 
-  const markItemReady = async (orderId) => {
+    const handleOrderCancelled = (data) => {
+      setOrders((prev) => prev.filter((order) => order._id !== data?.orderId));
+    };
+
+    socket.on('order-assigned', handleOrderAssigned);
+    socket.on('order-cancelled', handleOrderCancelled);
+
+    return () => {
+      socket.off('order-assigned', handleOrderAssigned);
+      socket.off('order-cancelled', handleOrderCancelled);
+    };
+  }, [connected, socket, isCook, user, loadOrders]);
+
+  const completeOrder = async (order) => {
+    if (completingId) return;
+    setCompletingId(order._id);
+
     try {
-      const response = await orderService.updateOrderStatus(orderId, 'ready');
-      setOrders(prev => prev.map(o => o._id === orderId ? (response.order || response.data) : o));
-      toast.success('Item marked as ready!');
+      if (order.status === 'confirmed') {
+        await staffService.chefAcceptOrder(order._id);
+      }
+      if (order.status === 'confirmed' || order.status === 'preparing') {
+        await staffService.startCooking(order._id);
+      }
+      await staffService.completeCooking(order._id);
+
+      setOrders((prev) => prev.filter((item) => item._id !== order._id));
+      toast.success(`✅ Order #${order.orderNumber} completed — ready for delivery`);
     } catch (error) {
-      console.error('Error updating item status:', error);
-      toast.error('Failed to update item status');
+      console.error('Kitchen: failed to complete order', error);
+      toast.error(error?.message || 'Failed to complete order');
+      loadOrders(false);
+    } finally {
+      setCompletingId(null);
     }
   };
 
-  const completeOrder = async (orderId) => {
-    try {
-      const response = await orderService.updateOrderStatus(orderId, 'ready');
-      setOrders(prev => prev.map(o => o._id === orderId ? (response.order || response.data) : o));
-      toast.success('Order marked as ready for pickup!');
-      setSelectedOrder(null);
-    } catch (error) {
-      console.error('Error completing order:', error);
-      toast.error('Failed to complete order');
-    }
-  };
+  const queue = useMemo(() => {
+    const sorted = [...orders].sort((a, b) => {
+      const aTime = new Date(a.createdAt).getTime();
+      const bTime = new Date(b.createdAt).getTime();
+      if (aTime !== bTime) return aTime - bTime;
+      return String(a.orderNumber).localeCompare(String(b.orderNumber));
+    });
+    return sorted.map((order, index) => ({ order, position: index + 1 }));
+  }, [orders]);
 
-  const assignOrderToMe = async (orderId) => {
-    try {
-      const response = await staffService.assignChef(orderId, user._id);
-      setOrders(prev => prev.map(o => o._id === orderId ? (response.order || response.data) : o));
-      loadOrders();
-      toast.success('Order assigned to you!');
-    } catch (error) {
-      console.error('Error assigning order:', error);
-      toast.error('Failed to assign order');
-    }
-  };
-
-  const myAssignedOrders = orders.filter(order =>
-    order.assignedChef?._id === user._id || order.assignedChef?.email === user.email
+  const urgentCount = useMemo(
+    () => queue.filter(({ order }) => urgencyLevel(new Date(order.createdAt).getTime(), now) === 'urgent').length,
+    [queue, now]
   );
 
-  const unassignedOrders = orders.filter(order => !order.assignedChef);
+  if (authLoading) {
+    return (
+      <div className="staff-kitchen-display">
+        <div className="skd-loading">Loading kitchen orders...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !isCook) {
+    return (
+      <div className="staff-kitchen-display">
+        <div className="skd-loading">Redirecting to staff login...</div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -130,243 +182,108 @@ const StaffKitchenDisplay = () => {
 
   return (
     <div className="staff-kitchen-display">
-      {/* Header */}
       <div className="skd-header">
         <div className="skd-title-section">
-          <h1>👨‍🍳 Kitchen Display System</h1>
-          <p>Welcome, {user?.name}! Here are your cooking tasks</p>
+          <h1>👨‍🍳 Kitchen Display</h1>
+          <p>Cooking queue for {user.name} — oldest order first</p>
         </div>
-        <button className="skd-back-btn" onClick={() => navigate('/staff')}>
-          ← Back to Dashboard
-        </button>
+        <div className="skd-header-actions">
+          <span className={`skd-connection ${connected ? 'online' : 'offline'}`}>
+            {connected ? '● Live' : '○ Reconnecting'}
+          </span>
+          <button className="skd-back-btn" onClick={() => navigate('/staff')}>
+            ← Back to Dashboard
+          </button>
+        </div>
       </div>
 
-      {/* Quick Stats */}
       <div className="skd-quick-stats">
         <div className="quick-stat">
-          <span className="stat-icon">📦</span>
-          <span className="stat-label">My Orders</span>
-          <span className="stat-value">{myAssignedOrders.length}</span>
-        </div>
-        <div className="quick-stat">
-          <span className="stat-icon">🆓</span>
-          <span className="stat-label">Unassigned</span>
-          <span className="stat-value">{unassignedOrders.length}</span>
-        </div>
-        <div className="quick-stat">
           <span className="stat-icon">🔥</span>
-          <span className="stat-label">All In Kitchen</span>
-          <span className="stat-value">{orders.length}</span>
+          <span className="stat-label">In Queue</span>
+          <span className="stat-value">{queue.length}</span>
+        </div>
+        <div className="quick-stat">
+          <span className="stat-icon">⏰</span>
+          <span className="stat-label">Over {URGENT_AFTER_MINUTES}m</span>
+          <span className="stat-value">{urgentCount}</span>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="skd-main">
-        {/* My Orders Section */}
-        <div className="orders-section">
-          <div className="section-header">
-            <h2>🎯 My Assigned Orders ({myAssignedOrders.length})</h2>
-            <button className="refresh-btn" onClick={loadOrders}>🔄</button>
-          </div>
+      <div className="orders-section">
+        <div className="section-header">
+          <h2>Cooking Queue ({queue.length})</h2>
+          <button className="refresh-btn" onClick={() => loadOrders(false)} aria-label="Refresh queue">
+            🔄
+          </button>
+        </div>
 
-          {myAssignedOrders.length === 0 ? (
-            <div className="empty-section">
-              <p>No orders assigned to you yet. Good job! 🎉</p>
+        {queue.length === 0 ? (
+          <div className="empty-section">
+            <p>Queue is clear. No orders waiting. 🎉</p>
+          </div>
+        ) : (
+          <div className="skd-queue">
+            <div className="skd-queue-head">
+              <span className="skd-col-position">#</span>
+              <span className="skd-col-order">Order</span>
+              <span className="skd-col-items">Items</span>
+              <span className="skd-col-ordered">Ordered</span>
+              <span className="skd-col-elapsed">Elapsed</span>
+              <span className="skd-col-action">Action</span>
             </div>
-          ) : (
-            <div className="orders-grid">
-              {myAssignedOrders.map(order => (
-                <div 
-                  key={order._id} 
-                  className={`order-card-mini ${order.status}`}
-                  onClick={() => setSelectedOrder(order)}
-                >
-                  <div className="order-header">
-                    <h3>Order #{order.orderNumber}</h3>
-                    <span className={`status-badge ${order.status}`}>
-                      {order.status === 'preparing' && '🔥 Preparing'}
-                      {order.status === 'ready' && '✅ Ready'}
-                      {order.status === 'pending' && '⏳ Pending'}
+
+            {queue.map(({ order, position }) => {
+              const startMs = new Date(order.createdAt).getTime();
+              const urgency = Number.isNaN(startMs) ? 'normal' : urgencyLevel(startMs, now);
+              const isCompleting = completingId === order._id;
+
+              return (
+                <div key={order._id} className={`skd-row status-${order.status} urgency-${urgency}`}>
+                  <div className="skd-col-position">
+                    <span className="skd-position-badge">{position}</span>
+                  </div>
+
+                  <div className="skd-col-order">
+                    <strong className="skd-order-number">#{order.orderNumber}</strong>
+                    <span className={`status-badge ${order.status}`}>{statusLabel(order.status)}</span>
+                  </div>
+
+                  <ul className="skd-col-items">
+                    {(order.items || []).map((item, index) => (
+                      <li key={item.menuItem?._id || item.menuItem || index} className="skd-item">
+                        <span className="skd-item-qty">{item.quantity}×</span>
+                        <span className="skd-item-name">{item.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="skd-col-ordered">
+                    <span className="skd-ordered-time">{formatClock(order.createdAt)}</span>
+                  </div>
+
+                  <div className="skd-col-elapsed">
+                    <span className="skd-elapsed-time">
+                      {Number.isNaN(startMs) ? '--:--' : formatElapsed(startMs, now)}
                     </span>
                   </div>
 
-                  <div className="order-body">
-                    <div className="item-count">
-                      <span className="label">Items:</span>
-                      <span className="count">{order.items?.length || 0}</span>
-                    </div>
-                    <div className="order-time">
-                      {new Date(order.createdAt).toLocaleTimeString()}
-                    </div>
-
-                    <div className="items-summary">
-                      {order.items?.slice(0, 3).map((item, idx) => (
-                        <div key={idx} className="item-summary">
-                          <span>• {item.name} x{item.quantity}</span>
-                          <span className="item-status">
-                            {item.status === 'ready' ? '✅' : '⏳'}
-                          </span>
-                        </div>
-                      ))}
-                      {order.items?.length > 3 && (
-                        <div className="items-more">
-                          +{order.items.length - 3} more items
-                        </div>
-                      )}
-                    </div>
+                  <div className="skd-col-action">
+                    <button
+                      className="skd-complete-btn"
+                      onClick={() => completeOrder(order)}
+                      disabled={Boolean(completingId)}
+                      aria-label={`Mark order ${order.orderNumber} complete`}
+                    >
+                      {isCompleting ? '⏳ Saving…' : '✅ Complete'}
+                    </button>
                   </div>
-
-                  <button 
-                    className="action-btn details-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedOrder(order);
-                    }}
-                  >
-                    View Details →
-                  </button>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Unassigned Orders Section */}
-        {unassignedOrders.length > 0 && (
-          <div className="orders-section">
-            <div className="section-header">
-              <h2>📋 Available Orders ({unassignedOrders.length})</h2>
-            </div>
-
-            <div className="orders-grid">
-              {unassignedOrders.map(order => (
-                <div 
-                  key={order._id} 
-                  className="order-card-mini available"
-                  onClick={() => setSelectedOrder(order)}
-                >
-                  <div className="order-header">
-                    <h3>Order #{order.orderNumber}</h3>
-                    <span className="available-badge">Available</span>
-                  </div>
-
-                  <div className="order-body">
-                    <div className="item-count">
-                      <span className="label">Items:</span>
-                      <span className="count">{order.items?.length || 0}</span>
-                    </div>
-                    <div className="order-time">
-                      {new Date(order.createdAt).toLocaleTimeString()}
-                    </div>
-                  </div>
-
-                  <button 
-                    className="action-btn take-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      assignOrderToMe(order._id);
-                    }}
-                  >
-                    Take This Order 🚀
-                  </button>
-                </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         )}
       </div>
-
-      {/* Order Detail Modal */}
-      {selectedOrder && (
-        <div className="skd-modal">
-          <div className="modal-overlay" onClick={() => setSelectedOrder(null)} />
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2>Order #{selectedOrder.orderNumber}</h2>
-              <button className="close-btn" onClick={() => setSelectedOrder(null)}>✕</button>
-            </div>
-
-            <div className="modal-body">
-              {/* Order Info */}
-              <section className="info-section">
-                <h3>📋 Order Details</h3>
-                <div className="info-grid">
-                  <div className="info-item">
-                    <span className="label">Status</span>
-                    <span className={`status-badge ${selectedOrder.status}`}>
-                      {selectedOrder.status === 'preparing' && '🔥 Preparing'}
-                      {selectedOrder.status === 'ready' && '✅ Ready'}
-                      {selectedOrder.status === 'pending' && '⏳ Pending'}
-                    </span>
-                  </div>
-                  <div className="info-item">
-                    <span className="label">Type</span>
-                    <span>{selectedOrder.orderType === 'dine-in' ? '🍽️ Dine-in' : '📦 Delivery'}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="label">Time</span>
-                    <span>{new Date(selectedOrder.createdAt).toLocaleTimeString()}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="label">Customer</span>
-                    <span>{selectedOrder.customer?.name || 'Unknown'}</span>
-                  </div>
-                </div>
-              </section>
-
-              {/* Items to Cook */}
-              <section className="items-section">
-                <h3>🍽️ Items to Prepare</h3>
-                <div className="items-list-detailed">
-                  {selectedOrder.items?.map((item, idx) => (
-                    <div key={idx} className={`item-card ${item.status || 'pending'}`}>
-                      <div className="item-main">
-                        <div className="item-name-qty">
-                          <strong>{item.name}</strong>
-                          <span className="qty">x{item.quantity}</span>
-                        </div>
-                        {item.specialInstructions && (
-                          <div className="item-instructions">
-                            📝 {item.specialInstructions}
-                          </div>
-                        )}
-                      </div>
-
-                      {item.status !== 'ready' && (
-                        <button
-                          className="mark-ready-btn"
-                          onClick={() => markItemReady(selectedOrder._id)}
-                        >
-                          Mark Ready
-                        </button>
-                      )}
-                      {item.status === 'ready' && (
-                        <span className="ready-badge">✅ Ready</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </div>
-
-            <div className="modal-footer">
-              <button 
-                className="btn-complete"
-                onClick={() => completeOrder(selectedOrder._id)}
-                disabled={selectedOrder.status === 'ready'}
-              >
-                ✅ Complete Order
-              </button>
-              <button 
-                className="btn-close"
-                onClick={() => setSelectedOrder(null)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

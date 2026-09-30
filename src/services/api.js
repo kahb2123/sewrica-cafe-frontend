@@ -1087,4 +1087,12 @@ export const getImageUrl = (image) => {
   return `${UPLOADS_URL}/${image}`;
 };
 
+// ========== ORDER NUMBER HELPER ==========
+// New orders are stored as a plain 5-digit number. Older records still carry the
+// legacy "ORD" prefix, so strip it for display instead of inventing digits.
+export const getOrderNumberLabel = (orderNumber) => {
+  if (orderNumber === null || orderNumber === undefined || orderNumber === '') return '--';
+  return String(orderNumber).replace(/^ORD/i, '');
+};
+
 export default api;

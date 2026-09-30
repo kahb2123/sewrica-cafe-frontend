@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
-import { staffService } from '../services/api';
+import { staffService, getOrderNumberLabel } from '../services/api';
 import './StaffKitchenDisplay.css';
 
 const KITCHEN_REFRESH_INTERVAL_MS = 15000;
@@ -245,7 +245,7 @@ const StaffKitchenDisplay = () => {
                   </div>
 
                   <div className="skd-col-order">
-                    <strong className="skd-order-number">#{order.orderNumber}</strong>
+                    <strong className="skd-order-number">#{getOrderNumberLabel(order.orderNumber)}</strong>
                     <span className={`status-badge ${order.status}`}>{statusLabel(order.status)}</span>
                   </div>
 

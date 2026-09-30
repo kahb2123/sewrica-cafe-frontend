@@ -114,7 +114,7 @@ const Navbar = () => {
   // Get staff dashboard link based on role
   const getStaffDashboardLink = () => {
     switch(user?.role) {
-      case 'cook': return '/staff/kitchen';
+      case 'cook': return '/staff/dashboard';
       case 'delivery': return '/staff/delivery';
       case 'cashier': return '/staff/cashier';
       case 'admin': return '/admin';

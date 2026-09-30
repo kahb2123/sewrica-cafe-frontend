@@ -37,7 +37,7 @@ const StaffLogin = () => {
           switch(user.role) {
             case 'cook':
             case 'chef':
-              redirectPath = '/staff/kitchen';
+              redirectPath = '/staff/dashboard';
               break;
             case 'delivery':
               redirectPath = '/staff/delivery';

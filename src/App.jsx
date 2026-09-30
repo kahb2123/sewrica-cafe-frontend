@@ -26,7 +26,6 @@ import Contact from './pages/Contact';
 import Admin from './pages/Admin'; // ← Updated: Import from Admin.jsx
 import StaffDashboard from './pages/StaffDashboard';
 import StaffLogin from './pages/StaffLogin';
-import StaffKitchenDisplay from './pages/StaffKitchenDisplay';
 
 // Import CSS
 import './App.css';
@@ -66,16 +65,10 @@ function App() {
                   </PrivateRoute>
                 } />
                 
-                <Route path="/staff/kitchen" element={
-                  <StaffPrivateRoute>
-                    <StaffKitchenDisplay />
-                  </StaffPrivateRoute>
-                } />
-                
                 <Route path="/staff/*" element={
-                  <StaffPrivateRoute>
-                    <StaffDashboard />
-                  </StaffPrivateRoute>
+                    <StaffPrivateRoute>
+                        <StaffDashboard />
+                    </StaffPrivateRoute>
                 } />
                 
                 {/* Catch-all route for 404 */}

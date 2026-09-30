@@ -250,6 +250,26 @@
   background: var(--sewrica-cream);
 }
 
+.inventory-line-total {
+  display: inline-block;
+  font-weight: 700;
+  color: var(--sewrica-dark);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.inventory-total-row td {
+  background: var(--sewrica-light);
+  border-top: 2px solid var(--border-light);
+  border-bottom: 0;
+  font-weight: 700;
+  color: var(--sewrica-dark);
+}
+
+.inventory-stat-value strong {
+  color: #176c49;
+}
+
 .inventory-save {
   padding: 8px 12px;
 }

@@ -13,6 +13,7 @@ const Sidebar = ({ activeTab, onMenuClick, mobileMenuOpen, user, onClose }) => {
     { id: 'staff', icon: '👨‍🍳', label: 'Staff' },
     { id: 'menu', icon: '🍽️', label: 'Menu Items' },
     { id: 'inventory', icon: '📦', label: 'Inventory' },
+    { id: 'stock', icon: '🔄', label: 'Stock In / Out' },
     { id: 'reports', icon: '📈', label: 'Reports' },
     { id: 'users', icon: '👥', label: 'Users' },
     { id: 'staff-reports', icon: '📋', label: 'Staff Reports' },
@@ -21,7 +22,7 @@ const Sidebar = ({ activeTab, onMenuClick, mobileMenuOpen, user, onClose }) => {
   ];
 
   const visibleMenuItems = user?.role === 'supply_chain'
-    ? menuItems.filter(item => ['inventory'].includes(item.id))
+    ? menuItems.filter(item => ['inventory', 'stock'].includes(item.id))
     : menuItems;
 
   return (

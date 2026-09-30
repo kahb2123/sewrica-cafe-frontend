@@ -44,7 +44,7 @@ const Login = () => {
       if (user.role === 'admin') {
         navigate('/admin', { replace: true });
       } else if (user.role === 'cook') {
-        navigate('/staff/kitchen', { replace: true });
+        navigate('/staff/dashboard', { replace: true });
       } else if (user.role === 'delivery') {
         navigate('/staff/delivery', { replace: true });
       } else if (user.role === 'cashier') {
@@ -148,7 +148,7 @@ const Login = () => {
             if (window.location.pathname.includes('login')) {
               const role = result.user.role;
               if (role === 'admin') window.location.href = '/admin';
-              else if (role === 'cook') window.location.href = '/staff/kitchen';
+              else if (role === 'cook') window.location.href = '/staff/dashboard';
               else if (role === 'delivery') window.location.href = '/staff/delivery';
               else if (role === 'cashier') window.location.href = '/staff/cashier';
               else if (returnTo && returnTo !== '/') window.location.href = returnTo;

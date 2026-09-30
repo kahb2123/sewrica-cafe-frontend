@@ -358,6 +358,24 @@ export const ingredientService = {
     } catch (error) {
       throw error.response?.data || { message: 'Failed to update ingredient' };
     }
+  },
+
+  getWithdrawals: async (limit = 50) => {
+    try {
+      const response = await api.get('/ingredients/withdrawals', { params: { limit } });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to load withdrawals' };
+    }
+  },
+
+  withdraw: async (withdrawalData) => {
+    try {
+      const response = await api.post('/ingredients/withdrawals', withdrawalData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to record withdrawal' };
+    }
   }
 };
 

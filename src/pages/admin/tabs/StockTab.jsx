@@ -5,6 +5,9 @@ import './StockTab.css';
 
 const currency = new Intl.NumberFormat('en-ET', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+const UNITS = ['piece', 'kg', 'g', 'liter', 'ml', 'pack', 'box'];
+const NEW_INGREDIENT = '__new__';
+
 const REASONS = [
   { value: 'consumption', label: 'Used in cooking' },
   { value: 'waste', label: 'Wasted / spoiled' },
@@ -17,8 +20,10 @@ const REASON_LABELS = Object.fromEntries(REASONS.map((reason) => [reason.value, 
 
 const emptyPurchase = { ingredientId: '', quantity: '', unitCost: '', supplier: '' };
 const emptyWithdrawal = { ingredientId: '', quantity: '', reason: 'consumption', note: '' };
+const emptyNewIngredient = { name: '', unit: 'piece', quantity: '', unitPrice: '', reorderLevel: '0', supplier: '' };
 
 const lineValue = (item) => (Number(item.unitPrice) || 0) * (Number(item.quantity) || 0);
+const isValidAmount = (value) => Number.isFinite(Number(value)) && Number(value) >= 0;
 
 const formatDateTime = (value) => {
   if (!value) return '--';
@@ -32,8 +37,12 @@ const StockTab = () => {
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [savingId, setSavingId] = useState(null);
   const [purchase, setPurchase] = useState(emptyPurchase);
   const [withdrawal, setWithdrawal] = useState(emptyWithdrawal);
+  const [newIngredient, setNewIngredient] = useState(emptyNewIngredient);
+
+  const creatingNew = purchase.ingredientId === NEW_INGREDIENT;
 
   const loadData = useCallback(async (showLoading = true) => {
     try {
@@ -58,7 +67,7 @@ const StockTab = () => {
     [ingredients]
   );
 
-  const purchaseIngredient = purchase.ingredientId ? ingredientById[purchase.ingredientId] : null;
+  const purchaseIngredient = creatingNew ? null : ingredientById[purchase.ingredientId] || null;
   const withdrawalIngredient = withdrawal.ingredientId ? ingredientById[withdrawal.ingredientId] : null;
 
   const stats = useMemo(() => {
@@ -66,7 +75,7 @@ const StockTab = () => {
     startOfDay.setHours(0, 0, 0, 0);
     return {
       total: ingredients.length,
-      value: ingredients.reduce((sum, item) => sum + lineValue(item), 0),
+      totalPrice: ingredients.reduce((sum, item) => sum + lineValue(item), 0),
       low: ingredients.filter((item) => Number(item.quantity) <= Number(item.reorderLevel)).length,
       todayOut: withdrawals.filter((item) => new Date(item.createdAt) >= startOfDay).length
     };
@@ -74,8 +83,40 @@ const StockTab = () => {
 
   const recordStockIn = async (event) => {
     event.preventDefault();
-    const quantity = Number(purchase.quantity);
 
+    if (creatingNew) {
+      if (!newIngredient.name.trim()) {
+        toast.error('Enter a name for the new ingredient');
+        return;
+      }
+      if (!isValidAmount(newIngredient.quantity) || !isValidAmount(newIngredient.unitPrice) || !isValidAmount(newIngredient.reorderLevel)) {
+        toast.error('Enter valid quantity, price and reorder level values');
+        return;
+      }
+      try {
+        setSubmitting(true);
+        const response = await ingredientService.create({
+          name: newIngredient.name.trim(),
+          unit: newIngredient.unit,
+          quantity: Number(newIngredient.quantity || 0),
+          unitPrice: Number(newIngredient.unitPrice || 0),
+          reorderLevel: Number(newIngredient.reorderLevel || 0),
+          supplier: newIngredient.supplier
+        });
+        setIngredients((current) => [...current, response.data].sort((a, b) => a.name.localeCompare(b.name)));
+        setNewIngredient(emptyNewIngredient);
+        setPurchase(emptyPurchase);
+        toast.success(`${response.data.name} added to stock`);
+        loadData(false);
+      } catch (error) {
+        toast.error(error.message || 'Failed to add the ingredient');
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    const quantity = Number(purchase.quantity);
     if (!purchase.ingredientId) {
       toast.error('Select an ingredient');
       return;
@@ -84,7 +125,6 @@ const StockTab = () => {
       toast.error('Enter an amount greater than 0');
       return;
     }
-
     const unitCost = Number(purchase.unitCost);
     if (!Number.isFinite(unitCost) || unitCost < 0) {
       toast.error('Unit cost must be 0 or more');
@@ -144,6 +184,29 @@ const StockTab = () => {
     }
   };
 
+  const patchIngredientLocal = (id, field, value) => {
+    setIngredients((current) => current.map((item) => (item._id === id ? { ...item, [field]: value } : item)));
+  };
+
+  const saveIngredient = async (item) => {
+    const unitPrice = Number(item.unitPrice);
+    const reorderLevel = Number(item.reorderLevel);
+    if (!isValidAmount(unitPrice) || !isValidAmount(reorderLevel)) {
+      toast.error('Price and reorder level must be 0 or more');
+      return;
+    }
+    try {
+      setSavingId(item._id);
+      const response = await ingredientService.update(item._id, { unitPrice, reorderLevel, supplier: item.supplier });
+      setIngredients((current) => current.map((entry) => (entry._id === item._id ? response.data : entry)));
+      toast.success(`${item.name} updated`);
+    } catch (error) {
+      toast.error(error.message || 'Failed to update ingredient');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   if (loading) {
     return <div className="stock-tab stock-loading">Loading stock...</div>;
   }
@@ -154,14 +217,14 @@ const StockTab = () => {
         <div>
           <p className="stock-eyebrow">Supply chain</p>
           <h1>Stock in and stock out</h1>
-          <p>Record deliveries going into stock and ingredients taken out for cooking or waste.</p>
+          <p>Add ingredients, record deliveries going into stock, and take out what is used for cooking or waste.</p>
         </div>
         <button className="stock-refresh" onClick={() => loadData(false)} type="button">Refresh</button>
       </div>
 
       <div className="stock-stats">
         <div><span>Ingredients</span><strong>{stats.total}</strong></div>
-        <div><span>Stock value</span><strong>ETB {currency.format(stats.value)}</strong></div>
+        <div><span>Total price</span><strong>ETB {currency.format(stats.totalPrice)}</strong></div>
         <div className="stock-stat-warning"><span>Reorder soon</span><strong>{stats.low}</strong></div>
         <div><span>Withdrawn today</span><strong>{stats.todayOut}</strong></div>
       </div>
@@ -169,7 +232,7 @@ const StockTab = () => {
       <div className="stock-forms">
         <div className="stock-form-card">
           <h2>Stock in</h2>
-          <p>Adds purchased stock. The unit cost becomes the new unit price.</p>
+          <p>Pick an existing ingredient to add stock, or add a new ingredient with its opening stock.</p>
           <form onSubmit={recordStockIn}>
             <label htmlFor="stock-in-ingredient">Ingredient</label>
             <select
@@ -181,43 +244,106 @@ const StockTab = () => {
               {ingredients.map((item) => (
                 <option key={item._id} value={item._id}>{item.name} ({item.unit})</option>
               ))}
+              <option value={NEW_INGREDIENT}>+ Add new ingredient</option>
             </select>
 
-            {purchaseIngredient && (
-              <div className="stock-available">
-                <span>Currently in stock</span>
-                <strong>{purchaseIngredient.quantity} {purchaseIngredient.unit}</strong>
-              </div>
+            {creatingNew ? (
+              <>
+                <label htmlFor="new-ingredient-name">New ingredient name</label>
+                <input
+                  id="new-ingredient-name"
+                  value={newIngredient.name}
+                  onChange={(e) => setNewIngredient({ ...newIngredient, name: e.target.value })}
+                  placeholder="e.g. Berbere spice"
+                />
+
+                <label htmlFor="new-ingredient-unit">Unit</label>
+                <select
+                  id="new-ingredient-unit"
+                  value={newIngredient.unit}
+                  onChange={(e) => setNewIngredient({ ...newIngredient, unit: e.target.value })}
+                >
+                  {UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}
+                </select>
+
+                <label htmlFor="new-ingredient-quantity">Opening quantity</label>
+                <input
+                  id="new-ingredient-quantity"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={newIngredient.quantity}
+                  onChange={(e) => setNewIngredient({ ...newIngredient, quantity: e.target.value })}
+                />
+
+                <label htmlFor="new-ingredient-price">Unit price (ETB)</label>
+                <input
+                  id="new-ingredient-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={newIngredient.unitPrice}
+                  onChange={(e) => setNewIngredient({ ...newIngredient, unitPrice: e.target.value })}
+                />
+
+                <label htmlFor="new-ingredient-reorder">Reorder level</label>
+                <input
+                  id="new-ingredient-reorder"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={newIngredient.reorderLevel}
+                  onChange={(e) => setNewIngredient({ ...newIngredient, reorderLevel: e.target.value })}
+                />
+
+                <label htmlFor="new-ingredient-supplier">Supplier</label>
+                <input
+                  id="new-ingredient-supplier"
+                  value={newIngredient.supplier}
+                  onChange={(e) => setNewIngredient({ ...newIngredient, supplier: e.target.value })}
+                />
+
+                <button type="submit" disabled={submitting}>Add ingredient to stock</button>
+              </>
+            ) : (
+              <>
+                {purchaseIngredient && (
+                  <div className="stock-available">
+                    <span>Currently in stock</span>
+                    <strong>{purchaseIngredient.quantity} {purchaseIngredient.unit}</strong>
+                  </div>
+                )}
+
+                <label htmlFor="stock-in-quantity">Amount received</label>
+                <input
+                  id="stock-in-quantity"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={purchase.quantity}
+                  onChange={(e) => setPurchase({ ...purchase, quantity: e.target.value })}
+                />
+
+                <label htmlFor="stock-in-cost">Unit cost (ETB)</label>
+                <input
+                  id="stock-in-cost"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={purchase.unitCost}
+                  onChange={(e) => setPurchase({ ...purchase, unitCost: e.target.value })}
+                />
+
+                <label htmlFor="stock-in-supplier">Supplier</label>
+                <input
+                  id="stock-in-supplier"
+                  value={purchase.supplier}
+                  onChange={(e) => setPurchase({ ...purchase, supplier: e.target.value })}
+                />
+
+                <button type="submit" disabled={submitting}>Add to stock</button>
+              </>
             )}
-
-            <label htmlFor="stock-in-quantity">Amount received</label>
-            <input
-              id="stock-in-quantity"
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={purchase.quantity}
-              onChange={(e) => setPurchase({ ...purchase, quantity: e.target.value })}
-            />
-
-            <label htmlFor="stock-in-cost">Unit cost (ETB)</label>
-            <input
-              id="stock-in-cost"
-              type="number"
-              min="0"
-              step="0.01"
-              value={purchase.unitCost}
-              onChange={(e) => setPurchase({ ...purchase, unitCost: e.target.value })}
-            />
-
-            <label htmlFor="stock-in-supplier">Supplier</label>
-            <input
-              id="stock-in-supplier"
-              value={purchase.supplier}
-              onChange={(e) => setPurchase({ ...purchase, supplier: e.target.value })}
-            />
-
-            <button type="submit" disabled={submitting}>Add to stock</button>
           </form>
         </div>
 
@@ -282,7 +408,7 @@ const StockTab = () => {
 
       <div className="stock-section-title">
         <h2>Available stock</h2>
-        <p>What is currently in the store room.</p>
+        <p>What is currently in the store room. Unit price and reorder level can be edited here.</p>
       </div>
       <div className="stock-table-wrap">
         <table className="stock-table">
@@ -291,9 +417,10 @@ const StockTab = () => {
               <th>Ingredient</th>
               <th>Available</th>
               <th>Reorder at</th>
-              <th>Unit price</th>
-              <th>Stock value</th>
+              <th>Unit price (ETB)</th>
+              <th>Total price (ETB)</th>
               <th>Status</th>
+              <th><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
@@ -301,18 +428,62 @@ const StockTab = () => {
               const low = Number(item.quantity) <= Number(item.reorderLevel);
               return (
                 <tr key={item._id} className={low ? 'low-stock' : ''}>
-                  <td><strong>{item.name}</strong></td>
+                  <td>
+                    <strong>{item.name}</strong>
+                    <small className="stock-unit">{item.unit}</small>
+                  </td>
                   <td><span className="stock-quantity">{item.quantity} {item.unit}</span></td>
-                  <td>{item.reorderLevel} {item.unit}</td>
-                  <td>ETB {currency.format(Number(item.unitPrice) || 0)}</td>
+                  <td>
+                    <input
+                      className="stock-inline-input"
+                      aria-label={`${item.name} reorder level`}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={item.reorderLevel}
+                      onChange={(e) => patchIngredientLocal(item._id, 'reorderLevel', e.target.value)}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      className="stock-inline-input"
+                      aria-label={`${item.name} unit price`}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={item.unitPrice ?? 0}
+                      onChange={(e) => patchIngredientLocal(item._id, 'unitPrice', e.target.value)}
+                    />
+                  </td>
                   <td><span className="stock-line-total">ETB {currency.format(lineValue(item))}</span></td>
                   <td><span className={`stock-status ${low ? 'low' : 'healthy'}`}>{low ? 'Reorder soon' : 'Healthy'}</span></td>
+                  <td>
+                    <button
+                      className="stock-save"
+                      type="button"
+                      disabled={savingId === item._id}
+                      onClick={() => saveIngredient(item)}
+                    >
+                      {savingId === item._id ? 'Saving...' : 'Save'}
+                    </button>
+                  </td>
                 </tr>
               );
             })}
           </tbody>
+          {ingredients.length > 0 && (
+            <tfoot>
+              <tr className="stock-total-row">
+                <td colSpan="4">Total price of all stock</td>
+                <td><span className="stock-line-total">ETB {currency.format(stats.totalPrice)}</span></td>
+                <td colSpan="2" />
+              </tr>
+            </tfoot>
+          )}
         </table>
-        {ingredients.length === 0 && <div className="stock-empty">No ingredients yet. Add them from the Inventory page.</div>}
+        {ingredients.length === 0 && (
+          <div className="stock-empty">No ingredients yet. Use the Stock in form above to add your first one.</div>
+        )}
       </div>
 
       <div className="stock-section-title">

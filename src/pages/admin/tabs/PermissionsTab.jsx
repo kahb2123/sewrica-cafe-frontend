@@ -1,6 +1,6 @@
 // src/pages/admin/tabs/PermissionsTab.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { adminService, PERMISSIONS, PAGE_ACCESS, hasPermission } from '../../services/api';
+import { adminService, PERMISSIONS, PAGE_ACCESS, hasPermission } from '../../../services/api';
 import { toast } from 'react-toastify';
 import './PermissionsTab.css';
 

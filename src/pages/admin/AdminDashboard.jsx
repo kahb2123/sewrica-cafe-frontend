@@ -5,8 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { adminService } from '../../services/api';
 import { toast } from 'react-toastify';
 import { useSocket } from '../../context/SocketContext';
-import LotteryTab from './tabs/LotteryTab';
-import GiveawayTab from './tabs/GiveawayTab';
 import './AdminDashboard.css';
 
 // Import components
@@ -21,6 +19,9 @@ import ReportsTab from './tabs/ReportsTab';
 import UsersTab from './tabs/UsersTab';
 import StockTab from './tabs/StockTab';
 import KitchenDisplayTab from './tabs/KitchenDisplayTab';
+import LotteryTab from './tabs/LotteryTab';
+import GiveawayTab from './tabs/GiveawayTab';
+import ExpenseTab from './tabs/ExpenseTab';
 
 const AdminDashboard = () => {
   const { user, isAuthenticated } = useAuth();
@@ -103,7 +104,7 @@ const AdminDashboard = () => {
       console.error('❌ API Error:', error);
       
       // Only show warning in development
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log('Using fallback mock data for development');
       }
       
@@ -127,7 +128,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const renderContent = () => {
+const renderContent = () => {
     switch(activeTab) {
       case 'overview':
         return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
@@ -141,6 +142,8 @@ const AdminDashboard = () => {
         return <MenuTab />;
       case 'stock':
         return <StockTab />;
+      case 'expenses':
+        return <ExpenseTab />;
       case 'reports':
         return <ReportsTab />;
       case 'users':
@@ -148,7 +151,7 @@ const AdminDashboard = () => {
       case 'lottery':
         return <LotteryTab />;
       case 'giveaway':
-       return <GiveawayTab />;
+        return <GiveawayTab />;
       default:
         return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
     }

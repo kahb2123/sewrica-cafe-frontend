@@ -379,6 +379,77 @@ export const ingredientService = {
   }
 };
 
+// ========== EXPENSE SERVICES ==========
+export const expenseService = {
+  getAll: async (params = {}) => {
+    try {
+      const query = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          query.append(key, value);
+        }
+      });
+      const queryString = query.toString() ? `?${query.toString()}` : '';
+      const response = await api.get(`/expenses${queryString}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch expenses' };
+    }
+  },
+
+  getStats: async (params = {}) => {
+    try {
+      const query = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          query.append(key, value);
+        }
+      });
+      const queryString = query.toString() ? `?${query.toString()}` : '';
+      const response = await api.get(`/expenses/stats${queryString}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch expense stats' };
+    }
+  },
+
+  create: async (expenseData) => {
+    try {
+      const response = await api.post('/expenses', expenseData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to create expense' };
+    }
+  },
+
+  update: async (id, expenseData) => {
+    try {
+      const response = await api.patch(`/expenses/${id}`, expenseData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update expense' };
+    }
+  },
+
+  approve: async (id) => {
+    try {
+      const response = await api.patch(`/expenses/${id}/approve`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to approve expense' };
+    }
+  },
+
+  delete: async (id) => {
+    try {
+      const response = await api.delete(`/expenses/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to delete expense' };
+    }
+  }
+};
+
 // ========== ADMIN SERVICES ==========
 export const adminService = {
   getStats: async () => {

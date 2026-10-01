@@ -1,7 +1,7 @@
 // src/pages/StaffLogin.jsx (updated redirect logic)
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import { authService, getPageAccessForRole } from '../services/api';
+import { authService } from '../services/api';
 import './StaffLogin.css';
 
 const StaffLogin = () => {
@@ -25,24 +25,20 @@ const StaffLogin = () => {
         console.log('Logged in user:', user);
         console.log('User role:', user?.role);
         
-        // Check if user is staff (not customer)
-        if (user && ['cook', 'chef', 'delivery', 'cashier', 'admin'].includes(user.role)) {
+         // Check if user is staff (not customer)
+         if (user && ['cook', 'chef', 'delivery', 'cashier', 'admin', 'supply_chain'].includes(user.role)) {
           toast.success(`Welcome back, ${user.name}!`);
           
+          const permData = await authService.getPermissions();
+          const pageAccess = permData.pageAccess || {};
           let redirectPath = '/staff/dashboard';
           
-          if (user.role === 'admin' || user.role === 'supply_chain') {
+          if (pageAccess.adminDashboard?.canRead) {
             redirectPath = '/admin';
-          } else {
-            const pageAccess = getPageAccessForRole(user.role);
-            
-            if (pageAccess.staffOrdersDelivery?.canRead) {
-              redirectPath = '/staff/delivery';
-            } else if (pageAccess.staffDashboard?.canRead) {
-              redirectPath = '/staff/dashboard';
-            } else {
-              redirectPath = '/staff/dashboard';
-            }
+          } else if (pageAccess.staffOrdersDelivery?.canRead) {
+            redirectPath = '/staff/delivery';
+          } else if (pageAccess.staffDashboard?.canRead) {
+            redirectPath = '/staff/dashboard';
           }
           
           console.log('Redirecting to:', redirectPath);

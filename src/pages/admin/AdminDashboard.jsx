@@ -25,7 +25,7 @@ import PermissionsTab from './tabs/PermissionsTab';
 import StaffPermissionsTab from './tabs/StaffPermissionsTab';
 
 const AdminDashboard = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, canReadPage } = useAuth();
   const navigate = useNavigate();
   const { onNewOrder, connected } = useSocket();
   const [activeTab, setActiveTab] = useState('overview');
@@ -76,8 +76,9 @@ const AdminDashboard = () => {
       return;
     }
     
-    if (!['admin', 'supply_chain'].includes(user.role)) {
-      console.log('❌ User is not admin. Role:', user.role);
+    // Check if user has admin dashboard access
+    if (!canReadPage('adminDashboard')) {
+      console.log('❌ User cannot access admin dashboard. Role:', user.role);
       toast.error('Admin access required');
       navigate('/');
       return;

@@ -1,30 +1,33 @@
 // src/pages/admin/components/Sidebar.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
 import './Sidebar.css';
 
 const Sidebar = ({ activeTab, onMenuClick, mobileMenuOpen, user, onClose }) => {
   const navigate = useNavigate();
+  const { canReadPage } = useAuth();
 
   const menuItems = [
-    { id: 'overview', icon: '📊', label: 'Overview' },
-    { id: 'orders', icon: '📦', label: 'Orders' },
-    { id: 'kitchen', icon: '🍳', label: 'Kitchen Display' },
-    { id: 'staff', icon: '👨‍🍳', label: 'Staff' },
-    { id: 'menu', icon: '🍽️', label: 'Menu Items' },
-    { id: 'stock', icon: '🔄', label: 'Stock In / Out' },
-    { id: 'expenses', icon: '💸', label: 'Expenses' },
-    { id: 'reports', icon: '📈', label: 'Reports' },
-    { id: 'users', icon: '👥', label: 'Users' },
+    { id: 'overview', icon: '📊', label: 'Overview', page: 'adminDashboard' },
+    { id: 'orders', icon: '📦', label: 'Orders', page: 'adminOrders' },
+    { id: 'kitchen', icon: '🍳', label: 'Kitchen Display', page: 'staffOrdersCooking' },
+    { id: 'staff', icon: '👨‍🍳', label: 'Staff', page: 'adminStaff' },
+    { id: 'menu', icon: '🍽️', label: 'Menu Items', page: 'adminMenu' },
+    { id: 'stock', icon: '🔄', label: 'Stock In / Out', page: 'adminIngredients' },
+    { id: 'expenses', icon: '💸', label: 'Expenses', page: 'adminExpenses' },
+    { id: 'reports', icon: '📈', label: 'Reports', page: 'adminReports' },
+    { id: 'users', icon: '👥', label: 'Users', page: 'adminUsers' },
     { id: 'lottery', icon: '🎲', label: 'Lottery' },
     { id: 'giveaway', icon: '🎁', label: 'Giveaway' },
     { id: 'permissions', icon: '🔐', label: 'Permissions' },
     { id: 'staff-permissions', icon: '👤🔐', label: 'Staff Permissions' }
   ];
 
-  const visibleMenuItems = user?.role === 'supply_chain'
-    ? menuItems.filter(item => ['stock', 'expenses'].includes(item.id))
-    : menuItems;
+  const visibleMenuItems = menuItems.filter(item => {
+    if (!item.page) return true;
+    return canReadPage(item.page);
+  });
 
   return (
     <>

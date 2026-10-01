@@ -1,6 +1,6 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { authService } from '../services/api';
+import { authService, ROLE_PERMISSIONS, ROLE_HIERARCHY, PAGE_ACCESS } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -110,21 +110,75 @@ export const AuthProvider = ({ children }) => {
     return getUserRole() === 'cashier';
   };
 
+  const getUserPermissions = () => {
+    const role = getUserRole();
+    return ROLE_PERMISSIONS[role] || [];
+  };
+
+  const hasPermission = (permission) => {
+    const role = getUserRole();
+    const perms = ROLE_PERMISSIONS[role] || [];
+    return perms.includes(permission);
+  };
+
+  const hasRole = (...allowedRoles) => {
+    const role = getUserRole();
+    return allowedRoles.includes(role);
+  };
+
+  const hasRoleOrHigher = (minRole) => {
+    const role = getUserRole();
+    const userLevel = ROLE_HIERARCHY[role] ?? -1;
+    const minLevel = ROLE_HIERARCHY[minRole] ?? -1;
+    return userLevel >= minLevel;
+  };
+
+  const canReadPage = (page) => {
+    const role = getUserRole();
+    const access = PAGE_ACCESS[page];
+    if (!access) return false;
+    return access.read.includes(role);
+  };
+
+  const canWritePage = (page) => {
+    const role = getUserRole();
+    const access = PAGE_ACCESS[page];
+    if (!access) return false;
+    return access.write.includes(role);
+  };
+
+  const getPageAccess = () => {
+    const role = getUserRole();
+    const result = {};
+    for (const [page, access] of Object.entries(PAGE_ACCESS)) {
+      result[page] = {
+        canRead: access.read.includes(role),
+        canWrite: access.write.includes(role),
+      };
+    }
+    return result;
+  };
+
   const value = {
     user,
     login,
     logout,
     loading,
     initialized,
-    isAuthenticated: !!user, // Computed from user state, not storage
-    // Role checkers as functions (safer)
+    isAuthenticated: !!user,
     isAdmin: isAdmin(),
     isStaff: isStaff(),
     isChef: isChef(),
     isDelivery: isDelivery(),
     isCashier: isCashier(),
-    // Also expose the role string
-    userRole: getUserRole()
+    userRole: getUserRole(),
+    userPermissions: getUserPermissions(),
+    hasPermission,
+    hasRole,
+    hasRoleOrHigher,
+    canReadPage,
+    canWritePage,
+    getPageAccess,
   };
 
   return (

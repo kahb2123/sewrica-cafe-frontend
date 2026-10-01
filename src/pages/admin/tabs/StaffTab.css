@@ -179,6 +179,60 @@
   text-transform: uppercase;
 }
 
+.role-badge-container {
+  margin-top: 10px;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #6c5ce5;
+  color: white;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.staff-permissions {
+  padding: 15px 20px;
+  background: #f8f9fa;
+  border-top: 1px solid #ecf0f1;
+}
+
+.permissions-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #7f8c8d;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.permission-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.permission-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #e8f4fd;
+  color: #2980b9;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid #d0e3f2;
+}
+
+@media (max-width: 768px) {
+  .permission-badge {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+  }
+}
+
 .staff-card-footer {
   display: flex;
   gap: 10px;

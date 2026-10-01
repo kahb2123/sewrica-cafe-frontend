@@ -1,9 +1,46 @@
 // src/pages/admin/tabs/StaffTab.jsx
 import React, { useState, useEffect } from 'react';
-import { adminService, staffService } from '../../../services/api';
+import { adminService, staffService, ROLE_PERMISSIONS, PERMISSIONS } from '../../../services/api';
 import { toast } from 'react-toastify';
+import PermissionGate from '../../../components/PermissionGate';
 import AddStaffModal from '../../../components/AddStaffModal';
 import './StaffTab.css';
+
+const PermissionDescriptions = {
+  [PERMISSIONS.ORDERS_ACCEPT]: 'Accept orders',
+  [PERMISSIONS.ORDERS_REJECT]: 'Reject orders',
+  [PERMISSIONS.ORDERS_START_COOKING]: 'Start cooking',
+  [PERMISSIONS.ORDERS_COMPLETE_COOKING]: 'Mark cooking complete',
+  [PERMISSIONS.ORDERS_START_DELIVERY]: 'Start delivery',
+  [PERMISSIONS.ORDERS_COMPLETE_DELIVERY]: 'Complete delivery',
+  [PERMISSIONS.ORDERS_VIEW_ASSIGNED]: 'View assigned orders',
+  [PERMISSIONS.ORDERS_VIEW]: 'View all orders',
+  [PERMISSIONS.ORDERS_ALL]: 'Manage all orders',
+  [PERMISSIONS.ORDERS_ASSIGN_CHEF]: 'Assign chef',
+  [PERMISSIONS.ORDERS_ASSIGN_DELIVERY]: 'Assign delivery',
+  [PERMISSIONS.ORDERS_UPDATE_STATUS]: 'Update order status',
+  [PERMISSIONS.STAFF_VIEW]: 'View staff',
+  [PERMISSIONS.STAFF_CREATE]: 'Create staff',
+  [PERMISSIONS.STAFF_UPDATE]: 'Update staff',
+  [PERMISSIONS.STAFF_DELETE]: 'Delete staff',
+  [PERMISSIONS.MENU_MANAGE]: 'Manage menu',
+  [PERMISSIONS.INGREDIENTS_MANAGE]: 'Manage ingredients',
+  [PERMISSIONS.EXPENSES_MANAGE]: 'Manage expenses',
+  [PERMISSIONS.REPORTS_VIEW]: 'View reports',
+  [PERMISSIONS.REPORTS_EXPORT]: 'Export reports',
+  [PERMISSIONS.PAYMENTS_PROCESS]: 'Process payments',
+  [PERMISSIONS.PAYMENTS_VIEW]: 'View payments',
+};
+
+const roleLabels = {
+  cook: 'Chef',
+  chef: 'Chef',
+  delivery: 'Delivery',
+  cashier: 'Cashier',
+  admin: 'Admin',
+  customer: 'Customer',
+  supply_chain: 'Supply Chain',
+};
 
 const StaffTab = () => {
   const [staff, setStaff] = useState({ cooks: [], delivery: [], cashiers: [] });
@@ -49,7 +86,7 @@ const StaffTab = () => {
           { _id: 'del3', name: 'Kebede Alemu', email: 'kebede@sewrica.com', phone: '0978901234', status: 'on_delivery', assignedOrders: 6, completedOrders: 58, rating: 4.5 },
         ],
         cashiers: [
-          { _id: 'cash1', name: 'Meron Tadesse', email: 'meron@sewrica.com', phone: '0989012345', status: 'active' },
+          { _id: 'cash1', name: 'Meron Tadesse', email: 'meron@sewrica.com', phone: '0989012345', status: 'active', rating: 4.7 },
         ]
       });
     } finally {
@@ -87,7 +124,7 @@ const StaffTab = () => {
   };
 
   const handleDeleteStaff = async (staffId, role) => {
-    if (!window.confirm('Are you sure you want to remove this staff member?')) return;
+    if (!window.confirm(`Are you sure you want to remove this ${role}?`)) return;
     
     try {
       await adminService.deleteStaff(staffId);
@@ -100,7 +137,7 @@ const StaffTab = () => {
   };
 
   const handleEditStaff = (staffMember) => {
-    toast.info('Edit functionality coming soon');
+    toast.info(`${staffMember.name} edit functionality coming soon`);
   };
 
   const getStatusColor = (status) => {
@@ -137,6 +174,102 @@ const StaffTab = () => {
     return stars.join('');
   };
 
+  const getRolePermissionList = (role) => {
+    const perms = ROLE_PERMISSIONS[role] || [];
+    return perms.map(perm => ({
+      key: perm,
+      label: PermissionDescriptions[perm] || perm,
+    }));
+  };
+
+  const renderPermissionBadges = (role) => {
+    const perms = getRolePermissionList(role);
+    return (
+      <div className="staff-permissions">
+        <span className="permissions-label">Permissions ({perms.length}):</span>
+        <div className="permission-badges">
+          {perms.map(p => (
+            <span key={p.key} className="permission-badge" title={p.label}>
+              {p.label}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderStaffCard = (staffMember, role, statsConfig) => {
+    const roleLabel = roleLabels[role] || role;
+
+    return (
+      <div key={staffMember._id} className="staff-card" data-role={role}>
+        <div className="staff-card-header">
+          <div className="staff-avatar">{roleLabel === 'Chef' ? 'Chef' : roleLabel}</div>
+          <div className="staff-info">
+            <h3>{staffMember.name}</h3>
+            <span className="staff-status" style={{ backgroundColor: getStatusColor(staffMember.status) }}>
+              {getStatusText(staffMember.status)}
+            </span>
+          </div>
+        </div>
+
+        <div className="staff-card-body">
+          <div className="staff-detail">
+            <span className="detail-label">Email:</span>
+            <span className="detail-value">{staffMember.email}</span>
+          </div>
+          <div className="staff-detail">
+            <span className="detail-label">Phone:</span>
+            <span className="detail-value">{staffMember.phone}</span>
+          </div>
+          {staffMember.rating && (
+            <div className="staff-detail">
+              <span className="detail-label">Performance:</span>
+              <span className="detail-value rating">
+                {renderStars(staffMember.rating)} ({staffMember.rating})
+              </span>
+            </div>
+          )}
+          {statsConfig && (
+            <div className="staff-stats">
+              {statsConfig.map(stat => (
+                <div key={stat.label} className="stat">
+                  <span className="stat-value">{staffMember[stat.field] || 0}</span>
+                  <span className="stat-label">{stat.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="role-badge-container">
+            <span className="role-badge">{roleLabel}</span>
+          </div>
+        </div>
+
+        {renderPermissionBadges(role)}
+
+        <div className="staff-card-footer">
+          {statsConfig && (
+            <PermissionGate permission={PERMISSIONS.REPORTS_VIEW} fallback={null}>
+              <button className="btn-view" onClick={() => handleViewPerformance(staffMember._id, role)}>
+                View Report
+              </button>
+            </PermissionGate>
+          )}
+          <PermissionGate permission={PERMISSIONS.STAFF_UPDATE} fallback={null}>
+            <button className="btn-edit" onClick={() => handleEditStaff(staffMember)}>
+              Edit
+            </button>
+          </PermissionGate>
+          <PermissionGate permission={PERMISSIONS.STAFF_DELETE} fallback={null}>
+            <button className="btn-delete" onClick={() => handleDeleteStaff(staffMember._id, role)}>
+              Delete
+            </button>
+          </PermissionGate>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -159,7 +292,7 @@ const StaffTab = () => {
           <div className="modal-content performance-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Staff Performance Report</h2>
-              <button className="modal-close-btn" onClick={() => setShowPerformanceModal(false)}>×</button>
+              <button className="modal-close-btn" onClick={() => setShowPerformanceModal(false)}>x</button>
             </div>
             
             {selectedStaff?.role === 'cook' && (
@@ -255,9 +388,11 @@ const StaffTab = () => {
 
       <div className="staff-tab-header">
         <h1 className="page-title">Staff Management</h1>
-        <button className="btn-primary" onClick={() => setShowAddModal(true)}>
-          + Add New Staff
-        </button>
+        <PermissionGate permission={PERMISSIONS.STAFF_CREATE} fallback={null}>
+          <button className="btn-primary" onClick={() => setShowAddModal(true)}>
+            + Add New Staff
+          </button>
+        </PermissionGate>
       </div>
 
       <div className="staff-tabs">
@@ -265,168 +400,46 @@ const StaffTab = () => {
           className={`staff-tab-btn ${activeSection === 'cooks' ? 'active' : ''}`}
           onClick={() => setActiveSection('cooks')}
         >
-          👨‍🍳 Chefs ({staff.cooks.length})
+          Chefs ({staff.cooks.length})
         </button>
         <button 
           className={`staff-tab-btn ${activeSection === 'delivery' ? 'active' : ''}`}
           onClick={() => setActiveSection('delivery')}
         >
-          🚚 Delivery ({staff.delivery.length})
+          Delivery ({staff.delivery.length})
         </button>
         <button 
           className={`staff-tab-btn ${activeSection === 'cashiers' ? 'active' : ''}`}
           onClick={() => setActiveSection('cashiers')}
         >
-          💰 Cashiers ({staff.cashiers.length})
+          Cashiers ({staff.cashiers.length})
         </button>
       </div>
 
       <div className="staff-grid">
-        {activeSection === 'cooks' && staff.cooks.map(cook => (
-          <div key={cook._id} className="staff-card" data-role="cook">
-            <div className="staff-card-header">
-              <div className="staff-avatar">👨‍🍳</div>
-              <div className="staff-info">
-                <h3>{cook.name}</h3>
-                <span className="staff-status" style={{ backgroundColor: getStatusColor(cook.status) }}>
-                  {getStatusText(cook.status)}
-                </span>
-              </div>
-            </div>
+        {activeSection === 'cooks' && staff.cooks.map(member =>
+          renderStaffCard(member, 'cook', [
+            { field: 'assignedOrders', label: 'Active' },
+            { field: 'completedOrders', label: 'Completed' },
+          ])
+        )}
 
-            <div className="staff-card-body">
-              <div className="staff-detail">
-                <span className="detail-label">📧 Email:</span>
-                <span className="detail-value">{cook.email}</span>
-              </div>
-              <div className="staff-detail">
-                <span className="detail-label">📱 Phone:</span>
-                <span className="detail-value">{cook.phone}</span>
-              </div>
-              <div className="staff-detail">
-                <span className="detail-label">📊 Performance:</span>
-                <span className="detail-value rating">
-                  {renderStars(cook.rating || 4.5)} ({cook.rating || 4.5})
-                </span>
-              </div>
-              <div className="staff-stats">
-                <div className="stat">
-                  <span className="stat-value">{cook.assignedOrders || 0}</span>
-                  <span className="stat-label">Active</span>
-                </div>
-                <div className="stat">
-                  <span className="stat-value">{cook.completedOrders || 0}</span>
-                  <span className="stat-label">Completed</span>
-                </div>
-              </div>
-            </div>
+        {activeSection === 'delivery' && staff.delivery.map(member =>
+          renderStaffCard(member, 'delivery', [
+            { field: 'assignedOrders', label: 'Active' },
+            { field: 'completedOrders', label: 'Delivered' },
+          ])
+        )}
 
-            <div className="staff-card-footer">
-              <button className="btn-view" onClick={() => handleViewPerformance(cook._id, 'cook')}>
-                📊 View Report
-              </button>
-              <button className="btn-edit" onClick={() => handleEditStaff(cook)}>
-                ✏️ Edit
-              </button>
-              <button className="btn-delete" onClick={() => handleDeleteStaff(cook._id, 'cook')}>
-                🗑️ Delete
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {activeSection === 'delivery' && staff.delivery.map(delivery => (
-          <div key={delivery._id} className="staff-card" data-role="delivery">
-            <div className="staff-card-header">
-              <div className="staff-avatar">🚚</div>
-              <div className="staff-info">
-                <h3>{delivery.name}</h3>
-                <span className="staff-status" style={{ backgroundColor: getStatusColor(delivery.status) }}>
-                  {getStatusText(delivery.status)}
-                </span>
-              </div>
-            </div>
-
-            <div className="staff-card-body">
-              <div className="staff-detail">
-                <span className="detail-label">📧 Email:</span>
-                <span className="detail-value">{delivery.email}</span>
-              </div>
-              <div className="staff-detail">
-                <span className="detail-label">📱 Phone:</span>
-                <span className="detail-value">{delivery.phone}</span>
-              </div>
-              <div className="staff-detail">
-                <span className="detail-label">📊 Performance:</span>
-                <span className="detail-value rating">
-                  {renderStars(delivery.rating || 4.5)} ({delivery.rating || 4.5})
-                </span>
-              </div>
-              <div className="staff-stats">
-                <div className="stat">
-                  <span className="stat-value">{delivery.assignedOrders || 0}</span>
-                  <span className="stat-label">Active</span>
-                </div>
-                <div className="stat">
-                  <span className="stat-value">{delivery.completedOrders || 0}</span>
-                  <span className="stat-label">Delivered</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="staff-card-footer">
-              <button className="btn-view" onClick={() => handleViewPerformance(delivery._id, 'delivery')}>
-                📊 View Report
-              </button>
-              <button className="btn-edit" onClick={() => handleEditStaff(delivery)}>
-                ✏️ Edit
-              </button>
-              <button className="btn-delete" onClick={() => handleDeleteStaff(delivery._id, 'delivery')}>
-                🗑️ Delete
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {activeSection === 'cashiers' && staff.cashiers.map(cashier => (
-          <div key={cashier._id} className="staff-card" data-role="cashier">
-            <div className="staff-card-header">
-              <div className="staff-avatar">💰</div>
-              <div className="staff-info">
-                <h3>{cashier.name}</h3>
-                <span className="staff-status" style={{ backgroundColor: getStatusColor(cashier.status) }}>
-                  {getStatusText(cashier.status)}
-                </span>
-              </div>
-            </div>
-
-            <div className="staff-card-body">
-              <div className="staff-detail">
-                <span className="detail-label">📧 Email:</span>
-                <span className="detail-value">{cashier.email}</span>
-              </div>
-              <div className="staff-detail">
-                <span className="detail-label">📱 Phone:</span>
-                <span className="detail-value">{cashier.phone}</span>
-              </div>
-            </div>
-
-            <div className="staff-card-footer">
-              <button className="btn-edit" onClick={() => handleEditStaff(cashier)}>
-                ✏️ Edit
-              </button>
-              <button className="btn-delete" onClick={() => handleDeleteStaff(cashier._id, 'cashier')}>
-                🗑️ Delete
-              </button>
-            </div>
-          </div>
-        ))}
+        {activeSection === 'cashiers' && staff.cashiers.map(member =>
+          renderStaffCard(member, 'cashier')
+        )}
       </div>
 
       {staff[activeSection].length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">
-            {activeSection === 'cooks' ? '👨‍🍳' : activeSection === 'delivery' ? '🚚' : '💰'}
+            {activeSection === 'cooks' ? 'Chef' : activeSection === 'delivery' ? 'Delivery' : 'Cashier'}
           </div>
           <h3>No {activeSection} found</h3>
           <p>Click "Add New Staff" to add a {activeSection.slice(0, -1)}.</p>

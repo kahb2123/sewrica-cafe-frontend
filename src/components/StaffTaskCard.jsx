@@ -1,5 +1,8 @@
 // src/components/StaffTaskCard.jsx
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { PERMISSIONS } from '../services/api';
+import PermissionGate from './PermissionGate';
 import { toast } from 'react-toastify';
 import './StaffTaskCard.css';
 
@@ -22,6 +25,8 @@ const StaffTaskCard = ({
   const [notes, setNotes] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
+
+  const { hasPermission } = useAuth();
 
   console.log('📋 StaffTaskCard - Task:', {
     id: task._id,
@@ -454,15 +459,15 @@ const StaffTaskCard = ({
       </div>
 
       <div className="task-card-footer">
-        {type === 'cook' && renderChefButtons()}
-        {type === 'delivery' && renderDeliveryButtons()}
-        {type === 'cashier' && renderCashierButtons()}
+        {type === 'cook' && hasPermission(PERMISSIONS.ORDERS_ACCEPT) && renderChefButtons()}
+        {type === 'delivery' && hasPermission(PERMISSIONS.ORDERS_ACCEPT) && renderDeliveryButtons()}
+        {type === 'cashier' && hasPermission(PERMISSIONS.PAYMENTS_PROCESS) && renderCashierButtons()}
         
         <button 
           className="btn-details"
           onClick={() => setShowDetails(!showDetails)}
         >
-          {showDetails ? '▲ Hide Notes' : '▼ Add Notes'}
+          {showDetails ? 'Hide Notes' : 'Add Notes'}
         </button>
       </div>
 

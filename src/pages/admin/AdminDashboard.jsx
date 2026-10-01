@@ -15,13 +15,13 @@ import OverviewTab from './tabs/OverviewTab';
 import OrdersTab from './tabs/OrdersTab';
 import StaffTab from './tabs/StaffTab';
 import MenuTab from './tabs/MenuTab';
+import StockTab from './tabs/StockTab';
+import ExpenseTab from './tabs/ExpenseTab';
 import ReportsTab from './tabs/ReportsTab';
 import UsersTab from './tabs/UsersTab';
-import StockTab from './tabs/StockTab';
-import KitchenDisplayTab from './tabs/KitchenDisplayTab';
 import LotteryTab from './tabs/LotteryTab';
 import GiveawayTab from './tabs/GiveawayTab';
-import ExpenseTab from './tabs/ExpenseTab';
+import PermissionsTab from './tabs/PermissionsTab';
 
 const AdminDashboard = () => {
   const { user, isAuthenticated } = useAuth();
@@ -152,6 +152,8 @@ const renderContent = () => {
         return <LotteryTab />;
       case 'giveaway':
         return <GiveawayTab />;
+      case 'permissions':
+        return <PermissionsTab />;
       default:
         return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
     }

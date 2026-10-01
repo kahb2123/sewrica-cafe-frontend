@@ -2,14 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { staffService } from '../services/api';
+import { staffService, PERMISSIONS } from '../services/api';
 import { useSocket } from '../context/SocketContext';
 import StaffTaskCard from '../components/StaffTaskCard';
 import { toast } from 'react-toastify';
 import './StaffDashboard.css';
 
 const StaffDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, hasRole, canReadPage } = useAuth();
   const navigate = useNavigate();
   const { connected, onOrderAssigned } = useSocket();
   const [activeTab, setActiveTab] = useState('tasks');
@@ -28,10 +28,7 @@ const StaffDashboard = () => {
       return;
     }
 
-    const userRole = user.role?.toLowerCase();
-    const validRoles = ['cook', 'chef', 'delivery', 'cashier', 'admin'];
-    
-    if (!validRoles.includes(userRole)) {
+    if (!canReadPage('staffDashboard')) {
       toast.error('Unauthorized access. Staff only.');
       navigate('/');
       return;
@@ -173,11 +170,10 @@ const StaffDashboard = () => {
       let activeTasks = [];
       let completed = [];
       
-      if (userRole === 'cook' || userRole === 'chef') {
+      if (canReadPage('staffOrdersCooking')) {
         const response = await staffService.getMyCookingOrders();
         const orders = extractArray(response, []);
         
-        // Active: confirmed (needs accept), confirmed+accepted (needs start), preparing/cooking (in progress)
         activeTasks = orders.filter(o => 
           o.status === 'confirmed' || o.status === 'preparing' || o.status === 'cooking'
         );
@@ -185,7 +181,7 @@ const StaffDashboard = () => {
           o.status === 'ready' || o.status === 'delivered'
         );
         
-      } else if (userRole === 'delivery') {
+      } else if (canReadPage('staffOrdersDelivery')) {
         const response = await staffService.getMyDeliveryOrders();
         const deliveries = extractArray(response, []);
         
@@ -280,18 +276,23 @@ const StaffDashboard = () => {
   };
 
   const getRoleSpecificMessage = () => {
-    const role = user?.role?.toLowerCase();
-    switch(role) {
-      case 'cook':
-      case 'chef':
-        return 'Orders ready for preparation will appear here';
-      case 'delivery':
-        return 'Orders ready for delivery will appear here';
-      case 'cashier':
-        return 'Pending payments will appear here';
-      default:
-        return 'Your tasks will appear here';
+    if (canReadPage('staffOrdersCooking')) {
+      return 'Orders ready for preparation will appear here';
     }
+    if (canReadPage('staffOrdersDelivery')) {
+      return 'Orders ready for delivery will appear here';
+    }
+    if (hasRole('cashier')) {
+      return 'Pending payments will appear here';
+    }
+    return 'Your tasks will appear here';
+  };
+
+  const getTaskType = () => {
+    if (canReadPage('staffOrdersCooking')) return 'cook';
+    if (canReadPage('staffOrdersDelivery')) return 'delivery';
+    if (hasRole('cashier')) return 'cashier';
+    return user?.role?.toLowerCase() || 'staff';
   };
 
   return (
@@ -368,7 +369,7 @@ const StaffDashboard = () => {
                     <StaffTaskCard
                       key={task._id}
                       task={task}
-                      type={user?.role?.toLowerCase() === 'chef' ? 'cook' : user?.role?.toLowerCase()}
+                      type={getTaskType()}
                       onTaskUpdate={handleTaskUpdate}
                       onChefAccept={handleChefAccept}
                       onChefReject={handleChefReject}
@@ -398,7 +399,7 @@ const StaffDashboard = () => {
                     <StaffTaskCard
                       key={task._id}
                       task={task}
-                      type={user?.role?.toLowerCase() === 'chef' ? 'cook' : user?.role?.toLowerCase()}
+                      type={getTaskType()}
                       onTaskUpdate={handleTaskUpdate}
                       onChefAccept={handleChefAccept}
                       onChefReject={handleChefReject}

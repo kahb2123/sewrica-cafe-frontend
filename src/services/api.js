@@ -168,6 +168,89 @@ export const authService = {
     }
   },
 
+  getPermissions: async () => {
+    try {
+      const response = await api.get('/auth/permissions');
+      const data = response.data;
+
+      if (data && data.success !== false) {
+        const permissions = data.permissions || [];
+        const role = data.user?.role || authService.getCurrentUser()?.role || 'customer';
+        const roleHierarchy = data.roleHierarchy || {};
+
+        const hasPermission = (permission) => permissions.includes(permission);
+        const hasRole = (...roles) => roles.includes(role);
+
+        const hasRoleOrHigher = (minRole) => {
+          const roleLevels = {
+            customer: 0,
+            supply_chain: 1,
+            cashier: 2,
+            delivery: 3,
+            cook: 4,
+            chef: 4,
+            admin: 5,
+          };
+          const userLevel = roleLevels[role] ?? -1;
+          const minLevel = roleLevels[minRole] ?? -1;
+          return userLevel >= minLevel;
+        };
+
+        const PERMISSIONS = data.PERMISSIONS || {
+          ORDERS_VIEW: 'orders:view',
+          ORDERS_ALL: 'orders:all',
+          ORDERS_ASSIGN_CHEF: 'orders:assign_chef',
+          ORDERS_ASSIGN_DELIVERY: 'orders:assign_delivery',
+          ORDERS_UPDATE_STATUS: 'orders:update_status',
+          ORDERS_ACCEPT: 'orders:accept',
+          ORDERS_REJECT: 'orders:reject',
+          ORDERS_START_COOKING: 'orders:start_cooking',
+          ORDERS_COMPLETE_COOKING: 'orders:complete_cooking',
+          ORDERS_START_DELIVERY: 'orders:start_delivery',
+          ORDERS_COMPLETE_DELIVERY: 'orders:complete_delivery',
+          ORDERS_VIEW_ASSIGNED: 'orders:view_assigned',
+          STAFF_VIEW: 'staff:view',
+          STAFF_CREATE: 'staff:create',
+          STAFF_UPDATE: 'staff:update',
+          STAFF_DELETE: 'staff:delete',
+          MENU_MANAGE: 'menu:manage',
+          INGREDIENTS_MANAGE: 'ingredients:manage',
+          EXPENSES_MANAGE: 'expenses:manage',
+          REPORTS_VIEW: 'reports:view',
+          REPORTS_EXPORT: 'reports:export',
+          PAYMENTS_PROCESS: 'payments:process',
+          PAYMENTS_VIEW: 'payments:view',
+        };
+
+        return {
+          success: true,
+          role,
+          permissions,
+          roleHierarchy,
+          PERMISSIONS,
+          hasPermission,
+          hasRole,
+          hasRoleOrHigher,
+          can: hasPermission,
+          canAccess: (requiredRole) => hasRoleOrHigher(requiredRole),
+        };
+      }
+
+      return data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to get permissions' };
+    }
+  },
+
+  getRoleMap: async () => {
+    try {
+      const response = await api.get('/auth/roles');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to get role map' };
+    }
+  },
+
   logout: () => {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
@@ -452,6 +535,15 @@ export const expenseService = {
 
 // ========== ADMIN SERVICES ==========
 export const adminService = {
+  getRoleMap: async () => {
+    try {
+      const response = await api.get('/auth/roles');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch role map' };
+    }
+  },
+
   getStats: async () => {
     try {
       const response = await api.get('/admin/stats');
@@ -1097,6 +1189,159 @@ export const getImageUrl = (image) => {
 export const getOrderNumberLabel = (orderNumber) => {
   if (orderNumber === null || orderNumber === undefined || orderNumber === '') return '--';
   return String(orderNumber).replace(/^ORD/i, '');
+};
+
+// ========== PERMISSIONS CONSTANTS ==========
+export const ROLE_PERMISSIONS = {
+  customer: ['orders:view'],
+  supply_chain: ['ingredients:manage'],
+  cashier: ['orders:view', 'payments:process', 'payments:view', 'staff:view'],
+  delivery: ['orders:view_assigned', 'orders:accept', 'orders:reject', 'orders:start_delivery', 'orders:complete_delivery'],
+  cook: ['orders:view_assigned', 'orders:accept', 'orders:reject', 'orders:start_cooking', 'orders:complete_cooking'],
+  chef: ['orders:view_assigned', 'orders:accept', 'orders:reject', 'orders:start_cooking', 'orders:complete_cooking'],
+  admin: [
+    'orders:view', 'orders:all', 'orders:assign_chef', 'orders:assign_delivery',
+    'orders:update_status', 'orders:accept', 'orders:reject',
+    'orders:start_cooking', 'orders:complete_cooking',
+    'orders:start_delivery', 'orders:complete_delivery',
+    'orders:view_assigned',
+    'staff:view', 'staff:create', 'staff:update', 'staff:delete',
+    'menu:manage', 'ingredients:manage', 'expenses:manage',
+    'reports:view', 'reports:export',
+    'payments:process', 'payments:view',
+  ],
+};
+
+export const PAGE_ACCESS = {
+  staffDashboard: {
+    read: ['cook', 'chef', 'delivery', 'cashier', 'admin'],
+    write: ['cook', 'chef', 'delivery', 'cashier', 'admin'],
+  },
+  staffOrdersCooking: {
+    read: ['cook', 'chef', 'admin'],
+    write: ['cook', 'chef', 'admin'],
+  },
+  staffOrdersDelivery: {
+    read: ['delivery', 'admin'],
+    write: ['delivery', 'admin'],
+  },
+  staffStats: {
+    read: ['cook', 'chef', 'delivery', 'cashier', 'admin'],
+    write: ['admin'],
+  },
+  staffProfile: {
+    read: ['cook', 'chef', 'delivery', 'cashier', 'admin'],
+    write: ['cook', 'chef', 'delivery', 'cashier', 'admin'],
+  },
+  adminDashboard: {
+    read: ['admin'],
+    write: ['admin'],
+  },
+  adminOrders: {
+    read: ['admin', 'cashier'],
+    write: ['admin'],
+  },
+  adminStaff: {
+    read: ['admin'],
+    write: ['admin'],
+  },
+  adminMenu: {
+    read: ['admin'],
+    write: ['admin'],
+  },
+  adminReports: {
+    read: ['admin', 'cashier'],
+    write: ['admin'],
+  },
+  adminIngredients: {
+    read: ['admin', 'supply_chain'],
+    write: ['admin', 'supply_chain'],
+  },
+  adminExpenses: {
+    read: ['admin'],
+    write: ['admin'],
+  },
+  adminUsers: {
+    read: ['admin'],
+    write: ['admin'],
+  },
+};
+
+export const canReadPage = (userRole, page) => {
+  const role = userRole?.toLowerCase();
+  const access = PAGE_ACCESS[page];
+  if (!access) return false;
+  return access.read.includes(role);
+};
+
+export const canWritePage = (userRole, page) => {
+  const role = userRole?.toLowerCase();
+  const access = PAGE_ACCESS[page];
+  if (!access) return false;
+  return access.write.includes(role);
+};
+
+export const getPageAccessForRole = (userRole) => {
+  const role = userRole?.toLowerCase();
+  const result = {};
+  for (const [page, access] of Object.entries(PAGE_ACCESS)) {
+    result[page] = {
+      canRead: access.read.includes(role),
+      canWrite: access.write.includes(role),
+    };
+  }
+  return result;
+};
+
+export const PERMISSIONS = {
+  ORDERS_VIEW: 'orders:view',
+  ORDERS_ALL: 'orders:all',
+  ORDERS_ASSIGN_CHEF: 'orders:assign_chef',
+  ORDERS_ASSIGN_DELIVERY: 'orders:assign_delivery',
+  ORDERS_UPDATE_STATUS: 'orders:update_status',
+  ORDERS_ACCEPT: 'orders:accept',
+  ORDERS_REJECT: 'orders:reject',
+  ORDERS_START_COOKING: 'orders:start_cooking',
+  ORDERS_COMPLETE_COOKING: 'orders:complete_cooking',
+  ORDERS_START_DELIVERY: 'orders:start_delivery',
+  ORDERS_COMPLETE_DELIVERY: 'orders:complete_delivery',
+  ORDERS_VIEW_ASSIGNED: 'orders:view_assigned',
+  STAFF_VIEW: 'staff:view',
+  STAFF_CREATE: 'staff:create',
+  STAFF_UPDATE: 'staff:update',
+  STAFF_DELETE: 'staff:delete',
+  MENU_MANAGE: 'menu:manage',
+  INGREDIENTS_MANAGE: 'ingredients:manage',
+  EXPENSES_MANAGE: 'expenses:manage',
+  REPORTS_VIEW: 'reports:view',
+  REPORTS_EXPORT: 'reports:export',
+  PAYMENTS_PROCESS: 'payments:process',
+  PAYMENTS_VIEW: 'payments:view',
+};
+
+export const hasPermission = (userRole, permission) => {
+  const perms = ROLE_PERMISSIONS[userRole?.toLowerCase()] || [];
+  return perms.includes(permission);
+};
+
+export const hasRole = (userRole, ...allowedRoles) => {
+  return allowedRoles.includes(userRole?.toLowerCase());
+};
+
+export const ROLE_HIERARCHY = {
+  customer: 0,
+  supply_chain: 1,
+  cashier: 2,
+  delivery: 3,
+  cook: 4,
+  chef: 4,
+  admin: 5,
+};
+
+export const hasRoleOrHigher = (userRole, minRole) => {
+  const userLevel = ROLE_HIERARCHY[userRole?.toLowerCase()] ?? -1;
+  const minLevel = ROLE_HIERARCHY[minRole?.toLowerCase()] ?? -1;
+  return userLevel >= minLevel;
 };
 
 export default api;

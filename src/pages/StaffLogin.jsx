@@ -1,8 +1,7 @@
 // src/pages/StaffLogin.jsx (updated redirect logic)
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { authService } from '../services/api';
+import { authService, getPageAccessForRole } from '../services/api';
 import './StaffLogin.css';
 
 const StaffLogin = () => {
@@ -10,7 +9,6 @@ const StaffLogin = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,30 +29,23 @@ const StaffLogin = () => {
         if (user && ['cook', 'chef', 'delivery', 'cashier', 'admin'].includes(user.role)) {
           toast.success(`Welcome back, ${user.name}!`);
           
-          // Determine redirect path based on role
           let redirectPath = '/staff/dashboard';
           
-          switch(user.role) {
-            case 'cook':
-            case 'chef':
-              redirectPath = '/staff/dashboard';
-              break;
-            case 'delivery':
+          if (user.role === 'admin' || user.role === 'supply_chain') {
+            redirectPath = '/admin';
+          } else {
+            const pageAccess = getPageAccessForRole(user.role);
+            
+            if (pageAccess.staffOrdersDelivery?.canRead) {
               redirectPath = '/staff/delivery';
-              break;
-            case 'cashier':
-              redirectPath = '/staff/cashier';
-              break;
-            case 'admin':
-              redirectPath = '/admin';
-              break;
-            default:
+            } else if (pageAccess.staffDashboard?.canRead) {
               redirectPath = '/staff/dashboard';
+            } else {
+              redirectPath = '/staff/dashboard';
+            }
           }
           
           console.log('Redirecting to:', redirectPath);
-          
-          // Use window.location for reliable redirect
           window.location.href = redirectPath;
           
         } else {

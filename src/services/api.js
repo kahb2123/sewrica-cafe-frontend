@@ -607,6 +607,28 @@ export const adminService = {
       throw error.response?.data || { message: 'Failed to delete staff' };
     }
   },
+
+  getStaffPermissions: async (staffId) => {
+    try {
+      const response = await api.get(`/admin/staff/${staffId}/permissions`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch staff permissions' };
+    }
+  },
+
+  updateStaffPermissions: async (staffId, { extraPermissions, deniedPermissions, pageAccessOverrides }) => {
+    try {
+      const response = await api.put(`/admin/staff/${staffId}/permissions`, {
+        extraPermissions,
+        deniedPermissions,
+        pageAccessOverrides
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update staff permissions' };
+    }
+  },
   
   getRecentOrders: async () => {
     try {

@@ -1,9 +1,10 @@
 // src/pages/admin/tabs/StaffTab.jsx
 import React, { useState, useEffect } from 'react';
-import { adminService, staffService, ROLE_PERMISSIONS, PERMISSIONS } from '../../../services/api';
+import { adminService, staffService, ROLE_PERMISSIONS, PERMISSIONS, PAGE_ACCESS } from '../../../services/api';
 import { toast } from 'react-toastify';
 import PermissionGate from '../../../components/PermissionGate';
 import AddStaffModal from '../../../components/AddStaffModal';
+import StaffPermissionEditor from '../../../components/StaffPermissionEditor';
 import './StaffTab.css';
 
 const PermissionDescriptions = {
@@ -136,8 +137,21 @@ const StaffTab = () => {
     }
   };
 
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+  const [permissionsStaff, setPermissionsStaff] = useState(null);
+
   const handleEditStaff = (staffMember) => {
-    toast.info(`${staffMember.name} edit functionality coming soon`);
+    setShowPermissionsModal(true);
+    fetchStaffWithPermissions(staffMember);
+  };
+
+  const fetchStaffWithPermissions = async (staffMember) => {
+    try {
+      const data = await adminService.getStaffPermissions(staffMember._id);
+      setPermissionsStaff(data);
+    } catch (error) {
+      toast.error(error.message || 'Failed to load staff permissions');
+    }
   };
 
   const getStatusColor = (status) => {
@@ -286,6 +300,22 @@ const StaffTab = () => {
         onClose={() => setShowAddModal(false)}
         onStaffAdded={handleStaffAdded}
       />
+
+      {showPermissionsModal && permissionsStaff && (
+        <div className="modal-overlay" onClick={() => setShowPermissionsModal(false)}>
+          <div className="modal-content staff-permissions-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Edit Permissions - {permissionsStaff.staff?.name}</h2>
+              <button className="modal-close-btn" onClick={() => setShowPermissionsModal(false)}>×</button>
+            </div>
+            <StaffPermissionEditor
+              staff={permissionsStaff}
+              onSave={handleStaffAdded}
+              onClose={() => setShowPermissionsModal(false)}
+            />
+          </div>
+        </div>
+      )}
 
       {showPerformanceModal && staffPerformance && (
         <div className="modal-overlay" onClick={() => setShowPerformanceModal(false)}>

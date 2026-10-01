@@ -1,6 +1,23 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
+import { PERMISSIONS, PAGE_ACCESS } from '../services/api';
 import './AddStaffModal.css';
+
+const PAGE_ACCESS_LABELS = {
+  staffDashboard: 'Staff Dashboard',
+  staffOrdersCooking: 'Cooking Orders',
+  staffOrdersDelivery: 'Delivery Orders',
+  staffStats: 'Statistics',
+  staffProfile: 'Profile',
+  adminDashboard: 'Admin Dashboard',
+  adminOrders: 'Admin Orders',
+  adminStaff: 'Admin Staff',
+  adminMenu: 'Menu Management',
+  adminReports: 'Reports',
+  adminIngredients: 'Ingredients',
+  adminExpenses: 'Expenses',
+  adminUsers: 'User Management',
+};
 
 // Get the API base URL from environment or use default
 const API_URL = import.meta.env.VITE_API_URL || 'https://sewrica-cafe-backend.onrender.com/api';
@@ -12,7 +29,8 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
     phone: '',
     password: '',
     confirmPassword: '',
-    role: 'cook'
+    role: 'cook',
+    pageAccessOverrides: {}
   });
   const [loading, setLoading] = useState(false);
 
@@ -77,7 +95,8 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
-          role: formData.role
+          role: formData.role,
+          pageAccessOverrides: formData.pageAccessOverrides
         })
       });
 
@@ -99,13 +118,14 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
         }
         
         // Reset form
-        setFormData({
+         setFormData({
           name: '',
           email: '',
           phone: '',
           password: '',
           confirmPassword: '',
-          role: 'cook'
+          role: 'cook',
+          pageAccessOverrides: {}
         });
         
         // Close modal
@@ -193,6 +213,47 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
               <option value="supply_chain">📦 Supply Chain</option>
               <option value="admin">👑 Admin</option>
             </select>
+          </div>
+
+          <div className="form-group">
+            <label>Page Access</label>
+            <div className="page-access-section">
+              <p className="page-access-note">Override default role permissions for individual pages</p>
+              {Object.keys(PAGE_ACCESS).map(page => {
+                const currentOverride = formData.pageAccessOverrides[page];
+                const currentValue = currentOverride
+                  ? (currentOverride.canWrite ? 'write' : currentOverride.canRead ? 'read' : 'none')
+                  : 'inherit';
+
+                return (
+                  <div key={page} className="page-access-row">
+                    <span className="page-name">{PAGE_ACCESS_LABELS[page] || page}</span>
+                    <select
+                      value={currentValue}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const newOverrides = { ...formData.pageAccessOverrides };
+                        if (value === 'inherit') {
+                          delete newOverrides[page];
+                        } else {
+                          newOverrides[page] = {
+                            canRead: value === 'read' || value === 'write',
+                            canWrite: value === 'write',
+                          };
+                        }
+                        setFormData({ ...formData, pageAccessOverrides: newOverrides });
+                      }}
+                      disabled={loading}
+                    >
+                      <option value="inherit">Inherit from Role</option>
+                      <option value="read">Read Only</option>
+                      <option value="write">Read & Write</option>
+                      <option value="none">No Access</option>
+                    </select>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <div className="form-row">

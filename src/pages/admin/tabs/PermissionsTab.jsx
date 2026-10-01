@@ -62,10 +62,6 @@ const PermissionsTab = () => {
   const [saving, setSaving] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
 
-  useEffect(() => {
-    fetchRoleMap();
-  }, [fetchRoleMap]);
-
   const fetchRoleMap = useCallback(async () => {
     try {
       setLoading(true);
@@ -81,6 +77,10 @@ const PermissionsTab = () => {
       setLoading(false);
     }
   }, [selectedRole]);
+
+  useEffect(() => {
+    fetchRoleMap();
+  }, [fetchRoleMap]);
 
   const handlePageAccessToggle = async (page, type) => {
     if (!selectedRole) return;

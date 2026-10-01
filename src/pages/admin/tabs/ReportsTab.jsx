@@ -290,7 +290,7 @@ const ReportsTab = () => {
                             style={{ height: `${((Number(row.paidRevenue) || 0) / peakRevenue) * 100}%` }}
                           />
                         </div>
-                        <span className="bar-label">{row.date.slice(5)}</span>
+                        <span className="bar-label">{row.date ? row.date.slice(5) : ''}</span>
                         <span className="bar-orders">{row.orders} orders</span>
                       </div>
                     ))}

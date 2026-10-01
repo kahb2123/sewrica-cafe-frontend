@@ -30,6 +30,35 @@
 .reports-export {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
+}
+
+.export-format-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.export-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted, #8a7b6b);
+  margin-right: 4px;
+}
+
+.btn-export-section {
+  background: var(--sewrica-cream, #fffdf8);
+  color: var(--color-text, #3d3229);
+  border-color: var(--border-light, #e6ddd0);
+}
+
+.btn-export-section:hover:not(:disabled) {
+  border-color: var(--sewrica-gold, #8b5a2b);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
 .btn-export {

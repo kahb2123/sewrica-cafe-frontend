@@ -54,6 +54,8 @@ const ReportsTab = () => {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(null);
 
+  const sectionLabel = SECTIONS.find((entry) => entry.key === section)?.label || 'Report';
+
   const loadReport = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
@@ -81,10 +83,15 @@ const ReportsTab = () => {
     setRange((current) => ({ ...current, [field]: value }));
   };
 
-  const handleExport = async (format) => {
+  const handleExport = async (format, exportSection = section) => {
     try {
       setExporting(format);
-      const blob = await adminService.exportUnifiedReport(format, { start: range.start, end: range.end, role });
+      const blob = await adminService.exportUnifiedReport(format, {
+        start: range.start,
+        end: range.end,
+        role,
+        section: exportSection
+      });
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
       link.href = url;
@@ -93,7 +100,7 @@ const ReportsTab = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success(`Report exported as ${format.toUpperCase()}`);
+      toast.success(`Report exported as ${format.toUpperCase()}${exportSection !== 'all' ? ` (${exportSection})` : ''}`);
     } catch (error) {
       toast.error(error.message || 'Failed to export report');
     } finally {
@@ -135,12 +142,39 @@ const ReportsTab = () => {
           <p className="page-subtitle">Sales, items and staff performance for any date range</p>
         </div>
         <div className="reports-export">
-          <button className="btn-export btn-csv" onClick={() => handleExport('csv')} disabled={exporting !== null}>
-            {exporting === 'csv' ? '⏳ Exporting...' : '📥 CSV'}
-          </button>
-          <button className="btn-export btn-pdf" onClick={() => handleExport('pdf')} disabled={exporting !== null}>
-            {exporting === 'pdf' ? '⏳ Exporting...' : '📄 PDF'}
-          </button>
+          <div className="export-format-group">
+            <span className="export-label">Export as:</span>
+            <button
+              className="btn-export btn-csv"
+              onClick={() => handleExport('csv', 'all')}
+              disabled={exporting !== null}
+            >
+              {exporting === 'csv' ? '⏳ Exporting...' : '📥 Full CSV'}
+            </button>
+            <button
+              className="btn-export btn-csv btn-export-section"
+              onClick={() => handleExport('csv', section)}
+              disabled={exporting !== null}
+            >
+              {exporting === 'csv' ? '⏳...' : `📥 ${sectionLabel} CSV`}
+            </button>
+          </div>
+          <div className="export-format-group">
+            <button
+              className="btn-export btn-pdf"
+              onClick={() => handleExport('pdf', 'all')}
+              disabled={exporting !== null}
+            >
+              {exporting === 'pdf' ? '⏳ Exporting...' : '📄 Full PDF'}
+            </button>
+            <button
+              className="btn-export btn-pdf btn-export-section"
+              onClick={() => handleExport('pdf', section)}
+              disabled={exporting !== null}
+            >
+              {exporting === 'pdf' ? '⏳...' : `📄 ${sectionLabel} PDF`}
+            </button>
+          </div>
         </div>
       </div>
 

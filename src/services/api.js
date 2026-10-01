@@ -503,13 +503,16 @@ export const adminService = {
 
   // ========== REPORT METHODS ==========
   // One endpoint serves every report in the admin panel.
-  getUnifiedReport: async ({ start, end, role, staffId } = {}) => {
+  // `section` (sales | items | staff) skips the unneeded aggregations so an
+  // export can be focused on just the staff or just the items.
+  getUnifiedReport: async ({ start, end, role, staffId, section } = {}) => {
     try {
       const params = new URLSearchParams();
       if (start) params.append('start', start);
       if (end) params.append('end', end);
       if (role && role !== 'all') params.append('role', role);
       if (staffId) params.append('staffId', staffId);
+      if (section && section !== 'all') params.append('section', section);
       const query = params.toString() ? `?${params}` : '';
       const response = await api.get(`/admin/reports/unified${query}`);
       return response.data;
@@ -519,13 +522,14 @@ export const adminService = {
     }
   },
 
-  exportUnifiedReport: async (format = 'csv', { start, end, role } = {}) => {
+  exportUnifiedReport: async (format = 'csv', { start, end, role, section } = {}) => {
     try {
       const params = new URLSearchParams();
       params.append('format', format);
       if (start) params.append('start', start);
       if (end) params.append('end', end);
       if (role && role !== 'all') params.append('role', role);
+      if (section && section !== 'all') params.append('section', section);
       const response = await api.get(`/admin/reports/export?${params}`, {
         responseType: 'blob',
         timeout: 60000
@@ -533,6 +537,19 @@ export const adminService = {
       return response.data;
     } catch (error) {
       console.error('Error exporting report:', error);
+      // The export endpoint can answer with JSON on a 4xx/5xx, but the request
+      // is typed as a blob. Parse the blob back to text so the caller sees the
+      // real server message instead of a generic axios failure.
+      const data = error.response?.data;
+      if (data instanceof Blob) {
+        const text = await data.text().catch(() => '');
+        try {
+          const parsed = JSON.parse(text);
+          throw parsed;
+        } catch {
+          throw { message: text || 'Failed to export report' };
+        }
+      }
       throw error.response?.data || { message: 'Failed to export report' };
     }
   }

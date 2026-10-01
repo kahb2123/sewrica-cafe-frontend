@@ -18,7 +18,8 @@ const Sidebar = ({ activeTab, onMenuClick, mobileMenuOpen, user, onClose }) => {
     { id: 'users', icon: '👥', label: 'Users' },
     { id: 'lottery', icon: '🎲', label: 'Lottery' },
     { id: 'giveaway', icon: '🎁', label: 'Giveaway' },
-    { id: 'permissions', icon: '🔐', label: 'Permissions' }
+    { id: 'permissions', icon: '🔐', label: 'Permissions' },
+    { id: 'staff-permissions', icon: '👤🔐', label: 'Staff Permissions' }
   ];
 
   const visibleMenuItems = user?.role === 'supply_chain'

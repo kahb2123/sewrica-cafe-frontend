@@ -22,6 +22,7 @@ import UsersTab from './tabs/UsersTab';
 import LotteryTab from './tabs/LotteryTab';
 import GiveawayTab from './tabs/GiveawayTab';
 import PermissionsTab from './tabs/PermissionsTab';
+import StaffPermissionsTab from './tabs/StaffPermissionsTab';
 
 const AdminDashboard = () => {
   const { user, isAuthenticated } = useAuth();
@@ -154,6 +155,8 @@ const renderContent = () => {
         return <GiveawayTab />;
       case 'permissions':
         return <PermissionsTab />;
+      case 'staff-permissions':
+        return <StaffPermissionsTab />;
       default:
         return <OverviewTab stats={stats} onRefresh={fetchDashboardStats} />;
     }

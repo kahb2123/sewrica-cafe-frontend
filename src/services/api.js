@@ -553,6 +553,33 @@ export const adminService = {
     }
   },
 
+  getUserPermissions: async (userId) => {
+    try {
+      const response = await api.get(`/auth/staff/${userId}/permissions`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch user permissions' };
+    }
+  },
+
+  updateUserPermission: async (userId, action, permission) => {
+    try {
+      const response = await api.put(`/auth/staff/${userId}/permissions`, { action, permission });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update user permission' };
+    }
+  },
+
+  updateUserPageAccess: async (userId, page, canRead, canWrite) => {
+    try {
+      const response = await api.put(`/auth/staff/${userId}/page-access`, { page, canRead, canWrite });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update user page access' };
+    }
+  },
+
   getStats: async () => {
     try {
       const response = await api.get('/admin/stats');

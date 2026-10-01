@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import { PERMISSIONS, PAGE_ACCESS } from '../services/api';
+import { PERMISSIONS, PAGE_ACCESS, adminService } from '../services/api';
 import './AddStaffModal.css';
 
 const PAGE_ACCESS_LABELS = {
@@ -22,8 +22,18 @@ const PAGE_ACCESS_LABELS = {
 // Get the API base URL from environment or use default
 const API_URL = import.meta.env.VITE_API_URL || 'https://sewrica-cafe-backend.onrender.com/api';
 
-const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
-  const [formData, setFormData] = useState({
+const AddStaffModal = ({ isOpen, onClose, onStaffAdded, editMode = false, staffData = null }) => {
+  const [formData, setFormData] = useState(editMode && staffData ? {
+    name: staffData.name || '',
+    email: staffData.email || '',
+    phone: staffData.phone || '',
+    password: '',
+    confirmPassword: '',
+    role: staffData.role || 'cook',
+    pageAccessOverrides: staffData.pageAccessOverrides || {},
+    extraPermissions: staffData.extraPermissions || [],
+    deniedPermissions: staffData.deniedPermissions || []
+  } : {
     name: '',
     email: '',
     phone: '',
@@ -45,19 +55,25 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
     e.preventDefault();
     
     // Validation
-    if (!formData.name || !formData.email || !formData.phone || !formData.password) {
+    const isCreateMode = !editMode;
+    if (!formData.name || !formData.email || !formData.phone) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
+    if (isCreateMode) {
+      if (!formData.password) {
+        toast.error('Password is required for new staff');
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        toast.error('Passwords do not match');
+        return;
+      }
+      if (formData.password.length < 6) {
+        toast.error('Password must be at least 6 characters');
+        return;
+      }
     }
 
     // Validate phone number (Ethiopian format - simple check)
@@ -76,69 +92,69 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
         return;
       }
 
-      console.log('Sending request to:', `${API_URL}/admin/staff`);
-      console.log('Request payload:', {
+      const payload = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        role: formData.role
-      });
+        role: formData.role,
+        pageAccessOverrides: formData.pageAccessOverrides,
+        extraPermissions: formData.extraPermissions || [],
+        deniedPermissions: formData.deniedPermissions || []
+      };
 
-      const response = await fetch(`${API_URL}/admin/staff`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-          role: formData.role,
-          pageAccessOverrides: formData.pageAccessOverrides
-        })
-      });
-
-      // Check if response is OK before parsing JSON
-      let data = {};
-      const contentType = response.headers.get('content-type');
-      
-      if (contentType && contentType.includes('application/json')) {
-        const text = await response.text();
-        data = text ? JSON.parse(text) : {};
+      if (formData.password) {
+        payload.password = formData.password;
       }
-      
-      if (response.ok) {
-        toast.success(`${formData.role} added successfully!`);
+
+      if (editMode) {
+        await adminService.updateStaffPermissions(staffData._id, {
+          extraPermissions: payload.extraPermissions,
+          deniedPermissions: payload.deniedPermissions,
+          pageAccessOverrides: payload.pageAccessOverrides
+        });
+        toast.success(`Permissions updated for ${formData.name}`);
+      } else {
+        console.log('Sending request to:', `${API_URL}/admin/staff`);
+        console.log('Request payload:', payload);
+
+        const response = await fetch(`${API_URL}/admin/staff`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        // Check if response is OK before parsing JSON
+        let data = {};
+        const contentType = response.headers.get('content-type');
         
-        // Call the callback to refresh staff list
-        if (onStaffAdded) {
-          onStaffAdded();
+        if (contentType && contentType.includes('application/json')) {
+          const text = await response.text();
+          data = text ? JSON.parse(text) : {};
         }
         
-        // Reset form
-         setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          password: '',
-          confirmPassword: '',
-          role: 'cook',
-          pageAccessOverrides: {}
-        });
-        
-        // Close modal
-        onClose();
-      } else {
-        // Handle error response
-        const errorMessage = data.message || data.error || `Failed to add ${formData.role}`;
-        toast.error(errorMessage);
-        console.error('Server error:', data);
+        if (response.ok) {
+          toast.success(`${formData.role} added successfully!`);
+        } else {
+          const errorMessage = data.message || data.error || `Failed to add ${formData.role}`;
+          toast.error(errorMessage);
+          setLoading(false);
+          return;
+        }
       }
+      
+      // Call the callback to refresh staff list
+      if (onStaffAdded) {
+        onStaffAdded();
+      }
+      
+      // Close modal
+      onClose();
     } catch (error) {
       console.error('Error adding staff:', error);
-      toast.error('Network error - please check your connection and try again');
+      toast.error(error.response?.data?.message || 'Network error - please check your connection and try again');
     } finally {
       setLoading(false);
     }
@@ -150,7 +166,7 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content add-staff-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Add New Staff Member</h2>
+          <h2>{editMode ? 'Edit Staff Member' : 'Add New Staff Member'}</h2>
           <button className="modal-close-btn" onClick={onClose}>×</button>
         </div>
         
@@ -307,10 +323,10 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
               {loading ? (
                 <>
                   <span className="spinner"></span>
-                  Adding...
+                  {editMode ? 'Saving...' : 'Adding...'}
                 </>
               ) : (
-                'Add Staff Member'
+                editMode ? 'Update Permissions' : 'Add Staff Member'
               )}
             </button>
             <button 

@@ -1,10 +1,9 @@
 // src/pages/admin/tabs/StaffTab.jsx
 import React, { useState, useEffect } from 'react';
-import { adminService, staffService, ROLE_PERMISSIONS, PERMISSIONS, PAGE_ACCESS } from '../../../services/api';
+import { adminService, staffService, ROLE_PERMISSIONS, PERMISSIONS } from '../../../services/api';
 import { toast } from 'react-toastify';
 import PermissionGate from '../../../components/PermissionGate';
 import AddStaffModal from '../../../components/AddStaffModal';
-import StaffPermissionEditor from '../../../components/StaffPermissionEditor';
 import './StaffTab.css';
 
 const PermissionDescriptions = {
@@ -47,7 +46,9 @@ const StaffTab = () => {
   const [staff, setStaff] = useState({ cooks: [], delivery: [], cashiers: [] });
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('cooks');
-  const [showAddModal, setShowAddModal] = useState(false);
+   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingStaff, setEditingStaff] = useState(null);
   const [showPerformanceModal, setShowPerformanceModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [staffPerformance, setStaffPerformance] = useState(null);
@@ -137,18 +138,16 @@ const StaffTab = () => {
     }
   };
 
-  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
-  const [permissionsStaff, setPermissionsStaff] = useState(null);
-
-  const handleEditStaff = (staffMember) => {
-    setShowPermissionsModal(true);
-    fetchStaffWithPermissions(staffMember);
-  };
-
-  const fetchStaffWithPermissions = async (staffMember) => {
+  const handleEditStaff = async (staffMember) => {
     try {
       const data = await adminService.getStaffPermissions(staffMember._id);
-      setPermissionsStaff(data);
+      setEditingStaff({
+        ...staffMember,
+        extraPermissions: data.extraPermissions || [],
+        deniedPermissions: data.deniedPermissions || [],
+        pageAccessOverrides: data.pageAccessOverrides || {}
+      });
+      setShowEditModal(true);
     } catch (error) {
       toast.error(error.message || 'Failed to load staff permissions');
     }
@@ -301,20 +300,14 @@ const StaffTab = () => {
         onStaffAdded={handleStaffAdded}
       />
 
-      {showPermissionsModal && permissionsStaff && (
-        <div className="modal-overlay" onClick={() => setShowPermissionsModal(false)}>
-          <div className="modal-content staff-permissions-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Edit Permissions - {permissionsStaff.staff?.name}</h2>
-              <button className="modal-close-btn" onClick={() => setShowPermissionsModal(false)}>×</button>
-            </div>
-            <StaffPermissionEditor
-              staff={permissionsStaff}
-              onSave={handleStaffAdded}
-              onClose={() => setShowPermissionsModal(false)}
-            />
-          </div>
-        </div>
+      {showEditModal && editingStaff && (
+        <AddStaffModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onStaffAdded={handleStaffAdded}
+          editMode={true}
+          staffData={editingStaff}
+        />
       )}
 
       {showPerformanceModal && staffPerformance && (

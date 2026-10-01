@@ -502,42 +502,16 @@ export const adminService = {
   },
 
   // ========== REPORT METHODS ==========
-  getDailyReport: async (date = null) => {
+  // One endpoint serves every report in the admin panel.
+  getUnifiedReport: async ({ start, end, role, staffId } = {}) => {
     try {
-      const url = date ? `/admin/reports/daily?date=${date}` : '/admin/reports/daily';
-      const response = await api.get(url);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching daily report:', error);
-      throw error.response?.data || { message: 'Failed to fetch daily report' };
-    }
-  },
-
-  getWeeklyReport: async (week = null) => {
-    try {
-      const url = week ? `/admin/reports/weekly?week=${week}` : '/admin/reports/weekly';
-      const response = await api.get(url);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching weekly report:', error);
-      throw error.response?.data || { message: 'Failed to fetch weekly report' };
-    }
-  },
-
-  getMonthlyReport: async (month = null) => {
-    try {
-      const url = month ? `/admin/reports/monthly?month=${month}` : '/admin/reports/monthly';
-      const response = await api.get(url);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching monthly report:', error);
-      throw error.response?.data || { message: 'Failed to fetch monthly report' };
-    }
-  },
-
-  getReport: async (type, startDate, endDate) => {
-    try {
-      const response = await api.get(`/admin/reports/${type}?start=${startDate}&end=${endDate}`);
+      const params = new URLSearchParams();
+      if (start) params.append('start', start);
+      if (end) params.append('end', end);
+      if (role && role !== 'all') params.append('role', role);
+      if (staffId) params.append('staffId', staffId);
+      const query = params.toString() ? `?${params}` : '';
+      const response = await api.get(`/admin/reports/unified${query}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching report:', error);
@@ -545,14 +519,16 @@ export const adminService = {
     }
   },
 
-  exportReport: async (type, format = 'csv', startDate = null, endDate = null) => {
+  exportUnifiedReport: async (format = 'csv', { start, end, role } = {}) => {
     try {
-      let url = `/admin/reports/export/${type}?format=${format}`;
-      if (startDate && endDate) {
-        url += `&start=${startDate}&end=${endDate}`;
-      }
-      const response = await api.get(url, {
-        responseType: 'blob'
+      const params = new URLSearchParams();
+      params.append('format', format);
+      if (start) params.append('start', start);
+      if (end) params.append('end', end);
+      if (role && role !== 'all') params.append('role', role);
+      const response = await api.get(`/admin/reports/export?${params}`, {
+        responseType: 'blob',
+        timeout: 60000
       });
       return response.data;
     } catch (error) {
@@ -854,52 +830,20 @@ export const staffService = {
     }
   },
 
-  getChefReport: async (chefId, startDate, endDate) => {
-    try {
-      const params = new URLSearchParams();
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
-      
-      let url = `/staff/reports/chef/${chefId}`;
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-      
-      const response = await api.get(url);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching chef report:', error);
-      throw error.response?.data || { message: 'Failed to get chef report' };
-    }
-  },
-
-  getDeliveryReport: async (deliveryId, startDate, endDate) => {
-    try {
-      const params = new URLSearchParams();
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
-      
-      let url = `/staff/reports/delivery/${deliveryId}`;
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-      
-      const response = await api.get(url);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching delivery report:', error);
-      throw error.response?.data || { message: 'Failed to get delivery report' };
-    }
-  },
-
   getChefStats: async () => {
     try {
       const userStr = sessionStorage.getItem('user');
       const user = userStr ? JSON.parse(userStr) : null;
-      
+
       if (user?._id) {
-        const response = await staffService.getChefReport(user._id);
-        return response.summary || { totalOrders: 0, totalItemsCooked: 0 };
+        const response = await adminService.getUnifiedReport({ staffId: user._id });
+        const detail = response?.data?.staffDetail;
+        if (detail) {
+          return {
+            totalOrders: detail.summary.totalOrders || 0,
+            totalItemsCooked: detail.summary.totalItemsCooked || 0
+          };
+        }
       }
       return { totalOrders: 0, totalItemsCooked: 0 };
     } catch (error) {
@@ -912,10 +856,16 @@ export const staffService = {
     try {
       const userStr = sessionStorage.getItem('user');
       const user = userStr ? JSON.parse(userStr) : null;
-      
+
       if (user?._id) {
-        const response = await staffService.getDeliveryReport(user._id);
-        return response.summary || { totalDeliveries: 0, totalAmount: 0 };
+        const response = await adminService.getUnifiedReport({ staffId: user._id });
+        const detail = response?.data?.staffDetail;
+        if (detail) {
+          return {
+            totalDeliveries: detail.summary.totalOrders || 0,
+            totalAmount: detail.summary.totalAmount || 0
+          };
+        }
       }
       return { totalDeliveries: 0, totalAmount: 0 };
     } catch (error) {
@@ -945,58 +895,6 @@ export const staffService = {
       return { pendingPayments: 0, completedToday: 0, totalCompleted: 0 };
     }
   },
- getAllStaffReports: async (startDate, endDate) => {
-  try {
-    const params = new URLSearchParams();
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
-    
-    const url = `/staff/reports/all${params.toString() ? `?${params.toString()}` : ''}`;
-    const response = await api.get(url);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching staff reports:', error);
-    throw error.response?.data || { message: 'Failed to fetch staff reports' };
-  }
-},
-
-getStaffReportsByRole: async (role, startDate, endDate) => {
-  try {
-    const params = new URLSearchParams();
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
-    
-    const url = `/staff/reports/${role}${params.toString() ? `?${params.toString()}` : ''}`;
-    const response = await api.get(url);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching staff reports by role:', error);
-    throw error.response?.data || { message: 'Failed to fetch staff reports' };
-  }
-},
-
-exportStaffReport: async (format, staffId = null, startDate, endDate, role = null) => {
-  try {
-    const params = new URLSearchParams();
-    params.append('format', format);
-    if (staffId) params.append('staffId', staffId);
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
-    if (role && role !== 'all') params.append('role', role);
-    
-    const url = `/staff/reports/export?${params.toString()}`;
-    const response = await api.get(url, { 
-      responseType: 'blob',
-      timeout: 60000
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error exporting staff report:', error);
-    throw error.response?.data || { message: 'Failed to export staff report' };
-  }
-},
-
-  
 };
 
 // ========== CART SERVICES ==========

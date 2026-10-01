@@ -19,7 +19,6 @@ import StaffTab from './tabs/StaffTab';
 import MenuTab from './tabs/MenuTab';
 import ReportsTab from './tabs/ReportsTab';
 import UsersTab from './tabs/UsersTab';
-import StaffReportsTab from './tabs/StaffReportsTab';
 import StockTab from './tabs/StockTab';
 import KitchenDisplayTab from './tabs/KitchenDisplayTab';
 
@@ -146,8 +145,6 @@ const AdminDashboard = () => {
         return <ReportsTab />;
       case 'users':
         return <UsersTab />;
-      case 'staff-reports':
-        return <StaffReportsTab />;
       case 'lottery':
         return <LotteryTab />;
       case 'giveaway':

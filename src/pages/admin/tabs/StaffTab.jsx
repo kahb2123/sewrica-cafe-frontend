@@ -64,52 +64,23 @@ const StaffTab = () => {
   const handleViewPerformance = async (staffId, role) => {
     try {
       setLoading(true);
-      let data;
-      
-      if (role === 'cook') {
-        data = await staffService.getChefReport(staffId);
-      } else if (role === 'delivery') {
-        data = await staffService.getDeliveryReport(staffId);
+      const response = await adminService.getUnifiedReport({ staffId });
+      const detail = response?.data?.staffDetail;
+
+      if (!detail) {
+        toast.info('No activity recorded for this staff member yet');
+        setStaffPerformance(null);
+        setSelectedStaff({ id: staffId, role });
+        setShowPerformanceModal(true);
+        return;
       }
-      
-      setStaffPerformance(data);
+
+      setStaffPerformance(detail);
       setSelectedStaff({ id: staffId, role });
       setShowPerformanceModal(true);
     } catch (error) {
       console.error('Error fetching performance:', error);
-      
-      const mockData = role === 'cook' ? {
-        summary: {
-          totalOrders: 45,
-          totalItemsCooked: 78,
-          totalCookingTime: 540,
-          averageCookingTime: 12
-        },
-        itemsBreakdown: {
-          'Cheese Burger': 25,
-          'Doro Wat': 18,
-          'Pizza': 15,
-          'Pasta': 12,
-          'Salad': 8
-        }
-      } : {
-        summary: {
-          totalDeliveries: 67,
-          totalAmount: 24500,
-          totalDeliveryTime: 1675,
-          averageDeliveryTime: 25
-        },
-        dailyBreakdown: {
-          '2024-03-01': { count: 12, totalAmount: 4500 },
-          '2024-03-02': { count: 15, totalAmount: 5200 },
-          '2024-03-03': { count: 10, totalAmount: 3800 },
-        }
-      };
-      
-      setStaffPerformance(mockData);
-      setSelectedStaff({ id: staffId, role });
-      setShowPerformanceModal(true);
-      toast.info('Using sample performance data');
+      toast.error(error.message || 'Failed to load performance');
     } finally {
       setLoading(false);
     }

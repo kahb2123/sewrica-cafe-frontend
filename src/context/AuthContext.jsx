@@ -1,4 +1,5 @@
 // src/context/AuthContext.jsx
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { authService, ROLE_PERMISSIONS, ROLE_HIERARCHY, PAGE_ACCESS } from '../services/api';
 
@@ -16,12 +17,46 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
+  const [userPermissions, setUserPermissions] = useState([]);
+  const [userPageAccess, setUserPageAccess] = useState({});
 
   // Use sessionStorage instead of localStorage for tab isolation
   const storage = sessionStorage;
 
+  const fetchPermissions = async () => {
+    const token = storage.getItem('token');
+    if (!token) return;
+    try {
+      const data = await authService.getPermissions();
+      if (data && data.success !== false) {
+        const perms = data.permissions || [];
+        setUserPermissions(perms);
+
+        const mergedPageAccess = {};
+        const role = data.role || 'customer';
+        for (const [page, access] of Object.entries(PAGE_ACCESS)) {
+          const override = (data.pageAccessOverrides || {})[page];
+          if (override) {
+            mergedPageAccess[page] = {
+              canRead: override.canRead ?? access.read.includes(role),
+              canWrite: override.canWrite ?? access.write.includes(role),
+            };
+          } else {
+            mergedPageAccess[page] = {
+              canRead: access.read.includes(role),
+              canWrite: access.write.includes(role),
+            };
+          }
+        }
+        setUserPageAccess(mergedPageAccess);
+      }
+    } catch (error) {
+      console.error('Error fetching permissions:', error);
+    }
+  };
+
   useEffect(() => {
-    const initializeAuth = () => {
+    const initializeAuth = async () => {
       const token = storage.getItem('token');
       const storedUser = storage.getItem('user');
 
@@ -40,6 +75,9 @@ export const AuthProvider = ({ children }) => {
       }
       setLoading(false);
       setInitialized(true);
+      if (token) {
+        await fetchPermissions();
+      }
     };
 
     initializeAuth();
@@ -68,6 +106,9 @@ export const AuthProvider = ({ children }) => {
         storage.setItem('token', data.token);
         storage.setItem('user', JSON.stringify(normalized));
         setUser(normalized);
+
+        await fetchPermissions();
+        
         return { success: true, user: normalized };
       }
       return { success: false, error: data?.error || data?.message || 'Login failed' };
@@ -110,44 +151,45 @@ export const AuthProvider = ({ children }) => {
     return getUserRole() === 'cashier';
   };
 
-  const getUserPermissions = () => {
+   const getUserPermissions = () => {
+    if (userPermissions.length) return userPermissions;
     const role = getUserRole();
     return ROLE_PERMISSIONS[role] || [];
   };
-
+  
   const hasPermission = (permission) => {
+    if (userPermissions.length) return userPermissions.includes(permission);
     const role = getUserRole();
     const perms = ROLE_PERMISSIONS[role] || [];
     return perms.includes(permission);
   };
-
+  
   const hasRole = (...allowedRoles) => {
     const role = getUserRole();
     return allowedRoles.includes(role);
   };
-
+  
   const hasRoleOrHigher = (minRole) => {
     const role = getUserRole();
     const userLevel = ROLE_HIERARCHY[role] ?? -1;
     const minLevel = ROLE_HIERARCHY[minRole] ?? -1;
     return userLevel >= minLevel;
   };
-
+  
   const canReadPage = (page) => {
+    if (userPageAccess[page]) return userPageAccess[page].canRead;
     const role = getUserRole();
-    const access = PAGE_ACCESS[page];
-    if (!access) return false;
-    return access.read.includes(role);
+    return PAGE_ACCESS[page]?.read.includes(role) || false;
   };
-
+  
   const canWritePage = (page) => {
+    if (userPageAccess[page]) return userPageAccess[page].canWrite;
     const role = getUserRole();
-    const access = PAGE_ACCESS[page];
-    if (!access) return false;
-    return access.write.includes(role);
+    return PAGE_ACCESS[page]?.write.includes(role) || false;
   };
-
+  
   const getPageAccess = () => {
+    if (Object.keys(userPageAccess).length) return userPageAccess;
     const role = getUserRole();
     const result = {};
     for (const [page, access] of Object.entries(PAGE_ACCESS)) {
@@ -179,6 +221,7 @@ export const AuthProvider = ({ children }) => {
     canReadPage,
     canWritePage,
     getPageAccess,
+    refetchPermissions: fetchPermissions,
   };
 
   return (

@@ -59,6 +59,7 @@ const PageLabels = {
 const PermissionsTab = () => {
   const [roleMap, setRoleMap] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
 
   useEffect(() => {
@@ -80,6 +81,50 @@ const PermissionsTab = () => {
       setLoading(false);
     }
   }, [selectedRole]);
+
+  const handlePageAccessToggle = async (page, type) => {
+    if (!selectedRole) return;
+
+    const current = selectedRole.pageAccess[page];
+    const isCurrently = type === 'read' ? current?.canRead : current?.canWrite;
+
+    const actionMap = {
+      read: isCurrently ? 'revoke_read' : 'grant_read',
+      write: isCurrently ? 'revoke_write' : 'grant_write',
+    };
+
+    setSaving(true);
+    try {
+      const result = await adminService.updatePageAccess(selectedRole.role, page, actionMap[type]);
+      if (result.success) {
+        const updatedPageAccess = {
+          ...selectedRole.pageAccess,
+          [page]: {
+            canRead: result.pageAccess.read.includes(selectedRole.role),
+            canWrite: result.pageAccess.write.includes(selectedRole.role),
+          },
+        };
+        setSelectedRole({ ...selectedRole, pageAccess: updatedPageAccess });
+
+        if (roleMap) {
+          setRoleMap({
+            ...roleMap,
+            roles: roleMap.roles.map(r =>
+              r.role === selectedRole.role ? { ...r, pageAccess: updatedPageAccess } : r
+            ),
+          });
+        }
+
+        toast.success(`Page access updated`);
+      } else {
+        toast.error(result.message || 'Failed to update page access');
+      }
+    } catch (error) {
+      toast.error(error.message || 'Failed to update page access');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const getRolePermissions = (role) => {
     if (!role || !role.permissions) return [];
@@ -174,18 +219,22 @@ const PermissionsTab = () => {
                 <tr key={page}>
                   <td>{PageLabels[page] || page}</td>
                   <td>
-                    {access.canRead ? (
-                      <span className="check-icon">Yes</span>
-                    ) : (
-                      <span className="x-icon">No</span>
-                    )}
+                    <button
+                      className={`page-access-toggle ${access.canRead ? 'granted' : 'revoked'}`}
+                      onClick={() => handlePageAccessToggle(page, 'read')}
+                      disabled={saving}
+                    >
+                      {access.canRead ? 'Yes' : 'No'}
+                    </button>
                   </td>
                   <td>
-                    {access.canWrite ? (
-                      <span className="check-icon">Yes</span>
-                    ) : (
-                      <span className="x-icon">No</span>
-                    )}
+                    <button
+                      className={`page-access-toggle ${access.canWrite ? 'granted' : 'revoked'}`}
+                      onClick={() => handlePageAccessToggle(page, 'write')}
+                      disabled={saving}
+                    >
+                      {access.canWrite ? 'Yes' : 'No'}
+                    </button>
                   </td>
                 </tr>
               ))}

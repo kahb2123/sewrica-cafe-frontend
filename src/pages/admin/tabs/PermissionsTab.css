@@ -212,6 +212,44 @@
   font-weight: 600;
 }
 
+.page-access-table td > span {
+  display: inline-block;
+  min-width: 28px;
+  text-align: center;
+}
+
+.page-access-toggle {
+  padding: 4px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 44px;
+}
+
+.page-access-toggle:hover {
+  border-color: #93c5fd;
+}
+
+.page-access-toggle:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.page-access-toggle.granted {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #6ee7b7;
+}
+
+.page-access-toggle.revoked {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
 .empty-state {
   padding: 40px;
   text-align: center;

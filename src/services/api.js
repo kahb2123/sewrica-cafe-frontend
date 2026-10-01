@@ -544,6 +544,15 @@ export const adminService = {
     }
   },
 
+  updatePageAccess: async (role, page, action) => {
+    try {
+      const response = await api.put('/auth/roles/page-access', { role, page, action });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update page access' };
+    }
+  },
+
   getStats: async () => {
     try {
       const response = await api.get('/admin/stats');

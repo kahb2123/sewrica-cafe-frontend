@@ -51,9 +51,10 @@ const urgencyLevel = (startMs, nowMs) => {
   return 'normal';
 };
 
-const KitchenDisplayTab = () => {
+const KitchenDisplayTab = ({ readOnly = false }) => {
   const [orders, setOrders] = useState([]);
   const [chefs, setChefs] = useState([]);
+  const [deliveries, setDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
   const [busyId, setBusyId] = useState(null);
@@ -80,6 +81,10 @@ const KitchenDisplayTab = () => {
       .getStaffByRole('cook')
       .then((response) => setChefs(response?.staff || []))
       .catch((error) => console.error('Kitchen: failed to load chefs', error));
+    staffService
+      .getStaffByRole('delivery')
+      .then((response) => setDeliveries(response?.staff || []))
+      .catch((error) => console.error('Kitchen: failed to load deliveries', error));
   }, [loadOrders]);
 
   useEffect(() => {
@@ -139,6 +144,7 @@ const KitchenDisplayTab = () => {
 
   const assignChefToOrder = async (orderId, chefId) => {
     if (!chefId) return;
+    setBusyId(`chef-${orderId}`);
     try {
       const response = await staffService.assignChef(orderId, chefId);
       const updated = response?.order || response?.data;
@@ -150,6 +156,27 @@ const KitchenDisplayTab = () => {
       console.error('Kitchen: failed to assign chef', error);
       toast.error(error?.message || 'Failed to assign chef');
       loadOrders(false);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const assignDeliveryToOrder = async (orderId, deliveryId) => {
+    if (!deliveryId) return;
+    setBusyId(`delivery-${orderId}`);
+    try {
+      const response = await staffService.assignDelivery(orderId, deliveryId);
+      const updated = response?.order || response?.data;
+      if (updated) {
+        setOrders((prev) => prev.map((order) => (order._id === orderId ? updated : order)));
+      }
+      toast.success('Delivery person assigned');
+    } catch (error) {
+      console.error('Kitchen: failed to assign delivery', error);
+      toast.error(error?.message || 'Failed to assign delivery person');
+      loadOrders(false);
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -300,31 +327,47 @@ const KitchenDisplayTab = () => {
                       </span>
                     </div>
 
-                     <div className="kds-col-chef">
-                      <select
-                        className="kds-chef-select"
-                        value={order.assignedChef?._id || ''}
-                        onChange={(event) => assignChefToOrder(order._id, event.target.value)}
-                        aria-label={`Assign chef to order ${getOrderNumberLabel(order.orderNumber)}`}
-                      >
-                        <option value="">-- No chef --</option>
-                        {chefs.map((chef) => (
-                          <option key={chef._id} value={chef._id}>
-                            {chef.name}
-                          </option>
-                        ))}
-                      </select>
+                    <div className="kds-col-chef">
+                      {readOnly ? (
+                        <span className="kds-chef-name">
+                          {order.assignedChef ? order.assignedChef.name : '—'}
+                        </span>
+                      ) : (
+                        <select
+                          className="kds-chef-select"
+                          value={order.assignedChef?._id || ''}
+                          onChange={(event) => assignChefToOrder(order._id, event.target.value)}
+                          aria-label={`Assign chef to order ${getOrderNumberLabel(order.orderNumber)}`}
+                        >
+                          <option value="">-- No chef --</option>
+                          {chefs.map((chef) => (
+                            <option key={chef._id} value={chef._id}>
+                              {chef.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
 
                     <div className="kds-col-delivery">
-                      {order.assignedDelivery ? (
+                      {readOnly ? (
                         <span className="kds-delivery-name">
-                          {order.assignedDelivery.name || 'Assigned'}
+                          {order.assignedDelivery ? order.assignedDelivery.name : '—'}
                         </span>
                       ) : (
-                        <span className="kds-delivery-name unassigned">
-                          ⏳ Waiting for assignment
-                        </span>
+                        <select
+                          className="kds-delivery-select"
+                          value={order.assignedDelivery?._id || ''}
+                          onChange={(event) => assignDeliveryToOrder(order._id, event.target.value)}
+                          aria-label={`Assign delivery to order ${getOrderNumberLabel(order.orderNumber)}`}
+                        >
+                          <option value="">⏳ Unassigned</option>
+                          {deliveries.map((delivery) => (
+                            <option key={delivery._id} value={delivery._id}>
+                              {delivery.name}
+                            </option>
+                          ))}
+                        </select>
                       )}
                     </div>
 

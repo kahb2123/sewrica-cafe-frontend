@@ -925,7 +925,7 @@ export const staffService = {
     }
   },
 
-  getKitchenOrders: async () => {
+   getKitchenOrders: async () => {
     try {
       const response = await api.get('/staff/orders/kitchen');
       return response.data;
@@ -937,7 +937,7 @@ export const staffService = {
 
   assignDelivery: async (orderId, deliveryId, notes = '') => {
     try {
-      const response = await api.post(`/staff/assign-delivery/${orderId}`, { deliveryId, notes });
+      const response = await api.post(`/staff/orders/${orderId}/assign-delivery`, { deliveryId, notes });
       return response.data;
     } catch (error) {
       console.error('Error assigning delivery:', error);

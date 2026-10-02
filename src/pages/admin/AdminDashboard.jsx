@@ -22,6 +22,7 @@ import UsersTab from './tabs/UsersTab';
 import LotteryTab from './tabs/LotteryTab';
 import GiveawayTab from './tabs/GiveawayTab';
 import PermissionsTab from './tabs/PermissionsTab';
+import KitchenDisplayTab from './tabs/KitchenDisplayTab';
 
 const AdminDashboard = () => {
   const { user, isAuthenticated, canReadPage } = useAuth();

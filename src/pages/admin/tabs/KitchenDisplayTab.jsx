@@ -57,7 +57,8 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
   const [deliveries, setDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
-  const [busyId, setBusyId] = useState(null);
+  const [busyChefIds, setBusyChefIds] = useState(new Set());
+  const [busyDeliveryIds, setBusyDeliveryIds] = useState(new Set());
   const [now, setNow] = useState(() => Date.now());
   const { connected, socket } = useSocket();
 
@@ -122,9 +123,9 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
     };
   }, [connected, socket, loadOrders]);
 
-  const completeOrder = async (order) => {
-    if (busyId) return;
-    setBusyId(order._id);
+   const completeOrder = async (order) => {
+    if (busyChefIds.size > 0 || busyDeliveryIds.size > 0) return;
+    setBusyChefIds(new Set([order._id]));
 
     try {
       const steps = ADMIN_PATH_TO_READY[order.status] || [];
@@ -138,13 +139,13 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
       toast.error(error?.message || 'Failed to complete order');
       loadOrders(false);
     } finally {
-      setBusyId(null);
+      setBusyChefIds(new Set());
     }
   };
 
   const assignChefToOrder = async (orderId, chefId) => {
     if (!chefId) return;
-    setBusyId(`chef-${orderId}`);
+    setBusyChefIds((prev) => new Set([...prev, orderId]));
     try {
       const response = await staffService.assignChef(orderId, chefId);
       const updated = response?.order || response?.data;
@@ -157,13 +158,17 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
       toast.error(error?.message || 'Failed to assign chef');
       loadOrders(false);
     } finally {
-      setBusyId(null);
+      setBusyChefIds((prev) => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
     }
   };
 
   const assignDeliveryToOrder = async (orderId, deliveryId) => {
     if (!deliveryId) return;
-    setBusyId(`delivery-${orderId}`);
+    setBusyDeliveryIds((prev) => new Set([...prev, orderId]));
     try {
       const response = await staffService.assignDelivery(orderId, deliveryId);
       const updated = response?.order || response?.data;
@@ -176,7 +181,11 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
       toast.error(error?.message || 'Failed to assign delivery person');
       loadOrders(false);
     } finally {
-      setBusyId(null);
+      setBusyDeliveryIds((prev) => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
     }
   };
 
@@ -295,7 +304,7 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
               {queue.map(({ order, position }) => {
                 const startMs = new Date(order.createdAt).getTime();
                 const urgency = Number.isNaN(startMs) ? 'normal' : urgencyLevel(startMs, now);
-                const isBusy = busyId === order._id;
+                const isBusy = busyChefIds.has(order._id) || busyDeliveryIds.has(order._id);
 
                 return (
                   <div key={order._id} className={`kds-row status-${order.status} urgency-${urgency}`}>
@@ -375,7 +384,7 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
                       <button
                         className="kds-complete-btn"
                         onClick={() => completeOrder(order)}
-                        disabled={Boolean(busyId)}
+                        disabled={isBusy}
                         aria-label={`Mark order ${getOrderNumberLabel(order.orderNumber)} ready`}
                       >
                         {isBusy ? '⏳ Saving…' : '✅ Complete'}

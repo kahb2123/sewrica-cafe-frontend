@@ -9,6 +9,7 @@ import RejectOrderModal from '../components/modals/RejectOrderModal';
 import CashPaymentModal from '../components/modals/CashPaymentModal';
 import AssignChefModal from '../components/modals/AssignChefModal';
 import AssignDeliveryModal from '../components/modals/AssignDeliveryModal';
+import AssignStaffModal from '../components/modals/AssignStaffModal';
 import './OrdersTab.css';
 
 const OrdersTab = () => {
@@ -27,6 +28,8 @@ const OrdersTab = () => {
   
   const [showAssignChefModal, setShowAssignChefModal] = useState(false);
   const [showAssignDeliveryModal, setShowAssignDeliveryModal] = useState(false);
+  const [showAssignStaffModal, setShowAssignStaffModal] = useState(false);
+  const [assigningBoth, setAssigningBoth] = useState(false);
   const [availableChefs, setAvailableChefs] = useState([]);
   const [availableDelivery, setAvailableDelivery] = useState([]);
   const [selectedChefId, setSelectedChefId] = useState('');
@@ -217,6 +220,43 @@ const OrdersTab = () => {
     } catch (error) {
       console.error('Error assigning delivery:', error);
       toast.error(error.message || 'Failed to assign delivery');
+    }
+  };
+
+  const handleAssignBoth = async () => {
+    if (!selectedOrder) return;
+    if (!selectedChefId && !selectedDeliveryId) {
+      toast.error('Please select at least a chef or delivery person');
+      return;
+    }
+
+    setAssigningBoth(true);
+    try {
+      const promises = [];
+      if (selectedChefId) {
+        promises.push(adminService.assignChef(selectedOrder._id, selectedChefId, assignmentNotes));
+      }
+      if (selectedDeliveryId) {
+        promises.push(adminService.assignDelivery(selectedOrder._id, selectedDeliveryId, assignmentNotes));
+      }
+
+      await Promise.all(promises);
+
+      toast.success(
+        `Successfully assigned ${selectedChefId && selectedDeliveryId ? 'both staff' : selectedChefId ? 'chef' : 'delivery person'}`
+      );
+      setShowAssignStaffModal(false);
+      setSelectedOrder(null);
+      setSelectedChefId('');
+      setSelectedDeliveryId('');
+      setAssignmentNotes('');
+      fetchOrders();
+      fetchAvailableStaff();
+    } catch (error) {
+      console.error('Error assigning staff:', error);
+      toast.error(error.message || 'Failed to assign staff');
+    } finally {
+      setAssigningBoth(false);
     }
   };
 
@@ -418,16 +458,28 @@ const OrdersTab = () => {
                   <button 
                     className="btn-assign-chef"
                     onClick={() => handleAssignChefClick(order)}
-                    disabled={Boolean(order.assignedChef) || order.status !== 'pending'}
+                    disabled={order.status === 'ready' || order.status === 'out-for-delivery' || order.status === 'delivered'}
                   >
                     {order.assignedChef ? '🔄 Reassign Chef' : '👨‍🍳 Assign Chef'}
                   </button>
                   <button 
                     className="btn-assign-delivery"
                     onClick={() => handleAssignDeliveryClick(order)}
-                    disabled={Boolean(order.assignedDelivery) || order.status !== 'ready'}
+                    disabled={order.status === 'delivered'}
                   >
                     {order.assignedDelivery ? '🔄 Reassign Delivery' : '🚚 Assign Delivery'}
+                  </button>
+                  <button
+                    className="btn-assign-both"
+                    onClick={() => {
+                      setSelectedOrder(order);
+                      setSelectedChefId(order.assignedChef?._id || '');
+                      setSelectedDeliveryId(order.assignedDelivery?._id || '');
+                      setShowAssignStaffModal(true);
+                    }}
+                    disabled={order.status === 'delivered'}
+                  >
+                    👥 Assign Both
                   </button>
                 </div>
 
@@ -504,6 +556,28 @@ const OrdersTab = () => {
         notes={assignmentNotes}
         setNotes={setAssignmentNotes}
         onAssign={handleAssignDelivery}
+      />
+
+      <AssignStaffModal
+        isOpen={showAssignStaffModal}
+        onClose={() => {
+          setShowAssignStaffModal(false);
+          setSelectedOrder(null);
+          setSelectedChefId('');
+          setSelectedDeliveryId('');
+          setAssignmentNotes('');
+        }}
+        order={selectedOrder}
+        chefs={availableChefs}
+        deliveryPersons={availableDelivery}
+        selectedChefId={selectedChefId}
+        setSelectedChefId={setSelectedChefId}
+        selectedDeliveryId={selectedDeliveryId}
+        setSelectedDeliveryId={setSelectedDeliveryId}
+        notes={assignmentNotes}
+        setNotes={setAssignmentNotes}
+        onAssign={handleAssignBoth}
+        assigning={assigningBoth}
       />
     </div>
   );

@@ -791,7 +791,7 @@ export const adminService = {
     }
   },
 
-  getItemPerformance: async ({ start, end } = {}) => {
+   getItemPerformance: async ({ start, end } = {}) => {
     try {
       const params = new URLSearchParams();
       if (start) params.append('start', start);
@@ -802,6 +802,49 @@ export const adminService = {
     } catch (error) {
       console.error('Error fetching item performance:', error);
       throw error.response?.data || { message: 'Failed to fetch item performance' };
+    }
+  },
+
+  exportReport: async (format = 'csv', { start, end, type, staffId } = {}) => {
+    try {
+      const params = new URLSearchParams();
+      params.append('format', format);
+      if (start) params.append('start', start);
+      if (end) params.append('end', end);
+      if (type) params.append('type', type);
+      if (staffId) params.append('staffId', staffId);
+      const response = await api.get(`/admin/reports/export${params.toString() ? `?${params}` : ''}`, {
+        responseType: 'blob',
+        timeout: 60000
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error exporting report:', error);
+      const data = error.response?.data;
+      if (data instanceof Blob) {
+        const text = await data.text().catch(() => '');
+        try {
+          const parsed = JSON.parse(text);
+          throw parsed;
+        } catch {
+          throw { message: text || 'Failed to export report' };
+        }
+      }
+      throw error.response?.data || { message: 'Failed to export report' };
+    }
+  },
+
+  getStaffDetail: async (staffId, { start, end } = {}) => {
+    try {
+      const params = new URLSearchParams();
+      if (start) params.append('start', start);
+      if (end) params.append('end', end);
+      const query = params.toString() ? `?${params}` : '';
+      const response = await api.get(`/admin/reports/staff/${staffId}${query}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching staff detail:', error);
+      throw error.response?.data || { message: 'Failed to fetch staff detail' };
     }
   },
 };

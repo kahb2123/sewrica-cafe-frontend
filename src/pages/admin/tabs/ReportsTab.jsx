@@ -4,8 +4,8 @@ import { toast } from 'react-toastify';
 import { adminService } from '../../../services/api';
 import './ReportsTab.css';
 
-const money = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const formatMoney = (value) => `$${money.format(Number(value) || 0)}`;
+const money = new Intl.NumberFormat('en-ET', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatMoney = (value) => `${money.format(Number(value) || 0)} ETB`;
 
 const toInputDate = (date) => date.toISOString().split('T')[0];
 const daysAgo = (n) => {
@@ -37,6 +37,14 @@ const ROLE_OPTIONS = [
   { value: 'cashier', label: 'Cashier' }
 ];
 
+const ROLE_LABELS = {
+  cook: 'Chef',
+  delivery: 'Delivery',
+  cashier: 'Cashier',
+  admin: 'Admin',
+  customer: 'Customer'
+};
+
 const ReportsTab = () => {
   const [activeTab, setActiveTab] = useState('items');
   const [preset, setPreset] = useState('7d');
@@ -47,6 +55,9 @@ const ReportsTab = () => {
   const [allStaff, setAllStaff] = useState([]);
   const [roleFilter, setRoleFilter] = useState('all');
   const [loading, setLoading] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState(null);
+  const [staffDetail, setStaffDetail] = useState(null);
+  const [exporting, setExporting] = useState(null);
 
   const applyPreset = (key) => {
     const match = PRESETS.find((entry) => entry.key === key);
@@ -88,9 +99,48 @@ const ReportsTab = () => {
   };
 
   useEffect(() => {
-    if (activeTab === 'items') loadItems();
-    if (activeTab === 'staff') loadStaff();
+    if (activeTab === 'items') { setSelectedStaff(null); setStaffDetail(null); loadItems(); }
+    if (activeTab === 'staff') { setSelectedStaff(null); setStaffDetail(null); loadStaff(); }
   }, [activeTab, range.start, range.end]);
+
+  const loadStaffDetail = async (staffId, staffName) => {
+    setLoading(true);
+    try {
+      const response = await adminService.getStaffDetail(staffId, { start: range.start, end: range.end });
+      setStaffDetail(response?.data?.staffDetail || null);
+      setSelectedStaff({ id: staffId, name: staffName });
+    } catch (error) {
+      toast.error(error.message || 'Failed to load staff detail');
+      setStaffDetail(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExport = async (format) => {
+    setExporting(format);
+    try {
+      const blob = await adminService.exportReport(format, {
+        start: range.start,
+        end: range.end,
+        type: activeTab === 'items' ? 'items' : 'staff',
+        staffId: selectedStaff?.id
+      });
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `sewrica-${activeTab === 'items' ? 'items' : 'staff'}-report-${range.start}-to-${range.end}.${format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(`Report exported as ${format.toUpperCase()}`);
+    } catch (error) {
+      toast.error(error.message || 'Failed to export report');
+    } finally {
+      setExporting(null);
+    }
+  };
 
   const peakItemRevenue = useMemo(
     () => Math.max(1, ...items.map((row) => Number(row.totalRevenue) || 0)),
@@ -109,8 +159,28 @@ const ReportsTab = () => {
   return (
     <div className="reports-tab">
       <header className="dashboard-header">
-        <h1 className="page-title">Analytics Dashboard</h1>
-        <p className="page-subtitle">Restaurant performance insights for Menu Items and Staff</p>
+        <div>
+          <h1 className="page-title">Analytics Dashboard</h1>
+          <p className="page-subtitle">Restaurant performance insights for Menu Items and Staff</p>
+        </div>
+        <div className="dashboard-actions">
+          <button
+            className="btn-export btn-csv"
+            onClick={() => handleExport('csv')}
+            disabled={exporting === 'csv' || exporting === 'pdf'}
+            title="Export as CSV"
+          >
+            {exporting === 'csv' ? 'Exporting...' : 'CSV'}
+          </button>
+          <button
+            className="btn-export btn-pdf"
+            onClick={() => handleExport('pdf')}
+            disabled={exporting === 'csv' || exporting === 'pdf'}
+            title="Export as PDF"
+          >
+            {exporting === 'pdf' ? 'Exporting...' : 'PDF'}
+          </button>
+        </div>
       </header>
 
       <div className="dashboard-controls">
@@ -148,7 +218,7 @@ const ReportsTab = () => {
           </div>
         </div>
 
-        {activeTab === 'staff' && (
+        {activeTab === 'staff' && !selectedStaff && (
           <div className="role-filter">
             <label>Staff role</label>
             <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
@@ -158,6 +228,15 @@ const ReportsTab = () => {
             </select>
           </div>
         )}
+
+        {selectedStaff && (
+          <button
+            className="btn-back-staff"
+            onClick={() => { setSelectedStaff(null); setStaffDetail(null); }}
+          >
+            Back to Staff List
+          </button>
+        )}
       </div>
 
       <div className="tab-bar">
@@ -165,7 +244,7 @@ const ReportsTab = () => {
           <button
             key={tab.key}
             className={activeTab === tab.key ? 'active' : ''}
-            onClick={() => { setActiveTab(tab.key); setRoleFilter('all'); }}
+            onClick={() => { setActiveTab(tab.key); setSelectedStaff(null); setStaffDetail(null); setRoleFilter('all'); }}
           >
             {tab.label}
           </button>
@@ -256,6 +335,86 @@ const ReportsTab = () => {
           <section className="report-section">
             {loading ? (
               <div className="loading-state">Loading staff performance data...</div>
+            ) : staffDetail ? (
+              <>
+                <div className="staff-detail-header">
+                  <h2>{staffDetail.name || 'Staff Member'}</h2>
+                  <span className={`staff-role-badge role-${staffDetail.role || 'unknown'}`}>
+                    {ROLE_LABELS[staffDetail.role] || staffDetail.role}
+                  </span>
+                </div>
+
+                <div className="dashboard-content">
+                  <div className="summary-bar">
+                    <div className="summary-item">
+                      <span>Total Orders</span>
+                      <strong>{staffDetail.summary?.totalOrders || 0}</strong>
+                    </div>
+                    <div className="summary-item">
+                      <span>Total Revenue</span>
+                      <strong>{formatMoney(staffDetail.summary?.totalRevenue)}</strong>
+                    </div>
+                    <div className="summary-item">
+                      <span>Average Order</span>
+                      <strong>{formatMoney(staffDetail.summary?.avgOrderValue)}</strong>
+                    </div>
+                  </div>
+
+                  {staffDetail.itemsBreakdown && (
+                    <div className="table-card" style={{ marginTop: '18px' }}>
+                      <h3>Items Handled</h3>
+                      <div className="table-responsive">
+                        <table className="report-table">
+                          <thead>
+                            <tr>
+                              <th>Item</th>
+                              <th>Quantity</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.entries(staffDetail.itemsBreakdown)
+                              .sort(([, a], [, b]) => Number(b) - Number(a))
+                              .map(([name, qty]) => (
+                                <tr key={name}>
+                                  <td className="item-name">{name}</td>
+                                  <td>{qty}</td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {staffDetail.recentOrders && staffDetail.recentOrders.length > 0 && (
+                    <div className="table-card" style={{ marginTop: '18px' }}>
+                      <h3>Recent Orders</h3>
+                      <div className="table-responsive">
+                        <table className="report-table">
+                          <thead>
+                            <tr>
+                              <th>Order #</th>
+                              <th>Date</th>
+                              <th>Status</th>
+                              <th>Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {staffDetail.recentOrders.map((order) => (
+                              <tr key={order.orderId}>
+                                <td className="item-name">{order.orderNumber}</td>
+                                <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                                <td>{order.status}</td>
+                                <td>{formatMoney(order.totalAmount)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
             ) : filteredStaff.length === 0 ? (
               <div className="empty-state">No staff activity in the selected period.</div>
             ) : (
@@ -271,6 +430,7 @@ const ReportsTab = () => {
                           <th>Role</th>
                           <th>Orders Handled</th>
                           <th>Total Revenue</th>
+                          <th>Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -280,11 +440,19 @@ const ReportsTab = () => {
                             <td className="item-name">{row.name || 'Unassigned'}</td>
                             <td>
                               <span className={`role-badge role-${row.role || 'unknown'}`}>
-                                {row.role || 'N/A'}
+                                {ROLE_LABELS[row.role] || row.role || 'N/A'}
                               </span>
                             </td>
                             <td>{row.totalOrders || 0}</td>
                             <td>{formatMoney(row.totalRevenue)}</td>
+                            <td>
+                              <button
+                                className="btn-view-detail"
+                                onClick={() => loadStaffDetail(row.staffId, row.name)}
+                              >
+                                View Detail
+                              </button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>

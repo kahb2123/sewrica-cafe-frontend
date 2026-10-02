@@ -32,23 +32,9 @@ export const AuthProvider = ({ children }) => {
         const perms = data.permissions || [];
         setUserPermissions(perms);
 
-        const mergedPageAccess = {};
-        const role = data.role || 'customer';
-        for (const [page, access] of Object.entries(PAGE_ACCESS)) {
-          const override = (data.pageAccessOverrides || {})[page];
-          if (override) {
-            mergedPageAccess[page] = {
-              canRead: override.canRead ?? access.read.includes(role),
-              canWrite: override.canWrite ?? access.write.includes(role),
-            };
-          } else {
-            mergedPageAccess[page] = {
-              canRead: access.read.includes(role),
-              canWrite: access.write.includes(role),
-            };
-          }
+        if (data.pageAccess) {
+          setUserPageAccess(data.pageAccess);
         }
-        setUserPageAccess(mergedPageAccess);
       }
     } catch (error) {
       console.error('Error fetching permissions:', error);
@@ -123,6 +109,8 @@ export const AuthProvider = ({ children }) => {
     storage.removeItem('token');
     storage.removeItem('user');
     setUser(null);
+    setUserPermissions([]);
+    setUserPageAccess({});
   };
 
   // Helper functions with null checks

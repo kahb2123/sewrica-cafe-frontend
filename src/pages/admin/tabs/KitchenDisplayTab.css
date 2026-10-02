@@ -234,7 +234,7 @@
 .kds-queue-head,
 .kds-row {
   display: grid;
-  grid-template-columns: 62px 150px minmax(0, 1fr) 96px 112px 190px 140px;
+  grid-template-columns: 62px 150px minmax(0, 1fr) 96px 112px 190px 150px 140px;
   align-items: center;
   gap: 14px;
 }
@@ -404,6 +404,26 @@
   min-width: 0;
 }
 
+.kds-col-delivery {
+  min-width: 0;
+}
+
+.kds-delivery-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2c3e50;
+  padding: 6px 10px;
+  background: #ecf0f1;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.kds-delivery-name.unassigned {
+  color: #e67e22;
+  font-style: italic;
+  background: #fdf3e7;
+}
+
 .kds-chef-select {
   width: 100%;
   min-height: 42px;
@@ -501,6 +521,7 @@
   .kds-col-ordered { grid-area: ordered; }
   .kds-col-elapsed { grid-area: elapsed; }
   .kds-col-chef { grid-area: chef; }
+  .kds-col-delivery { grid-area: delivery; }
   .kds-col-action { grid-area: action; }
 }
 

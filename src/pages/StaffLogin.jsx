@@ -35,8 +35,6 @@ const StaffLogin = () => {
           
           if (pageAccess.adminDashboard?.canRead) {
             redirectPath = '/admin';
-          } else if (pageAccess.staffOrdersDelivery?.canRead) {
-            redirectPath = '/staff/delivery';
           } else if (pageAccess.staffDashboard?.canRead) {
             redirectPath = '/staff/dashboard';
           }

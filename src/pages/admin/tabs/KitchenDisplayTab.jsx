@@ -1,7 +1,7 @@
 // src/pages/admin/tabs/KitchenDisplayTab.jsx
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
-import { adminService, staffService, orderService, getOrderNumberLabel } from '../../../services/api';
+import { staffService, orderService, getOrderNumberLabel } from '../../../services/api';
 import { useSocket } from '../../../context/SocketContext';
 import './KitchenDisplayTab.css';
 
@@ -63,7 +63,7 @@ const KitchenDisplayTab = () => {
   const loadOrders = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
-      const response = await adminService.getAllOrders();
+      const response = await staffService.getKitchenOrders();
       const allOrders = Array.isArray(response) ? response : response?.data || response?.orders || [];
       setOrders(allOrders.filter((order) => QUEUE_STATUSES.includes(order.status)));
     } catch (error) {
@@ -140,7 +140,7 @@ const KitchenDisplayTab = () => {
   const assignChefToOrder = async (orderId, chefId) => {
     if (!chefId) return;
     try {
-      const response = await adminService.assignChef(orderId, chefId);
+      const response = await staffService.assignChef(orderId, chefId);
       const updated = response?.order || response?.data;
       if (updated) {
         setOrders((prev) => prev.map((order) => (order._id === orderId ? updated : order)));
@@ -258,10 +258,11 @@ const KitchenDisplayTab = () => {
                 <span className="kds-col-position">#</span>
                 <span className="kds-col-order">Order</span>
                 <span className="kds-col-items">Items</span>
-                <span className="kds-col-ordered">Ordered</span>
-                <span className="kds-col-elapsed">Elapsed</span>
-                <span className="kds-col-chef">Chef</span>
-                <span className="kds-col-action">Action</span>
+                 <span className="kds-col-ordered">Ordered</span>
+                     <span className="kds-col-elapsed">Elapsed</span>
+                     <span className="kds-col-chef">Chef</span>
+                     <span className="kds-col-delivery">Wait / Delivery</span>
+                     <span className="kds-col-action">Action</span>
               </div>
 
               {queue.map(({ order, position }) => {
@@ -299,7 +300,7 @@ const KitchenDisplayTab = () => {
                       </span>
                     </div>
 
-                    <div className="kds-col-chef">
+                     <div className="kds-col-chef">
                       <select
                         className="kds-chef-select"
                         value={order.assignedChef?._id || ''}
@@ -313,6 +314,18 @@ const KitchenDisplayTab = () => {
                           </option>
                         ))}
                       </select>
+                    </div>
+
+                    <div className="kds-col-delivery">
+                      {order.assignedDelivery ? (
+                        <span className="kds-delivery-name">
+                          {order.assignedDelivery.name || 'Assigned'}
+                        </span>
+                      ) : (
+                        <span className="kds-delivery-name unassigned">
+                          ⏳ Waiting for assignment
+                        </span>
+                      )}
                     </div>
 
                     <div className="kds-col-action">

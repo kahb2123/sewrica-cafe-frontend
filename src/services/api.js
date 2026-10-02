@@ -224,8 +224,10 @@ export const authService = {
 
         return {
           success: true,
+          user: { role },
           role,
           permissions,
+          pageAccess: data.pageAccess || {},
           roleHierarchy,
           PERMISSIONS,
           hasPermission,
@@ -913,13 +915,23 @@ export const staffService = {
     }
   },
 
-  assignChef: async (orderId, chefId, notes = '') => {
+   assignChef: async (orderId, chefId, notes = '') => {
     try {
-      const response = await api.post(`/staff/assign-chef/${orderId}`, { chefId, notes });
+      const response = await api.post(`/staff/orders/${orderId}/assign-chef`, { chefId, notes });
       return response.data;
     } catch (error) {
       console.error('Error assigning chef:', error);
       throw error.response?.data || { message: 'Failed to assign chef' };
+    }
+  },
+
+  getKitchenOrders: async () => {
+    try {
+      const response = await api.get('/staff/orders/kitchen');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching kitchen orders:', error);
+      throw error.response?.data || { message: 'Failed to fetch kitchen orders' };
     }
   },
 

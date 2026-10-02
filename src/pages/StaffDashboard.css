@@ -692,7 +692,82 @@
     font-size: 13px;
   }
   
-  .modal-content {
+   .modal-content {
+     padding: 16px;
+   }
+}
+
+/* Staff Dashboard Navigation */
+.staff-nav {
+  display: flex;
+  gap: 4px;
+  padding: 12px 24px;
+  background: #f8f9fa;
+  border-bottom: 2px solid #e5e7eb;
+  overflow-x: auto;
+}
+
+.staff-nav .nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.staff-nav .nav-tab:hover {
+  background: #f1f3f5;
+  color: #374151;
+}
+
+.staff-nav .nav-tab.active {
+  background: #27ae60;
+  color: white;
+}
+
+.staff-nav .nav-icon {
+  font-size: 16px;
+}
+
+.staff-nav .nav-label {
+  font-size: 13px;
+}
+
+.staff-content {
+  padding: 20px;
+}
+
+.page-wrapper {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 24px;
+}
+
+@media (max-width: 768px) {
+  .staff-nav {
+    padding: 8px;
+    gap: 2px;
+  }
+  
+  .staff-nav .nav-tab {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  
+  .staff-content {
+    padding: 12px;
+  }
+  
+  .page-wrapper {
     padding: 16px;
   }
 }

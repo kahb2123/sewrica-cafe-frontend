@@ -5,14 +5,19 @@ import { useAuth } from '../context/AuthContext';
 import { staffService, PERMISSIONS } from '../services/api';
 import { useSocket } from '../context/SocketContext';
 import StaffTaskCard from '../components/StaffTaskCard';
+import KitchenDisplayTab from './admin/tabs/KitchenDisplayTab';
+import StockTab from './admin/tabs/StockTab';
+import ExpenseTab from './admin/tabs/ExpenseTab';
+import ReportsTab from './admin/tabs/ReportsTab';
 import { toast } from 'react-toastify';
 import './StaffDashboard.css';
 
 const StaffDashboard = () => {
-  const { user, logout, hasRole, canReadPage } = useAuth();
+  const { user, logout, hasRole, canReadPage, canWritePage } = useAuth();
   const navigate = useNavigate();
   const { connected, onOrderAssigned } = useSocket();
   const [activeTab, setActiveTab] = useState('tasks');
+  const [activeSubTab, setActiveSubTab] = useState('tasks');
   const [tasks, setTasks] = useState([]);
   const [completedTasks, setCompletedTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -295,6 +300,28 @@ const StaffDashboard = () => {
     return user?.role?.toLowerCase() || 'staff';
   };
 
+  const getNavTabs = () => {
+    const tabs = [];
+    if (canReadPage('staffDashboard')) {
+      tabs.push({ id: 'tasks', label: 'My Tasks', icon: '📋' });
+    }
+    if (canReadPage('staffOrdersCooking')) {
+      tabs.push({ id: 'kitchen', label: 'Kitchen Display', icon: '🍳' });
+    }
+    if (canReadPage('adminIngredients')) {
+      tabs.push({ id: 'stock', label: 'Stock In/Out', icon: '🔄' });
+    }
+    if (canReadPage('adminExpenses')) {
+      tabs.push({ id: 'expenses', label: 'Expenses', icon: '💸' });
+    }
+    if (canReadPage('adminReports')) {
+      tabs.push({ id: 'reports', label: 'Reports', icon: '📈' });
+    }
+    return tabs;
+  };
+
+  const navTabs = getNavTabs();
+
   return (
     <div className="staff-dashboard">
       <div className="dashboard-header">
@@ -315,113 +342,158 @@ const StaffDashboard = () => {
         </div>
       </div>
 
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon">📋</div>
-          <div className="stat-details">
-            <h3>Today's Tasks</h3>
-            <p className="stat-number">{stats.todayTasks}</p>
-          </div>
+      {navTabs.length > 1 && (
+        <div className="staff-nav">
+          {navTabs.map(tab => (
+            <button
+              key={tab.id}
+              className={`nav-tab ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span className="nav-icon">{tab.icon}</span>
+              <span className="nav-label">{tab.label}</span>
+            </button>
+          ))}
         </div>
-        <div className="stat-card">
-          <div className="stat-icon">✅</div>
-          <div className="stat-details">
-            <h3>Completed Today</h3>
-            <p className="stat-number">{stats.completedToday}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">⏳</div>
-          <div className="stat-details">
-            <h3>Pending</h3>
-            <p className="stat-number">{stats.pendingTasks}</p>
-          </div>
-        </div>
-      </div>
+      )}
 
-      <div className="tasks-tabs">
-        <button 
-          className={`tab-btn ${activeTab === 'tasks' ? 'active' : ''}`}
-          onClick={() => setActiveTab('tasks')}
-        >
-          Active Tasks ({tasks.length})
-        </button>
-        <button 
-          className={`tab-btn ${activeTab === 'completed' ? 'active' : ''}`}
-          onClick={() => setActiveTab('completed')}
-        >
-          Completed ({completedTasks.length})
-        </button>
-      </div>
-
-      <div className="tasks-container">
-        {loading ? (
-          <div className="loading-state">
-            <div className="spinner"></div>
-            <p>Loading your tasks...</p>
-          </div>
-        ) : (
+      <div className="staff-content">
+        {activeTab === 'tasks' && (
           <>
-            {activeTab === 'tasks' && (
-              <>
-                {tasks.length > 0 ? (
-                  tasks.map(task => (
-                    <StaffTaskCard
-                      key={task._id}
-                      task={task}
-                      type={getTaskType()}
-                      onTaskUpdate={handleTaskUpdate}
-                      onChefAccept={handleChefAccept}
-                      onChefReject={handleChefReject}
-                      onStartPreparing={handleStartPreparing}
-                      onMarkReady={handleMarkReady}
-                      onDeliveryAccept={handleDeliveryAccept}
-                      onDeliveryReject={handleDeliveryReject}
-                      onStartDelivery={handleStartDelivery}
-                      onCompleteDelivery={handleCompleteDelivery}
-                      onProcessPayment={handleProcessPayment}
-                    />
-                  ))
-                ) : (
-                  <div className="empty-state">
-                    <div className="empty-icon">🎉</div>
-                    <h3>No Active Tasks</h3>
-                    <p>{getRoleSpecificMessage()}</p>
-                  </div>
-                )}
-              </>
-            )}
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-icon">📋</div>
+                <div className="stat-details">
+                  <h3>Today's Tasks</h3>
+                  <p className="stat-number">{stats.todayTasks}</p>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon">✅</div>
+                <div className="stat-details">
+                  <h3>Completed Today</h3>
+                  <p className="stat-number">{stats.completedToday}</p>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon">⏳</div>
+                <div className="stat-details">
+                  <h3>Pending</h3>
+                  <p className="stat-number">{stats.pendingTasks}</p>
+                </div>
+              </div>
+            </div>
 
-            {activeTab === 'completed' && (
-              <>
-                {completedTasks.length > 0 ? (
-                  completedTasks.map(task => (
-                    <StaffTaskCard
-                      key={task._id}
-                      task={task}
-                      type={getTaskType()}
-                      onTaskUpdate={handleTaskUpdate}
-                      onChefAccept={handleChefAccept}
-                      onChefReject={handleChefReject}
-                      onStartPreparing={handleStartPreparing}
-                      onMarkReady={handleMarkReady}
-                      onDeliveryAccept={handleDeliveryAccept}
-                      onDeliveryReject={handleDeliveryReject}
-                      onStartDelivery={handleStartDelivery}
-                      onCompleteDelivery={handleCompleteDelivery}
-                      onProcessPayment={handleProcessPayment}
-                    />
-                  ))
-                ) : (
-                  <div className="empty-state">
-                    <div className="empty-icon">📭</div>
-                    <h3>No Completed Tasks</h3>
-                    <p>Your completed tasks will appear here.</p>
-                  </div>
-                )}
-              </>
-            )}
+            <div className="tasks-tabs">
+              <button 
+                className={`tab-btn ${activeSubTab === 'tasks' ? 'active' : ''}`}
+                onClick={() => setActiveSubTab('tasks')}
+              >
+                Active Tasks ({tasks.length})
+              </button>
+              <button 
+                className={`tab-btn ${activeSubTab === 'completed' ? 'active' : ''}`}
+                onClick={() => setActiveSubTab('completed')}
+              >
+                Completed ({completedTasks.length})
+              </button>
+            </div>
+
+            <div className="tasks-container">
+              {loading ? (
+                <div className="loading-state">
+                  <div className="spinner"></div>
+                  <p>Loading your tasks...</p>
+                </div>
+              ) : (
+                <>
+                  {activeSubTab === 'tasks' && (
+                    <>
+                      {tasks.length > 0 ? (
+                        tasks.map(task => (
+                          <StaffTaskCard
+                            key={task._id}
+                            task={task}
+                            type={getTaskType()}
+                            onTaskUpdate={handleTaskUpdate}
+                            onChefAccept={handleChefAccept}
+                            onChefReject={handleChefReject}
+                            onStartPreparing={handleStartPreparing}
+                            onMarkReady={handleMarkReady}
+                            onDeliveryAccept={handleDeliveryAccept}
+                            onDeliveryReject={handleDeliveryReject}
+                            onStartDelivery={handleStartDelivery}
+                            onCompleteDelivery={handleCompleteDelivery}
+                            onProcessPayment={handleProcessPayment}
+                          />
+                        ))
+                      ) : (
+                        <div className="empty-state">
+                          <div className="empty-icon">🎉</div>
+                          <h3>No Active Tasks</h3>
+                          <p>{getRoleSpecificMessage()}</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {activeSubTab === 'completed' && (
+                    <>
+                      {completedTasks.length > 0 ? (
+                        completedTasks.map(task => (
+                          <StaffTaskCard
+                            key={task._id}
+                            task={task}
+                            type={getTaskType()}
+                            onTaskUpdate={handleTaskUpdate}
+                            onChefAccept={handleChefAccept}
+                            onChefReject={handleChefReject}
+                            onStartPreparing={handleStartPreparing}
+                            onMarkReady={handleMarkReady}
+                            onDeliveryAccept={handleDeliveryAccept}
+                            onDeliveryReject={handleDeliveryReject}
+                            onStartDelivery={handleStartDelivery}
+                            onCompleteDelivery={handleCompleteDelivery}
+                            onProcessPayment={handleProcessPayment}
+                          />
+                        ))
+                      ) : (
+                        <div className="empty-state">
+                          <div className="empty-icon">📭</div>
+                          <h3>No Completed Tasks</h3>
+                          <p>Your completed tasks will appear here.</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+            </div>
           </>
+        )}
+
+        {activeTab === 'kitchen' && canReadPage('staffOrdersCooking') && (
+          <div className="page-wrapper">
+            <KitchenDisplayTab readOnly={!canWritePage('staffOrdersCooking')} />
+          </div>
+        )}
+
+        {activeTab === 'stock' && canReadPage('adminIngredients') && (
+          <div className="page-wrapper">
+            <StockTab readOnly={!canWritePage('adminIngredients')} />
+          </div>
+        )}
+
+        {activeTab === 'expenses' && canReadPage('adminExpenses') && (
+          <div className="page-wrapper">
+            <ExpenseTab readOnly={!canWritePage('adminExpenses')} />
+          </div>
+        )}
+
+        {activeTab === 'reports' && canReadPage('adminReports') && (
+          <div className="page-wrapper">
+            <ReportsTab readOnly={!canWritePage('adminReports')} />
+          </div>
         )}
       </div>
 

@@ -775,7 +775,35 @@ export const adminService = {
       }
       throw error.response?.data || { message: 'Failed to export report' };
     }
-  }
+  },
+
+  getStaffPerformance: async ({ start, end } = {}) => {
+    try {
+      const params = new URLSearchParams();
+      if (start) params.append('start', start);
+      if (end) params.append('end', end);
+      const query = params.toString() ? `?${params}` : '';
+      const response = await api.get(`/admin/reports/staff-performance${query}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching staff performance:', error);
+      throw error.response?.data || { message: 'Failed to fetch staff performance' };
+    }
+  },
+
+  getItemPerformance: async ({ start, end } = {}) => {
+    try {
+      const params = new URLSearchParams();
+      if (start) params.append('start', start);
+      if (end) params.append('end', end);
+      const query = params.toString() ? `?${params}` : '';
+      const response = await api.get(`/admin/reports/item-performance${query}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching item performance:', error);
+      throw error.response?.data || { message: 'Failed to fetch item performance' };
+    }
+  },
 };
 
 // ========== ORDER SERVICES ==========

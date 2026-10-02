@@ -844,7 +844,7 @@ export const adminService = {
       return response.data;
     } catch (error) {
       console.error('Error fetching staff detail:', error);
-      throw error.response?.data || { message: 'Failed to fetch staff detail' };
+      throw error.response?.data || { message: error.message || 'Failed to fetch staff detail' };
     }
   },
 };

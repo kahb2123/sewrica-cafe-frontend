@@ -4,19 +4,10 @@ import { PERMISSIONS, PAGE_ACCESS, adminService } from '../services/api';
 import './AddStaffModal.css';
 
 const PAGE_ACCESS_LABELS = {
-  staffDashboard: 'Staff Dashboard',
-  staffOrdersCooking: 'Cooking Orders',
-  staffOrdersDelivery: 'Delivery Orders',
-  staffStats: 'Statistics',
-  staffProfile: 'Profile',
-  adminDashboard: 'Admin Dashboard',
-  adminOrders: 'Admin Orders',
-  adminStaff: 'Admin Staff',
-  adminMenu: 'Menu Management',
-  adminReports: 'Reports',
+  staffOrdersCooking: 'Kitchen Display',
   adminIngredients: 'Ingredients',
   adminExpenses: 'Expenses',
-  adminUsers: 'User Management',
+  adminReports: 'Reports',
 };
 
 // Get the API base URL from environment or use default

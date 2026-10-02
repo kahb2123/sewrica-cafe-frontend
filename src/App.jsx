@@ -79,7 +79,16 @@ function App() {
           </div>
         </SocketProvider>
       </AuthProvider>
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer
+        position="top-right"
+        autoClose={2500}
+        hideProgressBar={true}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover={false}
+        pauseOnFocusLoss={false}
+        draggable={false}
+      />
     </>
   );
 }

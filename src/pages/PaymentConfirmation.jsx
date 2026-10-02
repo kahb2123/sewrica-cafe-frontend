@@ -41,33 +41,12 @@ const PaymentConfirmation = () => {
   useEffect(() => {
     if (order && orderId && connected) {
       registerOrder(orderId);
-      console.log('📦 Registered for order updates:', orderId);
 
       onOrderStatusUpdate((data) => {
-        console.log('📢 Real-time order update received:', data);
-        
         setOrderStatus(data.status);
         
-        if (data.status === 'confirmed') {
-          toast.success('✅ Your order has been accepted and is being prepared!');
-        } else if (data.status === 'cancelled') {
-          toast.error('❌ Your order has been rejected');
-          if (data.notes) {
-            toast.info(`Reason: ${data.notes}`);
-          }
-        } else if (data.status === 'preparing') {
-          toast.info('👨‍🍳 Your food is now being prepared');
-        } else if (data.status === 'cooking') {
-          toast.info('👨‍🍳 Your food is being cooked!');
-        } else if (data.status === 'ready') {
-          toast.success('🍽️ Your order is ready for pickup/delivery!');
-        } else if (data.status === 'out-for-delivery') {
-          toast.info('🛵 Your order is on the way!');
-        } else if (data.status === 'delivered') {
-          toast.success('🚚 Your order has been delivered!');
-          if (order?.lotteryTicketNumber) {
-            toast.info(`🎫 Your lottery ticket ${order.lotteryTicketNumber} is now active!`);
-          }
+        if (data.status === 'cancelled' && data.notes) {
+          toast.error(`Order cancelled: ${data.notes}`);
         }
       });
     }
@@ -82,11 +61,8 @@ const PaymentConfirmation = () => {
       setOrderStatus(orderData.status);
       setError(null);
       
-      // Show lottery ticket notification if order is delivered
       if (orderData.status === 'delivered' && orderData.lotteryTicketNumber) {
-        setTimeout(() => {
-          toast.info(`🎫 You have a lottery ticket! Number: ${orderData.lotteryTicketNumber}`);
-        }, 1000);
+        // Lottery ticket section in UI shows the ticket
       }
     } catch (error) {
       console.error('Error fetching order:', error);
@@ -114,7 +90,6 @@ const PaymentConfirmation = () => {
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-    toast.success('Receipt downloaded');
   };
 
   const handleEmailReceipt = () => {
@@ -347,13 +322,13 @@ Thank you for choosing SEWRICA Cafe!
                 <FaDownload /> Download
               </button>
               <button onClick={handleEmailReceipt} className="btn-email">
-                <FaEnvelope /> Email
-              </button>
-            </div>
+          <FaEnvelope /> Email
+            </button>
           </div>
+        </div>
 
-          {/* Right Column - Customer & Delivery Info */}
-          <div className="customer-info">
+        {/* Right Column - Customer & Delivery Info */}
+        <div className="customer-info">
             <h2>Delivery Information</h2>
             
             <div className="info-card">

@@ -45,7 +45,7 @@ const StaffDashboard = () => {
   useEffect(() => {
     if (connected && onOrderAssigned) {
       const unsubscribe = onOrderAssigned((data) => {
-        toast.info(`🔔 New task assigned: Order #${data.orderNumber}`);
+        toast.info(`New task assigned: Order #${data.orderNumber}`);
         fetchTasks();
       });
       return () => {
@@ -68,7 +68,6 @@ const StaffDashboard = () => {
   const handleChefAccept = async (orderId) => {
     try {
       await staffService.chefAcceptOrder(orderId);
-      toast.success('✅ Order accepted!');
       await fetchTasks();
     } catch (error) {
       console.error('Error accepting order:', error);
@@ -79,7 +78,6 @@ const StaffDashboard = () => {
   const handleChefReject = async (orderId, reason) => {
     try {
       await staffService.chefRejectOrder(orderId, reason);
-      toast.error('❌ Order rejected');
       await fetchTasks();
     } catch (error) {
       console.error('Error rejecting order:', error);
@@ -90,7 +88,6 @@ const StaffDashboard = () => {
   const handleStartPreparing = async (orderId) => {
     try {
       await staffService.startCooking(orderId);
-      toast.success('👨‍🍳 Started preparing!');
       await fetchTasks();
     } catch (error) {
       console.error('Error starting preparation:', error);
@@ -101,7 +98,6 @@ const StaffDashboard = () => {
   const handleMarkReady = async (orderId) => {
     try {
       await staffService.completeCooking(orderId);
-      toast.success('✅ Order ready for delivery!');
       await fetchTasks();
     } catch (error) {
       console.error('Error marking ready:', error);
@@ -113,7 +109,6 @@ const StaffDashboard = () => {
   const handleDeliveryAccept = async (orderId) => {
     try {
       await staffService.deliveryAcceptOrder(orderId);
-      toast.success('✅ Delivery accepted!');
       await fetchTasks();
     } catch (error) {
       console.error('Error accepting delivery:', error);
@@ -124,7 +119,6 @@ const StaffDashboard = () => {
   const handleDeliveryReject = async (orderId, reason) => {
     try {
       await staffService.deliveryRejectOrder(orderId, reason);
-      toast.error('❌ Delivery rejected');
       await fetchTasks();
     } catch (error) {
       console.error('Error rejecting delivery:', error);
@@ -135,7 +129,6 @@ const StaffDashboard = () => {
   const handleStartDelivery = async (orderId) => {
     try {
       await staffService.startDelivery(orderId);
-      toast.success('🛵 Started delivery!');
       await fetchTasks();
     } catch (error) {
       console.error('Error starting delivery:', error);
@@ -146,7 +139,6 @@ const StaffDashboard = () => {
   const handleCompleteDelivery = async (orderId) => {
     try {
       await staffService.completeDelivery(orderId);
-      toast.success('✅ Order delivered!');
       await fetchTasks();
     } catch (error) {
       console.error('Error completing delivery:', error);
@@ -158,7 +150,6 @@ const StaffDashboard = () => {
   const handleProcessPayment = async (orderId, amount) => {
     try {
       await staffService.processCashPayment(orderId, amount);
-      toast.success('💰 Payment processed!');
       await fetchTasks();
     } catch (error) {
       console.error('Error processing payment:', error);

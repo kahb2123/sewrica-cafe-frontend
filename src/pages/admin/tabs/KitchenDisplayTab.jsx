@@ -102,7 +102,7 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
     if (!connected || !socket) return undefined;
 
     const handleNewOrder = (data) => {
-      toast.info(`🆕 New order #${getOrderNumberLabel(data?.orderNumber)} in kitchen!`);
+      toast.info(`New order #${getOrderNumberLabel(data?.orderNumber)} in kitchen`);
       loadOrders(false);
     };
 
@@ -133,7 +133,6 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
         await orderService.updateOrderStatus(order._id, step);
       }
       setOrders((prev) => prev.filter((item) => item._id !== order._id));
-      toast.success(`✅ Order #${getOrderNumberLabel(order.orderNumber)} marked ready`);
     } catch (error) {
       console.error('Kitchen: failed to complete order', error);
       toast.error(error?.message || 'Failed to complete order');
@@ -152,7 +151,6 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
       if (updated) {
         setOrders((prev) => prev.map((order) => (order._id === orderId ? updated : order)));
       }
-      toast.success('Chef assigned');
     } catch (error) {
       console.error('Kitchen: failed to assign chef', error);
       toast.error(error?.message || 'Failed to assign chef');
@@ -175,7 +173,6 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
       if (updated) {
         setOrders((prev) => prev.map((order) => (order._id === orderId ? updated : order)));
       }
-      toast.success('Delivery person assigned');
     } catch (error) {
       console.error('Kitchen: failed to assign delivery', error);
       toast.error(error?.message || 'Failed to assign delivery person');

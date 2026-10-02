@@ -124,7 +124,7 @@ const OrdersTab = () => {
         'cancelled', 
         rejectionReason || 'Order rejected by admin'
       );
-      toast.success('❌ Order rejected');
+      toast.info('Order rejected');
       setShowRejectModal(false);
       setSelectedOrder(null);
       setRejectionReason('');

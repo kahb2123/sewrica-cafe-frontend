@@ -94,7 +94,7 @@ const StaffTaskCard = ({
     setLoading(true);
     try {
       await onChefAccept(task._id);
-      toast.success('✅ Order accepted successfully!');
+       toast.success('Order accepted');
       if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
       toast.error(error.message || 'Failed to accept order');
@@ -110,7 +110,7 @@ const StaffTaskCard = ({
     setLoading(true);
     try {
       await onChefReject(task._id, rejectionReason);
-      toast.error('❌ Order rejected');
+       toast.info('Order rejected');
       setShowRejectModal(false);
       setRejectionReason('');
       if (onTaskUpdate) onTaskUpdate(task);
@@ -128,7 +128,7 @@ const StaffTaskCard = ({
     setLoading(true);
     try {
       await onStartPreparing(task._id);
-      toast.success('👨‍🍳 Started cooking!');
+       toast.success('Cooking started');
       if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
       toast.error(error.message || 'Failed to start cooking');
@@ -144,7 +144,7 @@ const StaffTaskCard = ({
     setLoading(true);
     try {
       await onMarkReady(task._id);
-      toast.success('✅ Order ready for delivery!');
+       toast.success('Order marked ready');
       if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
       toast.error(error.message || 'Failed to mark ready');
@@ -160,7 +160,7 @@ const StaffTaskCard = ({
     setLoading(true);
     try {
       await onDeliveryAccept(task._id);
-      toast.success('✅ Delivery accepted!');
+       toast.success('Delivery accepted');
       if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
       toast.error(error.message || 'Failed to accept delivery');
@@ -176,7 +176,7 @@ const StaffTaskCard = ({
     setLoading(true);
     try {
       await onDeliveryReject(task._id, rejectionReason);
-      toast.error('❌ Delivery rejected');
+       toast.info('Delivery rejected');
       setShowRejectModal(false);
       setRejectionReason('');
       if (onTaskUpdate) onTaskUpdate(task);
@@ -194,7 +194,7 @@ const StaffTaskCard = ({
     setLoading(true);
     try {
       await onStartDelivery(task._id);
-      toast.success('🛵 Started delivery!');
+       toast.success('Delivery started');
       if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
       toast.error(error.message || 'Failed to start delivery');
@@ -210,7 +210,7 @@ const StaffTaskCard = ({
     setLoading(true);
     try {
       await onCompleteDelivery(task._id);
-      toast.success('✅ Order delivered successfully!');
+       toast.success('Order delivered');
       if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
       toast.error(error.message || 'Failed to complete delivery');
@@ -226,7 +226,7 @@ const StaffTaskCard = ({
     setLoading(true);
     try {
       await onProcessPayment(task._id, task.totalAmount);
-      toast.success('💰 Payment processed successfully!');
+       toast.success('Payment processed');
       if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
       toast.error(error.message || 'Failed to process payment');

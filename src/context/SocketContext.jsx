@@ -171,7 +171,7 @@ export const SocketProvider = ({ children }) => {
     if (socket) {
       socket.on('new-order', (data) => {
         console.log('📢 New order received:', data);
-        toast.info(`🆕 New order #${data.orderNumber} received!`);
+        toast.info(`New order #${data.orderNumber} received`);
         callback(data);
       });
     }
@@ -181,7 +181,7 @@ export const SocketProvider = ({ children }) => {
     if (socket) {
       socket.on('order-assigned', (data) => {
         console.log('📢 Order assigned:', data);
-        toast.info(`🔔 New task: Order #${data.orderNumber} assigned to you`);
+        toast.info(`New task: Order #${data.orderNumber} assigned to you`);
         callback(data);
       });
     }
@@ -201,7 +201,7 @@ export const SocketProvider = ({ children }) => {
     if (socket) {
       socket.on('order-ready', (data) => {
         console.log('✅ Order ready:', data);
-        toast.success(`Order #${data.orderNumber} is ready for delivery!`);
+        toast.success(`Order #${data.orderNumber} is ready for delivery`);
         callback(data);
       });
     }
@@ -221,7 +221,7 @@ export const SocketProvider = ({ children }) => {
     if (socket) {
       socket.on('order-delivered', (data) => {
         console.log('🎉 Order delivered:', data);
-        toast.success(`Order #${data.orderNumber} has been delivered!`);
+        toast.success(`Order #${data.orderNumber} has been delivered`);
         callback(data);
       });
     }
@@ -231,7 +231,7 @@ export const SocketProvider = ({ children }) => {
     if (socket) {
       socket.on('payment-completed', (data) => {
         console.log('💰 Payment completed:', data);
-        toast.success(`✅ Payment received for order #${data.orderNumber}`);
+        toast.success(`Payment received for order #${data.orderNumber}`);
         callback(data);
       });
     }

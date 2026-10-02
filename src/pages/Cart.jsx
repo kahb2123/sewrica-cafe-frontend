@@ -132,30 +132,21 @@ const Cart = () => {
     setCartItems(updatedCart);
     localStorage.setItem('cart', JSON.stringify(updatedCart));
     
-    // Dispatch event for navbar update
     window.dispatchEvent(new Event('cartUpdated'));
-    
-    toast.info('Cart updated');
   };
 
-  // Remove item from cart
   const removeItem = (itemId) => {
     const updatedCart = cartItems.filter(item => item.id !== itemId);
     setCartItems(updatedCart);
     localStorage.setItem('cart', JSON.stringify(updatedCart));
-    
     window.dispatchEvent(new Event('cartUpdated'));
-    
-    toast.error('Item removed from cart');
   };
 
-  // Clear entire cart
   const clearCart = () => {
     if (window.confirm('Are you sure you want to clear your cart?')) {
       setCartItems([]);
       localStorage.removeItem('cart');
       window.dispatchEvent(new Event('cartUpdated'));
-      toast.info('Cart cleared');
     }
   };
 
@@ -269,7 +260,7 @@ const Cart = () => {
     window.scrollTo(0, 0);
   };
 
-  // ========== ✅ UPDATED: Handle card payment with Stripe ==========
+  // Handle card payment with Stripe
   const handleCardPayment = async (orderId) => {
     if (!stripe || !elements) {
       throw new Error('Payment system not initialized');
@@ -321,8 +312,7 @@ const Cart = () => {
         // Confirm order with backend
         await orderService.confirmOrderPayment(orderId, paymentIntent.id);
         
-        // ✅ UPDATED: Navigate to confirmation page
-        toast.success('Payment successful! Order confirmed.');
+        // Navigate to confirmation page
         navigate(`/order-confirmation/${orderId}`);
         
         return paymentIntent;
@@ -335,40 +325,29 @@ const Cart = () => {
     }
   };
 
-  // ========== ✅ UPDATED: Handle Tele Birr payment ==========
+  // Handle Tele Birr payment
   const handleTeleBirrPayment = (order) => {
     // Clear cart
     localStorage.removeItem('cart');
     window.dispatchEvent(new Event('cartUpdated'));
-    
-    // ✅ UPDATED: Navigate to confirmation page
-    toast.info('Please complete your Tele Birr payment using the instructions provided.');
     navigate(`/order-confirmation/${order._id}`);
   };
 
-  // ========== ✅ UPDATED: Handle Bank Transfer payment ==========
+  // Handle Bank Transfer payment
   const handleBankPayment = (order) => {
     // Clear cart
     localStorage.removeItem('cart');
     window.dispatchEvent(new Event('cartUpdated'));
-    
-    // ✅ UPDATED: Navigate to confirmation page
-    toast.info('Please complete your bank transfer using the account details provided.');
     navigate(`/order-confirmation/${order._id}`);
   };
 
-  // ========== ✅ UPDATED: Handle Cash payment ==========
   const handleCashPayment = (order) => {
-    // Clear cart
     localStorage.removeItem('cart');
     window.dispatchEvent(new Event('cartUpdated'));
-
-    // ✅ UPDATED: Navigate to confirmation page
-    toast.success('Order placed successfully! You will pay on delivery.');
     navigate(`/order-confirmation/${order._id}`);
   };
 
-  // ========== ✅ UPDATED: Place order function ==========
+  // Place order function
   const placeOrder = async () => {
     if (placingOrderRef.current) return;
 
@@ -435,7 +414,6 @@ const Cart = () => {
         case 'card':
           try {
             await handleCardPayment(order._id);
-            // ✅ UPDATED: Removed duplicate code - navigation is in handleCardPayment
           } catch (error) {
             setPaymentError(error.message);
             throw error;
@@ -467,8 +445,6 @@ const Cart = () => {
     }
   };
 
-  // ✅ UPDATED: Removed handlePaymentSuccess as it's no longer needed
-
   // Render loading state
   if (loading) {
     return (
@@ -478,8 +454,6 @@ const Cart = () => {
       </div>
     );
   }
-
-  // ✅ UPDATED: Removed the entire order confirmation section (lines ~400-450)
 
   return (
     <div className="cart-page">
@@ -962,7 +936,7 @@ const Cart = () => {
                       {/* Payment error display */}
                       {paymentError && (
                         <div className="payment-error-message">
-                          <p>❌ {paymentError}</p>
+                          <p>{paymentError}</p>
                         </div>
                       )}
 

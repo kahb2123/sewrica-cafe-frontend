@@ -46,7 +46,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (connected && onNewOrder) {
       const unsubscribe = onNewOrder((data) => {
-        toast.info(`🆕 New order #${data.orderNumber} received!`);
+        toast.info(`New order #${data.orderNumber} received`);
         if (activeTab === 'overview') {
           fetchDashboardStats();
         }

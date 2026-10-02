@@ -138,7 +138,7 @@ const ReportsTab = () => {
     <div className="reports-tab">
       <div className="reports-header">
         <div>
-          <h1 className="page-title">📊 Reports</h1>
+          <h1 className="page-title">Reports</h1>
           <p className="page-subtitle">Sales, items and staff performance for any date range</p>
         </div>
         <div className="reports-export">
@@ -149,14 +149,14 @@ const ReportsTab = () => {
               onClick={() => handleExport('csv', 'all')}
               disabled={exporting !== null}
             >
-              {exporting === 'csv' ? '⏳ Exporting...' : '📥 Full CSV'}
+              {exporting === 'csv' ? 'Exporting...' : 'Full CSV'}
             </button>
             <button
               className="btn-export btn-csv btn-export-section"
               onClick={() => handleExport('csv', section)}
               disabled={exporting !== null}
             >
-              {exporting === 'csv' ? '⏳...' : `📥 ${sectionLabel} CSV`}
+              {exporting === 'csv' ? '...' : `${sectionLabel} CSV`}
             </button>
           </div>
           <div className="export-format-group">
@@ -165,14 +165,14 @@ const ReportsTab = () => {
               onClick={() => handleExport('pdf', 'all')}
               disabled={exporting !== null}
             >
-              {exporting === 'pdf' ? '⏳ Exporting...' : '📄 Full PDF'}
+              {exporting === 'pdf' ? 'Exporting...' : 'Full PDF'}
             </button>
             <button
               className="btn-export btn-pdf btn-export-section"
               onClick={() => handleExport('pdf', section)}
               disabled={exporting !== null}
             >
-              {exporting === 'pdf' ? '⏳...' : `📄 ${sectionLabel} PDF`}
+              {exporting === 'pdf' ? '...' : `${sectionLabel} PDF`}
             </button>
           </div>
         </div>
@@ -238,31 +238,31 @@ const ReportsTab = () => {
 
       <div className="summary-cards">
         <div className="summary-card primary">
-          <div className="card-icon">📦</div>
+          <div className="card-icon">Orders</div>
           <span className="label">Total orders</span>
           <span className="value">{(t.totalOrders || 0).toLocaleString()}</span>
           <span className="sub">{t.paidOrders || 0} paid · {t.cancelledOrders || 0} cancelled</span>
         </div>
         <div className="summary-card success">
-          <div className="card-icon">💰</div>
+          <div className="card-icon">Revenue</div>
           <span className="label">Paid revenue</span>
           <span className="value">{formatMoney(t.paidRevenue)}</span>
           <span className="sub">Only settled payments</span>
         </div>
         <div className="summary-card warning">
-          <div className="card-icon">⏳</div>
+          <div className="card-icon">Pending</div>
           <span className="label">Outstanding</span>
           <span className="value">{formatMoney(t.outstandingRevenue)}</span>
           <span className="sub">{t.unpaidOrders || 0} unpaid orders</span>
         </div>
         <div className="summary-card neutral">
-          <div className="card-icon">📊</div>
+          <div className="card-icon">Metrics</div>
           <span className="label">Average order</span>
           <span className="value">{formatMoney(t.averageOrderValue)}</span>
           <span className="sub">per paid order</span>
         </div>
         <div className="summary-card neutral">
-          <div className="card-icon">🍳</div>
+          <div className="card-icon">Cooking</div>
           <span className="label">Avg cooking</span>
           <span className="value">{(t.avgCookingMinutes || 0)} min</span>
           <span className="sub">across all cooks</span>
@@ -276,7 +276,7 @@ const ReportsTab = () => {
           {section === 'sales' && (
             <>
               <div className="report-section">
-                <h3>📈 Daily revenue</h3>
+                <h3>Daily revenue</h3>
                 {report.daily.length === 0 ? (
                   <p className="empty-note">No orders in this range.</p>
                 ) : (
@@ -300,7 +300,7 @@ const ReportsTab = () => {
 
               <div className="report-grid">
                 <div className="report-section">
-                  <h3>💳 Payment methods</h3>
+                  <h3>Payment methods</h3>
                   {report.paymentMethods.length === 0 ? (
                     <p className="empty-note">No settled payments yet.</p>
                   ) : (
@@ -324,7 +324,7 @@ const ReportsTab = () => {
                 </div>
 
                 <div className="report-section">
-                  <h3>🕐 Busiest hours</h3>
+                  <h3>Busiest hours</h3>
                   {report.hourly.length === 0 ? (
                     <p className="empty-note">No orders in this range.</p>
                   ) : (
@@ -351,7 +351,7 @@ const ReportsTab = () => {
               </div>
 
               <div className="report-section">
-                <h3>🚚 Order channels & statuses</h3>
+                <h3>Order channels & statuses</h3>
                 <div className="chip-grid">
                   {report.orderChannels.map((row) => (
                     <div key={row.channel} className="chip">
@@ -373,7 +373,7 @@ const ReportsTab = () => {
           {section === 'items' && (
             <>
               <div className="report-section">
-                <h3>🏆 Top selling items</h3>
+                <h3>Top selling items</h3>
                 {report.topItems.length === 0 ? (
                   <p className="empty-note">No items sold in this range.</p>
                 ) : (
@@ -398,7 +398,7 @@ const ReportsTab = () => {
               </div>
 
               <div className="report-section">
-                <h3>📂 Sales by category</h3>
+                <h3>Sales by category</h3>
                 {report.categories.length === 0 ? (
                   <p className="empty-note">No category sales in this range.</p>
                 ) : (
@@ -428,7 +428,7 @@ const ReportsTab = () => {
 
           {section === 'staff' && (
             <div className="report-section">
-              <h3>👥 Staff performance</h3>
+              <h3>Staff performance</h3>
               {report.staff.length === 0 ? (
                 <p className="empty-note">
                   No staff activity in this range. Revenue is attributed to a cashier once they take a payment,
@@ -458,10 +458,10 @@ const ReportsTab = () => {
                         />
                       </div>
                       <div className="spc-stats">
-                        <span><em>Orders</em>{row.totalOrders}</span>
-                        <span><em>Done</em>{row.completedOrders}</span>
-                        <span><em>Cancelled</em>{row.cancelledOrders}</span>
-                        <span><em>Revenue</em>{formatMoney(row.revenue)}</span>
+                        <span><em>Orders</em> <strong>{row.totalOrders}</strong></span>
+                        <span><em>Done</em> <strong>{row.completedOrders}</strong></span>
+                        <span><em>Cancelled</em> <strong>{row.cancelledOrders}</strong></span>
+                        <span><em>Revenue</em> <strong>{formatMoney(row.revenue)}</strong></span>
                       </div>
                       <div className="spc-foot">
                         <span>{row.completionRate}% completion</span>

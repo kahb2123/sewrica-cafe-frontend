@@ -212,7 +212,14 @@
 .summary-card.warning { border-left-color: #c08420; }
 .summary-card.neutral { border-left-color: #7d7269; }
 
-.card-icon { font-size: 20px; margin-bottom: 6px; }
+.card-icon { 
+  font-size: 14px; 
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted, #8a7b6b);
+  margin-bottom: 6px; 
+}
 
 .summary-card .label {
   display: block;
@@ -537,6 +544,11 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-muted, #8a7b6b);
+}
+
+.spc-stats strong {
+  font-size: 1rem;
+  color: var(--sewrica-dark, #2f2a24);
 }
 
 .spc-foot {

@@ -235,30 +235,30 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
       </div>
 
       <div className="kds-stats">
-        <div className="stat-card">
-          <span className="stat-icon">📦</span>
-          <span className="stat-label">In Queue</span>
-          <span className="stat-value">{orders.length}</span>
+        <div className="kds-stat-card">
+          <span className="kds-stat-icon">📦</span>
+          <span className="kds-stat-label">In Queue</span>
+          <span className="kds-stat-value">{orders.length}</span>
         </div>
-        <div className="stat-card pending">
-          <span className="stat-icon">⏳</span>
-          <span className="stat-label">Pending</span>
-          <span className="stat-value">{orders.filter((o) => o.status === 'pending').length}</span>
+        <div className="kds-stat-card pending">
+          <span className="kds-stat-icon">⏳</span>
+          <span className="kds-stat-label">Pending</span>
+          <span className="kds-stat-value">{orders.filter((o) => o.status === 'pending').length}</span>
         </div>
-        <div className="stat-card cooking">
-          <span className="stat-icon">🔥</span>
-          <span className="stat-label">Cooking</span>
-          <span className="stat-value">{orders.filter((o) => o.status === 'preparing' || o.status === 'cooking').length}</span>
+        <div className="kds-stat-card cooking">
+          <span className="kds-stat-icon">🔥</span>
+          <span className="kds-stat-label">Cooking</span>
+          <span className="kds-stat-value">{orders.filter((o) => o.status === 'preparing' || o.status === 'cooking').length}</span>
         </div>
-        <div className="stat-card unassigned">
-          <span className="stat-icon">🧑‍🍳</span>
-          <span className="stat-label">No Chef</span>
-          <span className="stat-value">{unassignedCount}</span>
+        <div className="kds-stat-card unassigned">
+          <span className="kds-stat-icon">🧑‍🍳</span>
+          <span className="kds-stat-label">No Chef</span>
+          <span className="kds-stat-value">{unassignedCount}</span>
         </div>
-        <div className="stat-card urgent">
-          <span className="stat-icon">⏰</span>
-          <span className="stat-label">Over {URGENT_AFTER_MINUTES}m</span>
-          <span className="stat-value">{urgentCount}</span>
+        <div className="kds-stat-card urgent">
+          <span className="kds-stat-icon">⏰</span>
+          <span className="kds-stat-label">Over {URGENT_AFTER_MINUTES}m</span>
+          <span className="kds-stat-value">{urgentCount}</span>
         </div>
       </div>
 
@@ -311,7 +311,7 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
 
                     <div className="kds-col-order" data-label="Order">
                       <strong className="kds-order-number">#{getOrderNumberLabel(order.orderNumber)}</strong>
-                      <span className={`status-badge ${order.status}`}>{statusLabel(order.status)}</span>
+                      <span className={`kds-status-badge ${order.status}`}>{statusLabel(order.status)}</span>
                     </div>
 
                     <ul className="kds-col-items" data-label="Items">

@@ -2,11 +2,18 @@
 
 .kitchen-display-tab {
   box-sizing: border-box;
-  padding: clamp(16px, 3vw, 32px);
+  padding: clamp(14px, 2vw, 24px);
   background: linear-gradient(135deg, #f8fafc 0%, #eef6f5 100%);
-  min-height: 100vh;
+  min-height: 100%;
   width: 100%;
+  max-width: 100%;
   overflow-x: hidden;
+
+  /* Container queries: the tab sits inside .admin-content (280px sidebar +
+     30px padding) on one page and full-bleed on another, so it must respond
+     to its own available width, not the viewport width. */
+  container-type: inline-size;
+  container-name: kds;
 }
 
 .kitchen-display-tab *,
@@ -106,33 +113,42 @@
   width: 100%;
 }
 
-.stat-card {
+/* NOTE: all classes here are prefixed with .kds-* so they cannot be
+   overridden by the shared dashboard globals (.stat-card, .status-badge,
+   .stat-icon in AdminDashboard.css), which use !important. */
+.kds-stat-card {
   background: white;
   padding: 18px;
   border-radius: 12px;
   text-align: center;
   border-left: 5px solid #3498db;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-width: 0;
 }
 
-.stat-card:hover {
+.kds-stat-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
-.stat-card.pending { border-left-color: #f39c12; }
-.stat-card.cooking { border-left-color: #e74c3c; }
-.stat-card.unassigned { border-left-color: #8e44ad; }
-.stat-card.urgent { border-left-color: #c0392b; }
+.kds-stat-card.pending { border-left-color: #f39c12; }
+.kds-stat-card.cooking { border-left-color: #e74c3c; }
+.kds-stat-card.unassigned { border-left-color: #8e44ad; }
+.kds-stat-card.urgent { border-left-color: #c0392b; }
 
-.stat-icon {
+.kds-stat-icon {
   font-size: 24px;
   display: block;
   margin-bottom: 8px;
+  width: auto;
+  height: auto;
+  background: none;
+  border-radius: 0;
+  margin-right: 0;
 }
 
-.stat-label {
+.kds-stat-label {
   display: block;
   color: #7f8c8d;
   font-size: 12px;
@@ -142,7 +158,7 @@
   margin-bottom: 8px;
 }
 
-.stat-value {
+.kds-stat-value {
   display: block;
   font-size: 28px;
   font-weight: 700;
@@ -152,7 +168,7 @@
 /* Controls */
 .kds-controls {
   background: white;
-  padding: clamp(16px, 2vw, 22px);
+  padding: clamp(14px, 1.6vw, 22px);
   border-radius: 12px;
   margin-bottom: 25px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -210,6 +226,7 @@
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
+  min-width: 0;
 }
 
 .kds-empty {
@@ -529,58 +546,79 @@
   cursor: not-allowed;
 }
 
-/* Shared status badge */
-.status-badge {
+/* Shared status badge (prefixed to avoid AdminDashboard.css globals) */
+.kds-status-badge {
   display: inline-block;
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
+  text-transform: none;
   white-space: nowrap;
 }
 
-.status-badge.pending { background: #fff3cd; color: #856404; }
-.status-badge.confirmed { background: #d1ecf1; color: #0c5460; }
-.status-badge.preparing,
-.status-badge.cooking { background: #f8d7da; color: #721c24; }
-.status-badge.ready { background: #d4edda; color: #155724; }
+.kds-status-badge.pending { background: #fff3cd; color: #856404; }
+.kds-status-badge.confirmed { background: #d1ecf1; color: #0c5460; }
+.kds-status-badge.preparing,
+.kds-status-badge.cooking { background: #f8d7da; color: #721c24; }
+.kds-status-badge.ready { background: #d4edda; color: #155724; }
 
 /* ==========================================================================
    RESPONSIVE
-   Desktop  : 8-column board (> 1400px)
-   Laptop   : 8-column board, tightened (1100 – 1400px)
-   Tablet   : 3-column stacked grid with inline labels (760 – 1100px)
-   Mobile   : single-column cards (480 – 760px)
-   Small    : compact cards (< 480px)
+   Driven by @container on .kitchen-display-tab, NOT viewport width.
+   This tab is rendered both inside .admin-content (280px fixed sidebar +
+   30px padding, so a 1440px laptop only offers ~1100px) and full-bleed in
+   StaffDashboard, so the only reliable signal is the tab's own inline size.
+
+   Board (8 cols) : >= 1180px container
+   Tight board     : 980 – 1180px
+   Tablet grid     : 680 – 980px
+   Cards           : < 680px
    ========================================================================== */
 
-/* --- Laptop: keep the board, shrink the fixed tracks --- */
-@media (max-width: 1400px) {
+/* --- Tight board: still a full board, smaller tracks and type --- */
+@container kds (max-width: 1180px) {
   .kds-queue-head,
   .kds-row {
-    grid-template-columns: 54px 120px minmax(0, 1fr) 84px 100px 160px 130px 118px;
-    gap: 10px;
+    grid-template-columns: 50px 108px minmax(0, 1fr) 76px 92px 142px 116px 104px;
+    gap: 9px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .kds-queue-head {
+    padding-left: 12px;
+    padding-right: 12px;
+    font-size: 10px;
   }
 
   .kds-position-badge {
-    width: 34px;
-    height: 34px;
-    font-size: 16px;
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
   }
 
-  .kds-order-number { font-size: 17px; }
-  .kds-elapsed-time { font-size: 18px; padding: 5px 9px; }
-  .kds-item { font-size: 13px; }
+  .kds-order-number { font-size: 16px; }
+  .kds-elapsed-time { font-size: 17px; padding: 5px 8px; }
+  .kds-ordered-time { font-size: 13px; }
+  .kds-item { font-size: 12px; padding: 4px 8px; gap: 4px; }
+  .kds-chef-select,
+  .kds-delivery-select { min-height: 38px; padding: 6px 6px; font-size: 12px; }
+  .kds-chef-name,
+  .kds-delivery-name { font-size: 12px; padding: 5px 8px; }
+  .kds-complete-btn { min-height: 38px; padding: 8px 8px; font-size: 13px; }
+  .kds-stat-card { padding: 14px 12px; }
+  .kds-stat-value { font-size: 24px; }
 }
 
-/* --- Tablet: stacked grid, delivery gets its own track --- */
-@media (max-width: 1100px) {
+/* --- Tablet: stacked grid; chef/delivery share a row with the action --- */
+@container kds (max-width: 980px) {
   .kds-queue-head {
     display: none;
   }
 
   .kds-row {
-    grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: 52px minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
       "position order    order"
       "position items    items"
@@ -599,12 +637,12 @@
     gap: 10px;
   }
 
-  /* inline "Label" text before each control */
+  /* inline "Label" text ahead of each control */
   .kds-col-chef::before,
   .kds-col-delivery::before {
     content: attr(data-label);
     flex: 0 0 auto;
-    min-width: 74px;
+    min-width: 78px;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.5px;
@@ -626,10 +664,15 @@
   .kds-col-action {
     align-self: end;
   }
+
+  .kds-stats {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+  }
 }
 
-/* --- Mobile: one card per order --- */
-@media (max-width: 760px) {
+/* --- Cards: one order per stacked card --- */
+@container kds (max-width: 680px) {
   .kitchen-display-tab {
     padding: 14px;
   }
@@ -646,9 +689,7 @@
     overflow-wrap: anywhere;
   }
 
-  .kds-subtitle {
-    font-size: 13px;
-  }
+  .kds-subtitle { font-size: 13px; }
 
   .kds-header-actions {
     width: 100%;
@@ -673,11 +714,8 @@
     margin-bottom: 20px;
   }
 
-  .stat-card {
-    padding: 14px 12px;
-  }
-
-  .stat-value { font-size: 24px; }
+  .kds-stat-card { padding: 14px 12px; }
+  .kds-stat-value { font-size: 24px; }
 
   .filter-buttons {
     display: grid;
@@ -692,12 +730,10 @@
     font-size: 12px;
   }
 
-  .kds-controls {
-    margin-bottom: 18px;
-  }
+  .kds-controls { margin-bottom: 18px; }
 
   .kds-row {
-    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-columns: 46px minmax(0, 1fr);
     grid-template-areas:
       "position order"
       "items    items"
@@ -710,7 +746,7 @@
     border-radius: 12px;
   }
 
-  /* every field carries its own label on small screens */
+  /* each field carries its own label once the header row is gone */
   .kds-col-ordered,
   .kds-col-elapsed {
     display: flex;
@@ -777,63 +813,46 @@
 }
 
 /* --- Small phones --- */
-@media (max-width: 480px) {
+@container kds (max-width: 460px) {
   .kitchen-display-tab {
     padding: 10px;
   }
 
-  .kds-title {
-    font-size: 21px;
-  }
+  .kds-title { font-size: 21px; }
+  .kds-stats { gap: 8px; }
 
-  .kds-stats {
-    gap: 8px;
-  }
-
-  .stat-card {
+  .kds-stat-card {
     padding: 12px 10px;
     border-left-width: 4px;
   }
 
-  .stat-icon { font-size: 20px; margin-bottom: 4px; }
-  .stat-label { font-size: 10px; letter-spacing: 0.3px; }
-  .stat-value { font-size: 21px; }
+  .kds-stat-icon { font-size: 20px; margin-bottom: 4px; }
+  .kds-stat-label { font-size: 10px; letter-spacing: 0.3px; }
+  .kds-stat-value { font-size: 21px; }
 
   .filter-buttons {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .kds-row {
-    grid-template-columns: 40px minmax(0, 1fr);
+    grid-template-columns: 38px minmax(0, 1fr);
     padding: 12px 10px;
     gap: 10px;
   }
 
   .kds-position-badge {
-    width: 32px;
-    height: 32px;
-    font-size: 15px;
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
   }
 
   .kds-order-number { font-size: 16px; }
   .kds-elapsed-time { font-size: 17px; padding: 5px 8px; }
-
-  .kds-item {
-    font-size: 13px;
-    padding: 5px 9px;
-  }
-
-  /* hover lift is meaningless on touch */
-  .kds-row:hover,
-  .stat-card:hover,
-  .kds-refresh:hover,
-  .kds-complete-btn:hover:not(:disabled) {
-    transform: none;
-  }
+  .kds-item { font-size: 13px; padding: 5px 9px; }
 }
 
-/* --- Wide / TV boards: let the queue use the extra space --- */
-@media (min-width: 1800px) {
+/* --- Wide / TV boards: use the extra space --- */
+@container kds (min-width: 1600px) {
   .kds-queue-head,
   .kds-row {
     grid-template-columns: 70px 170px minmax(0, 1fr) 104px 120px 210px 170px 160px;
@@ -852,6 +871,115 @@
   .kds-row { min-height: 84px; }
 }
 
+/* --- Fallback for browsers without container query support.
+       Mirrors the same tiers against viewport width. --- */
+@supports not (container-type: inline-size) {
+  @media (max-width: 1180px) {
+    .kds-queue-head,
+    .kds-row {
+      grid-template-columns: 50px 108px minmax(0, 1fr) 76px 92px 142px 116px 104px;
+      gap: 9px;
+    }
+
+    .kds-position-badge { width: 32px; height: 32px; font-size: 15px; }
+    .kds-order-number { font-size: 16px; }
+    .kds-elapsed-time { font-size: 17px; padding: 5px 8px; }
+    .kds-item { font-size: 12px; padding: 4px 8px; }
+  }
+
+  @media (max-width: 980px) {
+    .kds-queue-head { display: none; }
+
+    .kds-row {
+      grid-template-columns: 52px minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas:
+        "position order    order"
+        "position items    items"
+        "ordered elapsed   elapsed"
+        "chef    chef      chef"
+        "delivery delivery action";
+      row-gap: 12px;
+      padding: 16px;
+    }
+
+    .kds-col-chef,
+    .kds-col-delivery {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .kds-col-chef::before,
+    .kds-col-delivery::before {
+      content: attr(data-label);
+      flex: 0 0 auto;
+      min-width: 78px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #95a5a6;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .kitchen-display-tab { padding: 14px; }
+
+    .kds-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 14px;
+    }
+
+    .kds-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .filter-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .kds-row {
+      grid-template-columns: 46px minmax(0, 1fr);
+      grid-template-areas:
+        "position order"
+        "items    items"
+        "ordered  elapsed"
+        "chef     chef"
+        "delivery delivery"
+        "action   action";
+      padding: 14px;
+    }
+
+    .kds-col-ordered,
+    .kds-col-elapsed {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 5px;
+    }
+
+    .kds-col-ordered::before,
+    .kds-col-elapsed::before {
+      content: attr(data-label);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #95a5a6;
+    }
+
+    .kds-col-chef,
+    .kds-col-delivery {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+    }
+  }
+}
+
 /* --- Accessibility: honour reduced motion --- */
 @media (prefers-reduced-motion: reduce) {
   .kds-row.urgency-urgent .kds-elapsed-time {
@@ -859,9 +987,10 @@
   }
 
   .kds-row,
-  .stat-card,
+  .kds-stat-card,
   .kds-refresh,
   .kds-complete-btn {
     transition: none;
   }
 }
+

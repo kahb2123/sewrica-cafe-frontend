@@ -18,6 +18,26 @@ const REASONS = [
 
 const REASON_LABELS = Object.fromEntries(REASONS.map((reason) => [reason.value, reason.label]));
 
+const toInputDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getPeriodRange = (period) => {
+  const today = new Date();
+  const end = toInputDate(today);
+  if (period === 'daily') return { start: end, end };
+  if (period === 'weekly') {
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - 6);
+    return { start: toInputDate(startDate), end };
+  }
+  const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+  return { start: toInputDate(startDate), end };
+};
+
 const emptyPurchase = { ingredientId: '', quantity: '', unitCost: '', supplier: '' };
 const emptyWithdrawal = { ingredientId: '', quantity: '', reason: 'consumption', note: '' };
 const emptyNewIngredient = { name: '', unit: 'piece', quantity: '', unitPrice: '', reorderLevel: '0', supplier: '' };
@@ -41,6 +61,11 @@ const StockTab = () => {
   const [purchase, setPurchase] = useState(emptyPurchase);
   const [withdrawal, setWithdrawal] = useState(emptyWithdrawal);
   const [newIngredient, setNewIngredient] = useState(emptyNewIngredient);
+  const [activeView, setActiveView] = useState('manage');
+  const [reportPeriod, setReportPeriod] = useState('monthly');
+  const [reportRange, setReportRange] = useState(() => getPeriodRange('monthly'));
+  const [movementReport, setMovementReport] = useState(null);
+  const [reportLoading, setReportLoading] = useState(false);
 
   const creatingNew = purchase.ingredientId === NEW_INGREDIENT;
 
@@ -62,6 +87,28 @@ const StockTab = () => {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  useEffect(() => {
+    if (activeView !== 'report') return undefined;
+
+    let cancelled = false;
+    setReportLoading(true);
+    ingredientService.getMovementReport(reportRange)
+      .then((response) => {
+        if (!cancelled) setMovementReport(response.data);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          toast.error(error.message || 'Failed to load stock movement report');
+          setMovementReport(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setReportLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [activeView, reportRange]);
+
   const ingredientById = useMemo(
     () => Object.fromEntries(ingredients.map((item) => [item._id, item])),
     [ingredients]
@@ -80,6 +127,45 @@ const StockTab = () => {
       todayOut: withdrawals.filter((item) => new Date(item.createdAt) >= startOfDay).length
     };
   }, [ingredients, withdrawals]);
+
+  const movementRows = useMemo(() => {
+    const stockIn = movementReport?.stockIn || [];
+    const stockOut = movementReport?.stockOut || [];
+    const sumQuantities = (entries) => entries.reduce((totals, entry) => {
+      const unit = entry.unit || 'unit';
+      totals[unit] = (totals[unit] || 0) + (Number(entry.quantity) || 0);
+      return totals;
+    }, {});
+    const sumValue = (entries) => entries.reduce((total, entry) => total + (Number(entry.totalValue) || 0), 0);
+    const byReason = Object.fromEntries(REASONS.map(({ value }) => [
+      value,
+      stockOut.filter((entry) => entry.reason === value)
+    ]));
+    return {
+      stockIn,
+      stockOut,
+      totalIn: sumQuantities(stockIn),
+      totalOut: sumQuantities(stockOut),
+      outByReason: Object.fromEntries(Object.entries(byReason).map(([reason, entries]) => [
+        reason,
+        { quantities: sumQuantities(entries), value: sumValue(entries), count: entries.length }
+      ])),
+      stockInValue: sumValue(stockIn),
+      stockOutValue: sumValue(stockOut)
+    };
+  }, [movementReport]);
+
+  const formatQuantities = (quantities) => {
+    const entries = Object.entries(quantities || {});
+    return entries.length
+      ? entries.map(([unit, quantity]) => `${Number(quantity.toFixed(2))} ${unit}`).join(' · ')
+      : '0';
+  };
+
+  const setPeriod = (period) => {
+    setReportPeriod(period);
+    if (period !== 'custom') setReportRange(getPeriodRange(period));
+  };
 
   const recordStockIn = async (event) => {
     event.preventDefault();
@@ -211,6 +297,176 @@ const StockTab = () => {
     return <div className="stock-tab stock-loading">Loading stock...</div>;
   }
 
+  if (activeView === 'report') {
+    const reasonCards = [
+      { key: 'consumption', label: 'Used for cooking' },
+      { key: 'waste', label: 'Wasted / spoiled' },
+      { key: 'damage', label: 'Damaged' },
+      { key: 'correction', label: 'Stock correction' },
+      { key: 'other', label: 'Other stock out' }
+    ];
+
+    return (
+      <section className="stock-tab stock-report-page">
+        <div className="stock-header">
+          <div>
+            <p className="stock-eyebrow">Supply chain analytics</p>
+            <h1>Stock movement report</h1>
+            <p>Review stock received and stock removed, grouped by period and reason.</p>
+          </div>
+          <button className="stock-refresh" onClick={() => setActiveView('manage')} type="button">
+            Back to stock management
+          </button>
+        </div>
+
+        <div className="stock-report-toolbar">
+          <div className="stock-period-switch" role="group" aria-label="Report period">
+            {[
+              { value: 'daily', label: 'Daily' },
+              { value: 'weekly', label: 'Weekly' },
+              { value: 'monthly', label: 'Monthly' },
+              { value: 'custom', label: 'Custom' }
+            ].map((period) => (
+              <button
+                key={period.value}
+                type="button"
+                className={reportPeriod === period.value ? 'active' : ''}
+                onClick={() => setPeriod(period.value)}
+              >
+                {period.label}
+              </button>
+            ))}
+          </div>
+          <div className="stock-report-dates">
+            <label>
+              From
+              <input
+                type="date"
+                value={reportRange.start}
+                max={reportRange.end}
+                onChange={(event) => {
+                  setReportPeriod('custom');
+                  setReportRange((current) => ({ ...current, start: event.target.value }));
+                }}
+              />
+            </label>
+            <label>
+              To
+              <input
+                type="date"
+                value={reportRange.end}
+                min={reportRange.start}
+                onChange={(event) => {
+                  setReportPeriod('custom');
+                  setReportRange((current) => ({ ...current, end: event.target.value }));
+                }}
+              />
+            </label>
+          </div>
+        </div>
+
+        {reportLoading ? (
+          <div className="stock-report-state">Loading stock movement report...</div>
+        ) : (
+          <>
+            <div className="stock-report-period-label">
+              Showing {movementReport?.period?.start || reportRange.start} to {movementReport?.period?.end || reportRange.end}
+            </div>
+
+            <div className="stock-report-summary">
+              <article className="stock-report-metric stock-in-metric">
+                <span>Total stock in</span>
+                <strong>{formatQuantities(movementRows.totalIn)}</strong>
+                <small>ETB {currency.format(movementRows.stockInValue)}</small>
+              </article>
+              <article className="stock-report-metric stock-out-metric">
+                <span>Total stock out</span>
+                <strong>{formatQuantities(movementRows.totalOut)}</strong>
+                <small>ETB {currency.format(movementRows.stockOutValue)}</small>
+              </article>
+              {reasonCards.map((reason) => {
+                const totals = movementRows.outByReason[reason.key];
+                return (
+                  <article className="stock-report-metric" key={reason.key}>
+                    <span>{reason.label}</span>
+                    <strong>{formatQuantities(totals?.quantities)}</strong>
+                    <small>{totals?.count || 0} movement{totals?.count === 1 ? '' : 's'} · ETB {currency.format(totals?.value || 0)}</small>
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="stock-report-note">
+              Opening stock created from now on is recorded as stock in. Older opening balances without purchase history are not included in historical movement totals.
+            </div>
+
+            <div className="stock-report-tables">
+              <section className="stock-report-section">
+                <div className="stock-section-title">
+                  <h2>Stock received</h2>
+                  <p>{movementRows.stockIn.length} recorded stock-in movements</p>
+                </div>
+                <div className="stock-table-wrap">
+                  <table className="stock-table stock-report-table">
+                    <thead>
+                      <tr><th>Date</th><th>Ingredient</th><th>Quantity</th><th>Unit cost</th><th>Total value</th><th>Supplier</th><th>Recorded by</th></tr>
+                    </thead>
+                    <tbody>
+                      {movementRows.stockIn.map((entry) => (
+                        <tr key={entry._id}>
+                          <td>{formatDateTime(entry.createdAt)}</td>
+                          <td>{entry.ingredientName}</td>
+                          <td>{entry.quantity} {entry.unit}</td>
+                          <td>ETB {currency.format(entry.unitCost)}</td>
+                          <td>ETB {currency.format(entry.totalValue)}</td>
+                          <td>{entry.supplier || '--'}</td>
+                          <td>{entry.performedByName || '--'}</td>
+                        </tr>
+                      ))}
+                      {movementRows.stockIn.length === 0 && (
+                        <tr><td colSpan="7" className="stock-report-empty">No stock received in this period.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section className="stock-report-section">
+                <div className="stock-section-title">
+                  <h2>Stock taken out</h2>
+                  <p>{movementRows.stockOut.length} recorded stock-out movements</p>
+                </div>
+                <div className="stock-table-wrap">
+                  <table className="stock-table stock-report-table">
+                    <thead>
+                      <tr><th>Date</th><th>Ingredient</th><th>Quantity</th><th>Reason</th><th>Total value</th><th>Recorded by</th><th>Note</th></tr>
+                    </thead>
+                    <tbody>
+                      {movementRows.stockOut.map((entry) => (
+                        <tr key={entry._id}>
+                          <td>{formatDateTime(entry.createdAt)}</td>
+                          <td>{entry.ingredientName}</td>
+                          <td>{entry.quantity} {entry.unit}</td>
+                          <td>{REASON_LABELS[entry.reason] || 'Other'}</td>
+                          <td>ETB {currency.format(entry.totalValue)}</td>
+                          <td>{entry.performedByName || '--'}</td>
+                          <td>{entry.note || '--'}</td>
+                        </tr>
+                      ))}
+                      {movementRows.stockOut.length === 0 && (
+                        <tr><td colSpan="7" className="stock-report-empty">No stock taken out in this period.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </>
+        )}
+      </section>
+    );
+  }
+
   return (
     <section className="stock-tab">
       <div className="stock-header">
@@ -219,7 +475,12 @@ const StockTab = () => {
           <h1>Stock in and stock out</h1>
           <p>Add ingredients, record deliveries going into stock, and take out what is used for cooking or waste.</p>
         </div>
-        <button className="stock-refresh" onClick={() => loadData(false)} type="button">Refresh</button>
+        <div className="stock-header-actions">
+          <button className="stock-refresh" onClick={() => loadData(false)} type="button">Refresh</button>
+          <button className="stock-report-open" onClick={() => setActiveView('report')} type="button">
+            View stock report
+          </button>
+        </div>
       </div>
 
       <div className="stock-stats">

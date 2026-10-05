@@ -454,6 +454,16 @@ export const ingredientService = {
     }
   },
 
+  getMovementReport: async ({ start, end }) => {
+    try {
+      const response = await api.get('/ingredients/report', { params: { start, end } });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching stock movement report:', error);
+      throw error.response?.data || { message: 'Failed to load stock movement report' };
+    }
+  },
+
   withdraw: async (withdrawalData) => {
     try {
       const response = await api.post('/ingredients/withdrawals', withdrawalData);

@@ -25,14 +25,11 @@
 .top-bar {
   background: linear-gradient(135deg, var(--ethiopian-charcoal) 0%, #1a2632 100%);
   color: var(--ethiopian-cream);
-  padding: 10px 0;
-  font-size: 0.9rem;
+  padding: 8px 0;
+  font-size: 0.82rem;
   font-family: 'Poppins', sans-serif;
-  border-bottom: 3px solid var(--ethiopian-gold);
+  border-bottom: 2px solid var(--ethiopian-gold);
   letter-spacing: 0.3px;
-   position: sticky;
-  top: 0;
-  z-index: 1001;
 }
 
 .top-bar-container {
@@ -57,22 +54,21 @@
 /* Main Navbar */
 .navbar {
   background: var(--ethiopian-cream);
-  height: 90px;
+  height: 82px;
   position: sticky;
-  top: 40px;
+  top: 0;
   z-index: 1000;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.14);
   font-family: 'Poppins', sans-serif;
   transition: all 0.3s ease;
-
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.35);
 }
 
 .navbar-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 90px;
+  height: 82px;
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 40px;
@@ -455,7 +451,7 @@
 
   .navbar {
     height: 80px;
-    top: 53px;
+    top: 0;
   }
 
   .navbar-container {

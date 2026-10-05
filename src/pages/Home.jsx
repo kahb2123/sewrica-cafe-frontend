@@ -473,6 +473,7 @@ const Home = () => {
         </div>
       </section>
 
+
       {/* Welcome Section */}
       ?
       {/* Category Filter */}

@@ -745,7 +745,7 @@ export const adminService = {
     }
   },
 
-  exportUnifiedReport: async (format = 'csv', { start, end, role, section } = {}) => {
+  exportUnifiedReport: async (format = 'csv', { start, end, role, section, staffId } = {}) => {
     try {
       const params = new URLSearchParams();
       params.append('format', format);
@@ -753,6 +753,7 @@ export const adminService = {
       if (end) params.append('end', end);
       if (role && role !== 'all') params.append('role', role);
       if (section && section !== 'all') params.append('section', section);
+      if (staffId) params.append('staffId', staffId);
       const response = await api.get(`/admin/reports/export?${params}`, {
         responseType: 'blob',
         timeout: 60000

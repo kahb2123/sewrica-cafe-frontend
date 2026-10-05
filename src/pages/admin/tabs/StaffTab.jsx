@@ -291,7 +291,7 @@ const StaffTab = () => {
 
   if (loading) {
     return (
-      <div className="loading-container">
+      <div className="loading-container staff-tab-loading">
         <div className="loading-spinner"></div>
         <p>Loading staff data...</p>
       </div>

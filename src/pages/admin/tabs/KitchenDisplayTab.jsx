@@ -227,7 +227,7 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
           <p className="kds-subtitle">Manage orders and assign chefs to cooking tasks</p>
         </div>
         <div className="kds-header-actions">
-          <span className={`skd-connection ${connected ? 'online' : 'offline'}`}>
+          <span className={`kds-connection ${connected ? 'online' : 'offline'}`}>
             {connected ? '● Live' : '○ Reconnecting'}
           </span>
           <button className="kds-refresh" onClick={() => loadOrders(false)}>🔄 Refresh</button>
@@ -305,16 +305,16 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
 
                 return (
                   <div key={order._id} className={`kds-row status-${order.status} urgency-${urgency}`}>
-                    <div className="kds-col-position">
+                    <div className="kds-col-position" data-label="Position">
                       <span className="kds-position-badge">{position}</span>
                     </div>
 
-                    <div className="kds-col-order">
+                    <div className="kds-col-order" data-label="Order">
                       <strong className="kds-order-number">#{getOrderNumberLabel(order.orderNumber)}</strong>
                       <span className={`status-badge ${order.status}`}>{statusLabel(order.status)}</span>
                     </div>
 
-                    <ul className="kds-col-items">
+                    <ul className="kds-col-items" data-label="Items">
                       {(order.items || []).map((item, index) => (
                         <li key={item.menuItem?._id || item.menuItem || index} className="kds-item">
                           <span className="kds-item-qty">{item.quantity}×</span>
@@ -323,17 +323,17 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
                       ))}
                     </ul>
 
-                    <div className="kds-col-ordered">
+                    <div className="kds-col-ordered" data-label="Ordered">
                       <span className="kds-ordered-time">{formatClock(order.createdAt)}</span>
                     </div>
 
-                    <div className="kds-col-elapsed">
+                    <div className="kds-col-elapsed" data-label="Elapsed">
                       <span className="kds-elapsed-time">
                         {Number.isNaN(startMs) ? '--:--' : formatElapsed(startMs, now)}
                       </span>
                     </div>
 
-                    <div className="kds-col-chef">
+                    <div className="kds-col-chef" data-label="Chef">
                       {readOnly ? (
                         <span className="kds-chef-name">
                           {order.assignedChef ? order.assignedChef.name : '—'}
@@ -355,7 +355,7 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
                       )}
                     </div>
 
-                    <div className="kds-col-delivery">
+                    <div className="kds-col-delivery" data-label="Wait / Delivery">
                       {readOnly ? (
                         <span className="kds-delivery-name">
                           {order.assignedDelivery ? order.assignedDelivery.name : '—'}

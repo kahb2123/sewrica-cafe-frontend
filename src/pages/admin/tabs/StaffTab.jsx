@@ -1,6 +1,6 @@
 // src/pages/admin/tabs/StaffTab.jsx
 import React, { useState, useEffect } from 'react';
-import { adminService, staffService, ROLE_PERMISSIONS, PERMISSIONS } from '../../../services/api';
+import { adminService, ROLE_PERMISSIONS, PERMISSIONS } from '../../../services/api';
 import { toast } from 'react-toastify';
 import PermissionGate from '../../../components/PermissionGate';
 import AddStaffModal from '../../../components/AddStaffModal';
@@ -43,7 +43,13 @@ const roleLabels = {
 };
 
 const StaffTab = () => {
-  const [staff, setStaff] = useState({ cooks: [], delivery: [], cashiers: [] });
+  const [staff, setStaff] = useState({
+    cooks: [],
+    delivery: [],
+    cashiers: [],
+    supplyChain: [],
+    admins: []
+  });
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('cooks');
    const [showAddModal, setShowAddModal] = useState(false);
@@ -61,16 +67,14 @@ const StaffTab = () => {
     try {
       setLoading(true);
       
-      const [cooks, delivery, cashiers] = await Promise.all([
-        staffService.getStaffByRole('cook'),
-        staffService.getStaffByRole('delivery'),
-        staffService.getStaffByRole('cashier')
-      ]);
-      
+      const response = await adminService.getAllStaff();
+      const members = response.staff || [];
       setStaff({
-        cooks: cooks.staff || [],
-        delivery: delivery.staff || [],
-        cashiers: cashiers.staff || []
+        cooks: members.filter((member) => member.role === 'cook'),
+        delivery: members.filter((member) => member.role === 'delivery'),
+        cashiers: members.filter((member) => member.role === 'cashier'),
+        supplyChain: members.filter((member) => member.role === 'supply_chain'),
+        admins: members.filter((member) => member.role === 'admin')
       });
     } catch (error) {
       console.error('Error fetching staff:', error);
@@ -89,7 +93,9 @@ const StaffTab = () => {
         ],
         cashiers: [
           { _id: 'cash1', name: 'Meron Tadesse', email: 'meron@sewrica.com', phone: '0989012345', status: 'active', rating: 4.7 },
-        ]
+        ],
+        supplyChain: [],
+        admins: []
       });
     } finally {
       setLoading(false);
@@ -220,8 +226,8 @@ const StaffTab = () => {
           <div className="staff-avatar">{roleLabel === 'Chef' ? 'Chef' : roleLabel}</div>
           <div className="staff-info">
             <h3>{staffMember.name}</h3>
-            <span className="staff-status" style={{ backgroundColor: getStatusColor(staffMember.status) }}>
-              {getStatusText(staffMember.status)}
+            <span className="staff-status" style={{ backgroundColor: getStatusColor(staffMember.status || (staffMember.isActive ? 'active' : 'offline')) }}>
+              {getStatusText(staffMember.status || (staffMember.isActive ? 'active' : 'offline'))}
             </span>
           </div>
         </div>
@@ -437,6 +443,18 @@ const StaffTab = () => {
         >
           Cashiers ({staff.cashiers.length})
         </button>
+        <button
+          className={`staff-tab-btn ${activeSection === 'supplyChain' ? 'active' : ''}`}
+          onClick={() => setActiveSection('supplyChain')}
+        >
+          Supply Chain ({staff.supplyChain.length})
+        </button>
+        <button
+          className={`staff-tab-btn ${activeSection === 'admins' ? 'active' : ''}`}
+          onClick={() => setActiveSection('admins')}
+        >
+          Admins ({staff.admins.length})
+        </button>
       </div>
 
       <div className="staff-grid">
@@ -457,15 +475,27 @@ const StaffTab = () => {
         {activeSection === 'cashiers' && staff.cashiers.map(member =>
           renderStaffCard(member, 'cashier')
         )}
+
+        {activeSection === 'supplyChain' && staff.supplyChain.map(member =>
+          renderStaffCard(member, 'supply_chain')
+        )}
+
+        {activeSection === 'admins' && staff.admins.map(member =>
+          renderStaffCard(member, 'admin')
+        )}
       </div>
 
       {staff[activeSection].length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">
-            {activeSection === 'cooks' ? 'Chef' : activeSection === 'delivery' ? 'Delivery' : 'Cashier'}
+            {activeSection === 'cooks' ? 'Chef'
+              : activeSection === 'delivery' ? 'Delivery'
+                : activeSection === 'cashiers' ? 'Cashier'
+                  : activeSection === 'supplyChain' ? 'Supply Chain'
+                    : 'Admin'}
           </div>
-          <h3>No {activeSection} found</h3>
-          <p>Click "Add New Staff" to add a {activeSection.slice(0, -1)}.</p>
+          <h3>No {activeSection === 'supplyChain' ? 'Supply Chain staff' : activeSection} found</h3>
+          <p>Click "Add New Staff" to add a {activeSection === 'supplyChain' ? 'Supply Chain staff member' : activeSection.slice(0, -1)}.</p>
         </div>
       )}
     </div>

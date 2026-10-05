@@ -7,7 +7,15 @@ import './UsersTab.css';
 const UsersTab = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const roles = ['customer', 'chef', 'delivery', 'cashier', 'admin'];
+  const roles = ['customer', 'cook', 'delivery', 'cashier', 'supply_chain', 'admin'];
+  const roleLabels = {
+    customer: 'Customer',
+    cook: 'Chef / Cook',
+    delivery: 'Delivery',
+    cashier: 'Cashier',
+    supply_chain: 'Supply Chain',
+    admin: 'Admin'
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -96,7 +104,7 @@ const UsersTab = () => {
                       className="role-select"
                     >
                       {roles.map(role => (
-                        <option key={role} value={role}>{role}</option>
+                        <option key={role} value={role}>{roleLabels[role]}</option>
                       ))}
                     </select>
                   </td>

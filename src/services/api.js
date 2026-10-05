@@ -601,6 +601,16 @@ export const adminService = {
     }
   },
 
+  getAllStaff: async () => {
+    try {
+      const response = await api.get('/admin/staff');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching staff:', error);
+      throw error.response?.data || { message: 'Failed to fetch staff members' };
+    }
+  },
+
   deleteStaff: async (staffId) => {
     try {
       const response = await api.delete(`/admin/staff/${staffId}`);

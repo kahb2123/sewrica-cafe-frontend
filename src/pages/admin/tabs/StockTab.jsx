@@ -52,7 +52,7 @@ const formatDateTime = (value) => {
   return date.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
 };
 
-const StockTab = () => {
+const StockTab = ({ readOnly = false }) => {
   const [ingredients, setIngredients] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -169,6 +169,7 @@ const StockTab = () => {
 
   const recordStockIn = async (event) => {
     event.preventDefault();
+    if (readOnly) return;
 
     if (creatingNew) {
       if (!newIngredient.name.trim()) {
@@ -237,6 +238,7 @@ const StockTab = () => {
 
   const recordStockOut = async (event) => {
     event.preventDefault();
+    if (readOnly) return;
     const quantity = Number(withdrawal.quantity);
 
     if (!withdrawal.ingredientId) {
@@ -275,6 +277,7 @@ const StockTab = () => {
   };
 
   const saveIngredient = async (item) => {
+    if (readOnly) return;
     const unitPrice = Number(item.unitPrice);
     const reorderLevel = Number(item.reorderLevel);
     if (!isValidAmount(unitPrice) || !isValidAmount(reorderLevel)) {
@@ -473,7 +476,9 @@ const StockTab = () => {
         <div>
           <p className="stock-eyebrow">Supply chain</p>
           <h1>Stock in and stock out</h1>
-          <p>Add ingredients, record deliveries going into stock, and take out what is used for cooking or waste.</p>
+          <p>{readOnly
+            ? 'Review available stock, recent movements, and stock reports.'
+            : 'Add ingredients, record deliveries going into stock, and take out what is used for cooking or waste.'}</p>
         </div>
         <div className="stock-header-actions">
           <button className="stock-refresh" onClick={() => loadData(false)} type="button">Refresh</button>
@@ -490,7 +495,7 @@ const StockTab = () => {
         <div><span>Withdrawn today</span><strong>{stats.todayOut}</strong></div>
       </div>
 
-      <div className="stock-forms">
+      {!readOnly && <div className="stock-forms">
         <div className="stock-form-card">
           <h2>Stock in</h2>
           <p>Pick an existing ingredient to add stock, or add a new ingredient with its opening stock.</p>
@@ -665,11 +670,13 @@ const StockTab = () => {
             <button type="submit" disabled={submitting}>Take out of stock</button>
           </form>
         </div>
-      </div>
+      </div>}
 
       <div className="stock-section-title">
         <h2>Available stock</h2>
-        <p>What is currently in the store room. Unit price and reorder level can be edited here.</p>
+        <p>{readOnly
+          ? 'What is currently in the store room.'
+          : 'What is currently in the store room. Unit price and reorder level can be edited here.'}</p>
       </div>
       <div className="stock-table-wrap">
         <table className="stock-table">
@@ -681,7 +688,7 @@ const StockTab = () => {
               <th>Unit price (ETB)</th>
               <th>Total price (ETB)</th>
               <th>Status</th>
-              <th><span className="sr-only">Actions</span></th>
+              {!readOnly && <th><span className="sr-only">Actions</span></th>}
             </tr>
           </thead>
           <tbody>
@@ -694,7 +701,7 @@ const StockTab = () => {
                     <small className="stock-unit">{item.unit}</small>
                   </td>
                   <td><span className="stock-quantity">{item.quantity} {item.unit}</span></td>
-                  <td>
+                  <td>{readOnly ? item.reorderLevel : (
                     <input
                       className="stock-inline-input"
                       aria-label={`${item.name} reorder level`}
@@ -704,8 +711,8 @@ const StockTab = () => {
                       value={item.reorderLevel}
                       onChange={(e) => patchIngredientLocal(item._id, 'reorderLevel', e.target.value)}
                     />
-                  </td>
-                  <td>
+                  )}</td>
+                  <td>{readOnly ? (item.unitPrice ?? 0) : (
                     <input
                       className="stock-inline-input"
                       aria-label={`${item.name} unit price`}
@@ -715,10 +722,10 @@ const StockTab = () => {
                       value={item.unitPrice ?? 0}
                       onChange={(e) => patchIngredientLocal(item._id, 'unitPrice', e.target.value)}
                     />
-                  </td>
+                  )}</td>
                   <td><span className="stock-line-total">ETB {currency.format(lineValue(item))}</span></td>
                   <td><span className={`stock-status ${low ? 'low' : 'healthy'}`}>{low ? 'Reorder soon' : 'Healthy'}</span></td>
-                  <td>
+                  {!readOnly && <td>
                     <button
                       className="stock-save"
                       type="button"
@@ -727,7 +734,7 @@ const StockTab = () => {
                     >
                       {savingId === item._id ? 'Saving...' : 'Save'}
                     </button>
-                  </td>
+                  </td>}
                 </tr>
               );
             })}
@@ -735,15 +742,17 @@ const StockTab = () => {
           {ingredients.length > 0 && (
             <tfoot>
               <tr className="stock-total-row">
-                <td colSpan="4">Total price of all stock</td>
+                <td colSpan={readOnly ? '3' : '4'}>Total price of all stock</td>
                 <td><span className="stock-line-total">ETB {currency.format(stats.totalPrice)}</span></td>
-                <td colSpan="2" />
+                <td colSpan={readOnly ? '1' : '2'} />
               </tr>
             </tfoot>
           )}
         </table>
         {ingredients.length === 0 && (
-          <div className="stock-empty">No ingredients yet. Use the Stock in form above to add your first one.</div>
+          <div className="stock-empty">{readOnly
+            ? 'No ingredients found.'
+            : 'No ingredients yet. Use the Stock in form above to add your first one.'}</div>
         )}
       </div>
 

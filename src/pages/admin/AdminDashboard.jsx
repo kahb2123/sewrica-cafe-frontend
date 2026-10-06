@@ -25,7 +25,7 @@ import PermissionsTab from './tabs/PermissionsTab';
 import KitchenDisplayTab from './tabs/KitchenDisplayTab';
 
 const AdminDashboard = () => {
-  const { user, isAuthenticated, canReadPage } = useAuth();
+  const { user, isAuthenticated, canReadPage, canWritePage } = useAuth();
   const navigate = useNavigate();
   const { onNewOrder, connected } = useSocket();
   const [activeTab, setActiveTab] = useState('overview');
@@ -137,7 +137,7 @@ const renderContent = () => {
       case 'orders':
         return <OrdersTab />;
       case 'kitchen':
-        return <KitchenDisplayTab />;
+        return <KitchenDisplayTab readOnly={!canWritePage('adminDashboard') || !canWritePage('staffOrdersCooking')} />;
       case 'staff':
         return <StaffTab />;
       case 'menu':

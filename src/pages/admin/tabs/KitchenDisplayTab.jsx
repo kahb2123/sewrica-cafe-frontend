@@ -1,7 +1,7 @@
 // src/pages/admin/tabs/KitchenDisplayTab.jsx
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
-import { staffService, orderService, getOrderNumberLabel } from '../../../services/api';
+import { staffService, getOrderNumberLabel } from '../../../services/api';
 import { useSocket } from '../../../context/SocketContext';
 import './KitchenDisplayTab.css';
 
@@ -124,13 +124,13 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
   }, [connected, socket, loadOrders]);
 
    const completeOrder = async (order) => {
-    if (busyChefIds.size > 0 || busyDeliveryIds.size > 0) return;
+     if (readOnly || busyChefIds.size > 0 || busyDeliveryIds.size > 0) return;
     setBusyChefIds(new Set([order._id]));
 
     try {
       const steps = ADMIN_PATH_TO_READY[order.status] || [];
       for (const step of steps) {
-        await orderService.updateOrderStatus(order._id, step);
+        await staffService.updateKitchenOrderStatus(order._id, step);
       }
       setOrders((prev) => prev.filter((item) => item._id !== order._id));
     } catch (error) {
@@ -143,7 +143,7 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
   };
 
   const assignChefToOrder = async (orderId, chefId) => {
-    if (!chefId) return;
+    if (readOnly || !chefId) return;
     setBusyChefIds((prev) => new Set([...prev, orderId]));
     try {
       const response = await staffService.assignChef(orderId, chefId);
@@ -165,7 +165,7 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
   };
 
   const assignDeliveryToOrder = async (orderId, deliveryId) => {
-    if (!deliveryId) return;
+    if (readOnly || !deliveryId) return;
     setBusyDeliveryIds((prev) => new Set([...prev, orderId]));
     try {
       const response = await staffService.assignDelivery(orderId, deliveryId);
@@ -378,14 +378,16 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
                     </div>
 
                     <div className="kds-col-action">
-                      <button
-                        className="kds-complete-btn"
-                        onClick={() => completeOrder(order)}
-                        disabled={isBusy}
-                        aria-label={`Mark order ${getOrderNumberLabel(order.orderNumber)} ready`}
-                      >
-                        {isBusy ? '⏳ Saving…' : '✅ Complete'}
-                      </button>
+                      {!readOnly && (
+                        <button
+                          className="kds-complete-btn"
+                          onClick={() => completeOrder(order)}
+                          disabled={isBusy}
+                          aria-label={`Mark order ${getOrderNumberLabel(order.orderNumber)} ready`}
+                        >
+                          {isBusy ? '⏳ Saving…' : '✅ Complete'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 );

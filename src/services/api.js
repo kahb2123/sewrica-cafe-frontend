@@ -1027,6 +1027,15 @@ export const staffService = {
     }
   },
 
+  updateKitchenOrderStatus: async (orderId, status, notes = '') => {
+    try {
+      const response = await api.patch(`/staff/orders/${orderId}/status`, { status, notes });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update kitchen order status' };
+    }
+  },
+
   assignDelivery: async (orderId, deliveryId, notes = '') => {
     try {
       const response = await api.post(`/staff/orders/${orderId}/assign-delivery`, { deliveryId, notes });

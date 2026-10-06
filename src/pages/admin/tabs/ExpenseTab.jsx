@@ -23,7 +23,7 @@ const formatDate = (value) => { if (!value) return '--'; const d = new Date(valu
 
 const emptyExpense = { category: '', description: '', amount: '', currency: 'ETB', paymentMethod: 'cash', supplier: '', receiptNumber: '', expenseDate: toInputDate(new Date()), notes: '' };
 
-const ExpenseTab = () => {
+const ExpenseTab = ({ readOnly = false }) => {
   const [expenses, setExpenses] = useState([]);
   const [stats, setStats] = useState({ totalAmount: 0, count: 0, approved: 0, byCategory: [], byPaymentMethod: [] });
   const [loading, setLoading] = useState(true);
@@ -63,6 +63,7 @@ const ExpenseTab = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (readOnly) return;
     if (!form.category || !form.description?.trim() || !form.amount || Number(form.amount) <= 0) {
       toast.error('Please fill all required fields');
       return;
@@ -87,6 +88,7 @@ const ExpenseTab = () => {
   };
 
   const handleEdit = (expense) => {
+    if (readOnly) return;
     setEditingId(expense._id);
     setForm({
       category: expense.category,
@@ -103,6 +105,7 @@ const ExpenseTab = () => {
   };
 
   const handleApprove = async (id) => {
+    if (readOnly) return;
     try {
       await expenseService.approve(id);
       toast.success('Expense approved');
@@ -113,6 +116,7 @@ const ExpenseTab = () => {
   };
 
   const handleDelete = async (id) => {
+    if (readOnly) return;
     if (!window.confirm('Delete this expense?')) return;
     try {
       setDeletingId(id);
@@ -148,7 +152,7 @@ const ExpenseTab = () => {
         <div className="expense-stat-warning"><span>Pending</span><strong>{(totals.count || 0) - (totals.approved || 0)}</strong></div>
       </div>
 
-      <div className="expense-form-card">
+      {!readOnly && <div className="expense-form-card">
         <h2>{editingId ? 'Edit Expense' : 'Add Expense'}</h2>
         <form onSubmit={handleSubmit}>
           <div className="expense-form-row">
@@ -203,7 +207,7 @@ const ExpenseTab = () => {
             {editingId && <button type="button" className="btn-cancel" onClick={resetForm}>Cancel</button>}
           </div>
         </form>
-      </div>
+      </div>}
 
       <div className="expense-filters">
         <div className="filter-group">
@@ -242,7 +246,7 @@ const ExpenseTab = () => {
               <th>Payment</th>
               <th>Supplier</th>
               <th>Status</th>
-              <th><span className="sr-only">Actions</span></th>
+              {!readOnly && <th><span className="sr-only">Actions</span></th>}
             </tr>
           </thead>
           <tbody>
@@ -258,7 +262,7 @@ const ExpenseTab = () => {
                 <td>{expense.paymentMethod?.replace('_', ' ')}</td>
                 <td>{expense.supplier || '-'}</td>
                 <td><span className={`expense-status ${expense.approved ? 'approved' : 'pending'}`}>{expense.approved ? '✓ Approved' : '⏳ Pending'}</span></td>
-                <td>
+                {!readOnly && <td>
                   <div className="expense-actions">
                     {!expense.approved && (
                       <button className="btn-approve" onClick={() => handleApprove(expense._id)}>Approve</button>
@@ -266,12 +270,14 @@ const ExpenseTab = () => {
                     <button className="btn-edit" onClick={() => handleEdit(expense)} disabled={deletingId === expense._id}>Edit</button>
                     <button className="btn-delete" onClick={() => handleDelete(expense._id)} disabled={deletingId === expense._id}>{deletingId === expense._id ? '...' : 'Delete'}</button>
                   </div>
-                </td>
+                </td>}
               </tr>
             ))}
           </tbody>
         </table>
-        {expenses.length === 0 && <div className="expense-empty">No expenses found. Add your first expense above.</div>}
+        {expenses.length === 0 && <div className="expense-empty">{readOnly
+          ? 'No expenses found.'
+          : 'No expenses found. Add your first expense above.'}</div>}
       </div>
 
       {totalPages > 1 && (

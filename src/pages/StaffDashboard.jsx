@@ -312,6 +312,14 @@ const StaffDashboard = () => {
   };
 
   const navTabs = getNavTabs();
+  const taskType = getTaskType();
+  const canWriteTasks = canWritePage('staffDashboard') && (
+    taskType === 'cook'
+      ? canWritePage('staffOrdersCooking')
+      : taskType === 'delivery'
+        ? canWritePage('staffOrdersDelivery')
+        : taskType === 'cashier'
+  );
 
   return (
     <div className="staff-dashboard">
@@ -405,7 +413,8 @@ const StaffDashboard = () => {
                           <StaffTaskCard
                             key={task._id}
                             task={task}
-                            type={getTaskType()}
+                            type={taskType}
+                            canWrite={canWriteTasks}
                             onTaskUpdate={handleTaskUpdate}
                             onChefAccept={handleChefAccept}
                             onChefReject={handleChefReject}
@@ -435,7 +444,8 @@ const StaffDashboard = () => {
                           <StaffTaskCard
                             key={task._id}
                             task={task}
-                            type={getTaskType()}
+                            type={taskType}
+                            canWrite={canWriteTasks}
                             onTaskUpdate={handleTaskUpdate}
                             onChefAccept={handleChefAccept}
                             onChefReject={handleChefReject}
@@ -465,7 +475,7 @@ const StaffDashboard = () => {
 
         {activeTab === 'kitchen' && canReadPage('staffOrdersCooking') && (
           <div className="page-wrapper">
-            <KitchenDisplayTab readOnly={!canWritePage('staffOrdersCooking')} />
+            <KitchenDisplayTab readOnly={!canWritePage('staffDashboard') || !canWritePage('staffOrdersCooking')} />
           </div>
         )}
 

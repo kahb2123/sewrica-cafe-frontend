@@ -9,6 +9,7 @@ import './StaffTaskCard.css';
 const StaffTaskCard = ({ 
   task, 
   type, 
+  canWrite = false,
   onTaskUpdate,
   onChefAccept,
   onChefReject,
@@ -459,9 +460,9 @@ const StaffTaskCard = ({
       </div>
 
       <div className="task-card-footer">
-        {type === 'cook' && hasPermission(PERMISSIONS.ORDERS_ACCEPT) && renderChefButtons()}
-        {type === 'delivery' && hasPermission(PERMISSIONS.ORDERS_ACCEPT) && renderDeliveryButtons()}
-        {type === 'cashier' && hasPermission(PERMISSIONS.PAYMENTS_PROCESS) && renderCashierButtons()}
+        {canWrite && type === 'cook' && hasPermission(PERMISSIONS.ORDERS_ACCEPT) && renderChefButtons()}
+        {canWrite && type === 'delivery' && hasPermission(PERMISSIONS.ORDERS_ACCEPT) && renderDeliveryButtons()}
+        {canWrite && type === 'cashier' && hasPermission(PERMISSIONS.PAYMENTS_PROCESS) && renderCashierButtons()}
         
         <button 
           className="btn-details"

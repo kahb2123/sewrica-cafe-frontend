@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { adminService } from '../../../services/api';
+import scrollToPageTop from '../../../utils/scrollToPageTop';
 import './ReportsTab.css';
 
 const money = new Intl.NumberFormat('en-ET', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -286,7 +287,13 @@ const ReportsTab = () => {
           <button
             key={tab.key}
             className={activeTab === tab.key ? 'active' : ''}
-            onClick={() => { setActiveTab(tab.key); setSelectedStaff(null); setStaffDetail(null); setRoleFilter('all'); }}
+            onClick={() => {
+              if (tab.key !== activeTab) scrollToPageTop();
+              setActiveTab(tab.key);
+              setSelectedStaff(null);
+              setStaffDetail(null);
+              setRoleFilter('all');
+            }}
           >
             {tab.label}
           </button>

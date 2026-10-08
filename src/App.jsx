@@ -1,6 +1,6 @@
 // src/App.jsx
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { useLayoutEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './themes/sewrica-theme.css';
@@ -26,13 +26,25 @@ import Contact from './pages/Contact';
 import Admin from './pages/Admin'; // ← Updated: Import from Admin.jsx
 import StaffDashboard from './pages/StaffDashboard';
 import StaffLogin from './pages/StaffLogin';
+import scrollToPageTop from './utils/scrollToPageTop';
 
 // Import CSS
 import './App.css';
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useLayoutEffect(() => {
+    scrollToPageTop();
+  }, [pathname]);
+
+  return null;
+}
+
 function App() {
   return (
     <>
+      <ScrollToTop />
       <AuthProvider>
         <SocketProvider>
           <div className="App">

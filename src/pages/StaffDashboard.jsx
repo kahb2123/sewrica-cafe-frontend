@@ -10,6 +10,7 @@ import StockTab from './admin/tabs/StockTab';
 import ExpenseTab from './admin/tabs/ExpenseTab';
 import ReportsTab from './admin/tabs/ReportsTab';
 import { toast } from 'react-toastify';
+import scrollToPageTop from '../utils/scrollToPageTop';
 import './StaffDashboard.css';
 
 const StaffDashboard = () => {
@@ -26,6 +27,20 @@ const StaffDashboard = () => {
     completedToday: 0,
     pendingTasks: 0
   });
+
+  const handleTabChange = (tab) => {
+    if (tab !== activeTab) {
+      scrollToPageTop();
+    }
+    setActiveTab(tab);
+  };
+
+  const handleSubTabChange = (tab) => {
+    if (tab !== activeSubTab) {
+      scrollToPageTop();
+      setActiveSubTab(tab);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -347,7 +362,7 @@ const StaffDashboard = () => {
             <button
               key={tab.id}
               className={`nav-tab ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
             >
               <span className="nav-icon">{tab.icon}</span>
               <span className="nav-label">{tab.label}</span>
@@ -386,13 +401,13 @@ const StaffDashboard = () => {
             <div className="tasks-tabs">
               <button 
                 className={`tab-btn ${activeSubTab === 'tasks' ? 'active' : ''}`}
-                onClick={() => setActiveSubTab('tasks')}
+                onClick={() => handleSubTabChange('tasks')}
               >
                 Active Tasks ({tasks.length})
               </button>
               <button 
                 className={`tab-btn ${activeSubTab === 'completed' ? 'active' : ''}`}
-                onClick={() => setActiveSubTab('completed')}
+                onClick={() => handleSubTabChange('completed')}
               >
                 Completed ({completedTasks.length})
               </button>

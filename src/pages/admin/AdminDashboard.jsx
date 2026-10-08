@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { adminService } from '../../services/api';
 import { toast } from 'react-toastify';
 import { useSocket } from '../../context/SocketContext';
+import scrollToPageTop from '../../utils/scrollToPageTop';
 import './AdminDashboard.css';
 
 // Import components
@@ -89,6 +90,9 @@ const AdminDashboard = () => {
   }, [user, isAuthenticated, navigate]);
 
   const handleMenuClick = (tab) => {
+    if (tab !== activeTab) {
+      scrollToPageTop();
+    }
     setActiveTab(tab);
     if (window.innerWidth <= 768) {
       setMobileMenuOpen(false);

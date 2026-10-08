@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { orderService } from '../services/api';
 import { toast } from 'react-toastify';
+import scrollToPageTop from '../utils/scrollToPageTop';
 import './Profile.css';
 
 const Profile = () => {
@@ -13,6 +14,13 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
+  const handleTabChange = (tab) => {
+    if (tab !== activeTab) {
+      scrollToPageTop();
+      setActiveTab(tab);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -159,13 +167,13 @@ const Profile = () => {
             <div className="profile-nav">
               <button
                 className={activeTab === 'orders' ? 'active' : ''}
-                onClick={() => setActiveTab('orders')}
+                onClick={() => handleTabChange('orders')}
               >
                 📦 My Orders
               </button>
               <button
                 className={activeTab === 'account' ? 'active' : ''}
-                onClick={() => setActiveTab('account')}
+                onClick={() => handleTabChange('account')}
               >
                 👤 Account Settings
               </button>

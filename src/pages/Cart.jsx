@@ -196,18 +196,6 @@ const Cart = () => {
       errors.phone = 'Invalid phone number';
     }
     
-    if (!customerInfo.email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(customerInfo.email)) {
-      errors.email = 'Invalid email';
-    }
-    
-    if (customerInfo.deliveryMethod === 'delivery') {
-      if (!customerInfo.address.trim() && !customerInfo.area) {
-        errors.address = 'Delivery address is required';
-      }
-    }
-    
     return errors;
   };
 
@@ -705,7 +693,7 @@ const Cart = () => {
 
                   <div className="form-group">
                     <label>
-                      <FaEnvelope /> Email Address *
+                      <FaEnvelope /> Email Address
                     </label>
                     <input
                       type="email"
@@ -724,7 +712,7 @@ const Cart = () => {
                       
                       <div className="form-row">
                         <div className="form-group">
-                          <label>Area *</label>
+                          <label>Area</label>
                           <input
                             type="text"
                             name="area"

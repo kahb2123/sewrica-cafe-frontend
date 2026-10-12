@@ -7,6 +7,7 @@ import AddStaffModal from '../../../components/AddStaffModal';
 import './StaffTab.css';
 
 const PermissionDescriptions = {
+  [PERMISSIONS.ORDERS_CREATE]: 'Create staff orders',
   [PERMISSIONS.ORDERS_ACCEPT]: 'Accept orders',
   [PERMISSIONS.ORDERS_REJECT]: 'Reject orders',
   [PERMISSIONS.ORDERS_START_COOKING]: 'Start cooking',
@@ -36,6 +37,7 @@ const roleLabels = {
   cook: 'Chef',
   chef: 'Chef',
   delivery: 'Delivery',
+  waiter: 'Waiter',
   cashier: 'Cashier',
   admin: 'Admin',
   customer: 'Customer',
@@ -46,6 +48,7 @@ const StaffTab = () => {
   const [staff, setStaff] = useState({
     cooks: [],
     delivery: [],
+    waiters: [],
     cashiers: [],
     supplyChain: [],
     admins: []
@@ -72,6 +75,7 @@ const StaffTab = () => {
       setStaff({
         cooks: members.filter((member) => member.role === 'cook'),
         delivery: members.filter((member) => member.role === 'delivery'),
+        waiters: members.filter((member) => member.role === 'waiter'),
         cashiers: members.filter((member) => member.role === 'cashier'),
         supplyChain: members.filter((member) => member.role === 'supply_chain'),
         admins: members.filter((member) => member.role === 'admin')
@@ -94,6 +98,7 @@ const StaffTab = () => {
         cashiers: [
           { _id: 'cash1', name: 'Meron Tadesse', email: 'meron@sewrica.com', phone: '0989012345', status: 'active', rating: 4.7 },
         ],
+        waiters: [],
         supplyChain: [],
         admins: []
       });
@@ -444,6 +449,12 @@ const StaffTab = () => {
           Cashiers ({staff.cashiers.length})
         </button>
         <button
+          className={`staff-tab-btn ${activeSection === 'waiters' ? 'active' : ''}`}
+          onClick={() => setActiveSection('waiters')}
+        >
+          Waiters ({staff.waiters.length})
+        </button>
+        <button
           className={`staff-tab-btn ${activeSection === 'supplyChain' ? 'active' : ''}`}
           onClick={() => setActiveSection('supplyChain')}
         >
@@ -476,6 +487,10 @@ const StaffTab = () => {
           renderStaffCard(member, 'cashier')
         )}
 
+        {activeSection === 'waiters' && staff.waiters.map(member =>
+          renderStaffCard(member, 'waiter')
+        )}
+
         {activeSection === 'supplyChain' && staff.supplyChain.map(member =>
           renderStaffCard(member, 'supply_chain')
         )}
@@ -491,11 +506,12 @@ const StaffTab = () => {
             {activeSection === 'cooks' ? 'Chef'
               : activeSection === 'delivery' ? 'Delivery'
                 : activeSection === 'cashiers' ? 'Cashier'
-                  : activeSection === 'supplyChain' ? 'Supply Chain'
-                    : 'Admin'}
+                  : activeSection === 'waiters' ? 'Waiter'
+                    : activeSection === 'supplyChain' ? 'Supply Chain'
+                      : 'Admin'}
           </div>
           <h3>No {activeSection === 'supplyChain' ? 'Supply Chain staff' : activeSection} found</h3>
-          <p>Click "Add New Staff" to add a {activeSection === 'supplyChain' ? 'Supply Chain staff member' : activeSection.slice(0, -1)}.</p>
+          <p>Click "Add New Staff" to add a {activeSection === 'supplyChain' ? 'Supply Chain staff member' : activeSection === 'waiters' ? 'waiter' : activeSection.slice(0, -1)}.</p>
         </div>
       )}
     </div>

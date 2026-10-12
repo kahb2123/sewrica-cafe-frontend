@@ -20,6 +20,10 @@
   padding: 0;
 }
 
+.kitchen-display-tab.tv-mode .kds-header {
+  display: none;
+}
+
 .kitchen-display-tab.tv-mode .kds-header,
 .kitchen-display-tab.tv-mode .kds-stats,
 .kitchen-display-tab.tv-mode .kds-controls,

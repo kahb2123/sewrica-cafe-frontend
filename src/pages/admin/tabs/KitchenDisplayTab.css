@@ -43,6 +43,13 @@
   display: none;
 }
 
+.kitchen-display-tab.tv-mode .kds-queue-head {
+  font-size: clamp(14px, 1vw, 18px);
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #34495e;
+}
+
 .kitchen-display-tab *,
 .kitchen-display-tab *::before,
 .kitchen-display-tab *::after {

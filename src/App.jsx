@@ -42,14 +42,22 @@ function ScrollToTop() {
 }
 
 function App() {
+  const location = useLocation();
+  const isKitchenTvMode = location.pathname.startsWith('/admin')
+    && new URLSearchParams(location.search).get('mode') === 'tv';
+
   return (
     <>
       <ScrollToTop />
       <AuthProvider>
         <SocketProvider>
           <div className="App">
-            <Navbar />
-            <GiveawayBanner />
+            {!isKitchenTvMode && (
+              <>
+                <Navbar />
+                <GiveawayBanner />
+              </>
+            )}
             <main className="main-content">
               <Routes>
                 {/* Public Routes */}
@@ -87,7 +95,7 @@ function App() {
                 <Route path="*" element={<div className="not-found">Page Not Found</div>} />
               </Routes>
             </main>
-            <Footer />
+            {!isKitchenTvMode && <Footer />}
           </div>
         </SocketProvider>
       </AuthProvider>

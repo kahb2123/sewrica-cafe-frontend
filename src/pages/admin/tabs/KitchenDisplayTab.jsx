@@ -227,6 +227,15 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   tvModeSearch.set('mode', 'tv');
   const tvModeUrl = `${location.pathname}?${tvModeSearch.toString()}${location.hash}`;
 
+  const openTvMode = () => {
+    const tvWindow = window.open(tvModeUrl, '_blank');
+    if (!tvWindow) {
+      toast.warn('Allow pop-ups to open the kitchen TV display in a new tab.');
+      return;
+    }
+    tvWindow.opener = null;
+  };
+
   if (loading) {
     return (
       <div className={`kitchen-display-tab ${tvMode ? 'tv-mode' : ''}`}>
@@ -248,14 +257,13 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
           </span>
           {!tvMode && (
             <>
-              <a
+              <button
                 className="kds-tv-mode"
-                href={tvModeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+                type="button"
+                onClick={openTvMode}
               >
                 📺 Open TV mode
-              </a>
+              </button>
               <button className="kds-refresh" onClick={() => loadOrders(false)}>🔄 Refresh</button>
             </>
           )}

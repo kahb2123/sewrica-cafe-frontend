@@ -12,6 +12,7 @@ const UsersTab = () => {
     customer: 'Customer',
     cook: 'Chef / Cook',
     delivery: 'Delivery',
+    waiter: 'Waiter',
     cashier: 'Cashier',
     supply_chain: 'Supply Chain',
     admin: 'Admin'

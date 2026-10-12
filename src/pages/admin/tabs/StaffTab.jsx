@@ -1,5 +1,5 @@
 // src/pages/admin/tabs/StaffTab.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { adminService, ROLE_PERMISSIONS, PERMISSIONS } from '../../../services/api';
 import { toast } from 'react-toastify';
 import PermissionGate from '../../../components/PermissionGate';
@@ -62,52 +62,44 @@ const StaffTab = () => {
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [staffPerformance, setStaffPerformance] = useState(null);
 
-  useEffect(() => {
-    fetchStaff();
-  }, []);
-
-  const fetchStaff = async () => {
+  const fetchStaff = useCallback(async () => {
     try {
       setLoading(true);
       
       const response = await adminService.getAllStaff();
-      const members = response.staff || [];
+      const members = Array.isArray(response?.staff) ? response.staff : [];
       setStaff({
-        cooks: members.filter((member) => member.role === 'cook'),
-        delivery: members.filter((member) => member.role === 'delivery'),
-        waiters: members.filter((member) => member.role === 'waiter'),
-        cashiers: members.filter((member) => member.role === 'cashier'),
-        supplyChain: members.filter((member) => member.role === 'supply_chain'),
-        admins: members.filter((member) => member.role === 'admin')
+        cooks: members.filter((member) => ['cook', 'chef'].includes(member.role?.toLowerCase())),
+        delivery: members.filter((member) => member.role?.toLowerCase() === 'delivery'),
+        waiters: members.filter((member) => member.role?.toLowerCase() === 'waiter'),
+        cashiers: members.filter((member) => member.role?.toLowerCase() === 'cashier'),
+        supplyChain: members.filter((member) => member.role?.toLowerCase() === 'supply_chain'),
+        admins: members.filter((member) => member.role?.toLowerCase() === 'admin')
       });
     } catch (error) {
       console.error('Error fetching staff:', error);
       toast.error('Failed to load staff data');
-      
       setStaff({
-        cooks: [
-          { _id: 'chef1', name: 'Chef Berhanu', email: 'berhanu@sewrica.com', phone: '0923456789', status: 'active', assignedOrders: 5, completedOrders: 45, rating: 4.8 },
-          { _id: 'chef2', name: 'Chef Tigist', email: 'tigist@sewrica.com', phone: '0934567890', status: 'active', assignedOrders: 3, completedOrders: 38, rating: 4.9 },
-          { _id: 'chef3', name: 'Chef Solomon', email: 'solomon@sewrica.com', phone: '0945678901', status: 'busy', assignedOrders: 7, completedOrders: 52, rating: 4.7 },
-        ],
-        delivery: [
-          { _id: 'del1', name: 'Abebe Kebede', email: 'abebe@sewrica.com', phone: '0956789012', status: 'active', assignedOrders: 4, completedOrders: 67, rating: 4.6 },
-          { _id: 'del2', name: 'Almaz Worku', email: 'almaz@sewrica.com', phone: '0967890123', status: 'active', assignedOrders: 2, completedOrders: 43, rating: 4.9 },
-          { _id: 'del3', name: 'Kebede Alemu', email: 'kebede@sewrica.com', phone: '0978901234', status: 'on_delivery', assignedOrders: 6, completedOrders: 58, rating: 4.5 },
-        ],
-        cashiers: [
-          { _id: 'cash1', name: 'Meron Tadesse', email: 'meron@sewrica.com', phone: '0989012345', status: 'active', rating: 4.7 },
-        ],
+        cooks: [],
+        delivery: [],
         waiters: [],
+        cashiers: [],
         supplyChain: [],
         admins: []
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleStaffAdded = () => {
+  useEffect(() => {
+    fetchStaff();
+  }, [fetchStaff]);
+
+  const handleStaffAdded = (role) => {
+    if (role?.toLowerCase() === 'waiter') {
+      setActiveSection('waiters');
+    }
     fetchStaff();
   };
 

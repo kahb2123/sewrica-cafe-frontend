@@ -139,7 +139,7 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded, editMode = false, staffD
       
       // Call the callback to refresh staff list
       if (onStaffAdded) {
-        onStaffAdded();
+        onStaffAdded(editMode ? undefined : formData.role);
       }
       
       // Close modal

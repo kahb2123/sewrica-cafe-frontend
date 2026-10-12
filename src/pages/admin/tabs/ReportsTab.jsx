@@ -60,7 +60,6 @@ const ReportsTab = () => {
 
   const [items, setItems] = useState([]);
   const [staff, setStaff] = useState([]);
-  const [allStaff, setAllStaff] = useState([]);
   const [roleFilter, setRoleFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
@@ -100,7 +99,6 @@ const ReportsTab = () => {
           } else {
             const rows = response?.data?.staff || [];
             setStaff(rows);
-            setAllStaff(rows);
           }
         }
       } catch (error) {
@@ -109,7 +107,6 @@ const ReportsTab = () => {
           if (activeTab === 'items') setItems([]);
           else {
             setStaff([]);
-            setAllStaff([]);
           }
         }
       } finally {
@@ -192,14 +189,14 @@ const ReportsTab = () => {
     [items]
   );
 
-  const peakStaffRevenue = useMemo(
-    () => Math.max(1, ...staff.map((row) => Number(row.revenue) || 0)),
-    [staff]
-  );
-
+  const activeStaff = staff.filter((row) => Number(row.totalOrders) > 0);
   const filteredStaff = roleFilter === 'all'
-    ? staff
-    : staff.filter((s) => s.role === roleFilter);
+    ? activeStaff
+    : activeStaff.filter((row) => row.role === roleFilter);
+  const peakStaffRevenue = useMemo(
+    () => Math.max(1, ...filteredStaff.map((row) => Number(row.revenue) || 0)),
+    [filteredStaff]
+  );
 
   return (
     <div className="reports-tab">
@@ -590,15 +587,15 @@ const ReportsTab = () => {
                 <div className="summary-bar">
                   <div className="summary-item">
                     <span>Staff Members</span>
-                    <strong>{allStaff.length}</strong>
+                    <strong>{filteredStaff.length}</strong>
                   </div>
                   <div className="summary-item">
                     <span>Total Orders Handled</span>
-                    <strong>{staff.reduce((sum, row) => sum + (Number(row.totalOrders) || 0), 0)}</strong>
+                    <strong>{filteredStaff.reduce((sum, row) => sum + (Number(row.totalOrders) || 0), 0)}</strong>
                   </div>
                   <div className="summary-item">
-                    <span>Total Revenue</span>
-                    <strong>{formatMoney(staff.reduce((sum, row) => sum + (Number(row.revenue) || 0), 0))}</strong>
+                    <span>Total Order Revenue</span>
+                    <strong>{formatMoney(filteredStaff.reduce((sum, row) => sum + (Number(row.revenue) || 0), 0))}</strong>
                   </div>
                 </div>
               </>

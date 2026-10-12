@@ -1,5 +1,6 @@
 // src/pages/admin/tabs/KitchenDisplayTab.jsx
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { staffService, getOrderNumberLabel } from '../../../services/api';
 import { useSocket } from '../../../context/SocketContext';
@@ -61,6 +62,7 @@ const urgencyLevel = (startMs, nowMs) => {
 };
 
 const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
+  const location = useLocation();
   const [orders, setOrders] = useState([]);
   const [chefs, setChefs] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
@@ -221,6 +223,9 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   );
 
   const unassignedCount = orders.filter((order) => !order.assignedChef).length;
+  const tvModeSearch = new URLSearchParams(location.search);
+  tvModeSearch.set('mode', 'tv');
+  const tvModeUrl = `${location.pathname}?${tvModeSearch.toString()}${location.hash}`;
 
   if (loading) {
     return (
@@ -242,7 +247,17 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
             {connected ? '● Live' : '○ Reconnecting'}
           </span>
           {!tvMode && (
-            <button className="kds-refresh" onClick={() => loadOrders(false)}>🔄 Refresh</button>
+            <>
+              <a
+                className="kds-tv-mode"
+                href={tvModeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                📺 Open TV mode
+              </a>
+              <button className="kds-refresh" onClick={() => loadOrders(false)}>🔄 Refresh</button>
+            </>
           )}
         </div>
       </div>

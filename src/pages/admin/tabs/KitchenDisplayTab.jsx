@@ -113,9 +113,7 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
     if (!connected || !socket) return undefined;
 
     const handleNewOrder = (data) => {
-      if (!tvMode) {
-        toast.info(`New order #${getOrderNumberLabel(data?.orderNumber)} in kitchen`);
-      }
+      toast.info(`New order #${getOrderNumberLabel(data?.orderNumber)} in kitchen`);
       loadOrders(false);
     };
 

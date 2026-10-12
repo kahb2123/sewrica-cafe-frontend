@@ -169,12 +169,14 @@ export const SocketProvider = ({ children }) => {
 
   const onNewOrder = (callback) => {
     if (socket) {
-      socket.on('new-order', (data) => {
+      const handleNewOrder = (data) => {
         console.log('📢 New order received:', data);
-        toast.info(`New order #${data.orderNumber} received`);
         callback(data);
-      });
+      };
+      socket.on('new-order', handleNewOrder);
+      return () => socket.off('new-order', handleNewOrder);
     }
+    return undefined;
   };
 
   const onOrderAssigned = (callback) => {

@@ -8,6 +8,15 @@ import './KitchenDisplayTab.css';
 const KITCHEN_REFRESH_INTERVAL_MS = 15000;
 const TICK_INTERVAL_MS = 1000;
 const QUEUE_STATUSES = ['pending', 'confirmed', 'preparing', 'cooking'];
+const KITCHEN_REFRESH_EVENTS = [
+  'order-updated',
+  'order-cancelled',
+  'order-assigned-chef',
+  'order-assigned-delivery',
+  'chef-accepted',
+  'chef-rejected',
+  'cooking-started'
+];
 const WARN_AFTER_MINUTES = 10;
 const URGENT_AFTER_MINUTES = 20;
 
@@ -51,7 +60,7 @@ const urgencyLevel = (startMs, nowMs) => {
   return 'normal';
 };
 
-const KitchenDisplayTab = ({ readOnly = false }) => {
+const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   const [orders, setOrders] = useState([]);
   const [chefs, setChefs] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
@@ -102,26 +111,28 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
     if (!connected || !socket) return undefined;
 
     const handleNewOrder = (data) => {
-      toast.info(`New order #${getOrderNumberLabel(data?.orderNumber)} in kitchen`);
+      if (!tvMode) {
+        toast.info(`New order #${getOrderNumberLabel(data?.orderNumber)} in kitchen`);
+      }
       loadOrders(false);
     };
 
-    const removeIfReady = (data) => {
-      if (data?.status === 'ready') {
-        setOrders((prev) => prev.filter((order) => order._id !== data.orderId));
-      }
+    const refreshOrders = () => loadOrders(false);
+    const removeReadyOrder = (data) => {
+      setOrders((prev) => prev.filter((order) => order._id !== data.orderId));
     };
 
     socket.on('new-order', handleNewOrder);
-    socket.on('order-updated', removeIfReady);
-    socket.on('order-ready', removeIfReady);
+    socket.on('order-ready', removeReadyOrder);
+    KITCHEN_REFRESH_EVENTS.forEach((eventName) => socket.on(eventName, refreshOrders));
+    loadOrders(false);
 
     return () => {
       socket.off('new-order', handleNewOrder);
-      socket.off('order-updated', removeIfReady);
-      socket.off('order-ready', removeIfReady);
+      socket.off('order-ready', removeReadyOrder);
+      KITCHEN_REFRESH_EVENTS.forEach((eventName) => socket.off(eventName, refreshOrders));
     };
-  }, [connected, socket, loadOrders]);
+  }, [connected, socket, loadOrders, tvMode]);
 
    const completeOrder = async (order) => {
      if (readOnly || busyChefIds.size > 0 || busyDeliveryIds.size > 0) return;
@@ -213,14 +224,14 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
 
   if (loading) {
     return (
-      <div className="kitchen-display-tab">
+      <div className={`kitchen-display-tab ${tvMode ? 'tv-mode' : ''}`}>
         <div className="kds-loading">Loading kitchen orders...</div>
       </div>
     );
   }
 
   return (
-    <div className="kitchen-display-tab">
+    <div className={`kitchen-display-tab ${tvMode ? 'tv-mode' : ''}`}>
       <div className="kds-header">
         <div>
           <h1 className="kds-title">🍳 Kitchen Display System</h1>
@@ -230,7 +241,9 @@ const KitchenDisplayTab = ({ readOnly = false }) => {
           <span className={`kds-connection ${connected ? 'online' : 'offline'}`}>
             {connected ? '● Live' : '○ Reconnecting'}
           </span>
-          <button className="kds-refresh" onClick={() => loadOrders(false)}>🔄 Refresh</button>
+          {!tvMode && (
+            <button className="kds-refresh" onClick={() => loadOrders(false)}>🔄 Refresh</button>
+          )}
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 // src/pages/admin/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { adminService } from '../../services/api';
 import { toast } from 'react-toastify';
 import { useSocket } from '../../context/SocketContext';
@@ -27,9 +27,12 @@ import KitchenDisplayTab from './tabs/KitchenDisplayTab';
 
 const AdminDashboard = () => {
   const { user, isAuthenticated, canReadPage, canWritePage } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const { onNewOrder, connected } = useSocket();
-  const [activeTab, setActiveTab] = useState('overview');
+  const hasAdminDashboardAccess = canReadPage('adminDashboard');
+  const isTvMode = new URLSearchParams(location.search).get('mode') === 'tv';
+  const [activeTab, setActiveTab] = useState(isTvMode ? 'kitchen' : 'overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const [stats, setStats] = useState({
@@ -42,6 +45,10 @@ const AdminDashboard = () => {
     todayRevenue: 0
   });
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setActiveTab(isTvMode ? 'kitchen' : 'overview');
+  }, [isTvMode]);
 
   // Listen for new orders via socket
   useEffect(() => {
@@ -78,7 +85,7 @@ const AdminDashboard = () => {
     }
     
     // Check if user has admin dashboard access
-    if (!canReadPage('adminDashboard')) {
+    if (!hasAdminDashboardAccess) {
       console.log('❌ User cannot access admin dashboard. Role:', user.role);
       toast.error('Admin access required');
       navigate('/');
@@ -86,8 +93,12 @@ const AdminDashboard = () => {
     }
     
     console.log('✅ Admin access granted');
+    if (isTvMode) {
+      setLoading(false);
+      return;
+    }
     fetchDashboardStats();
-  }, [user, isAuthenticated, navigate]);
+  }, [user, isAuthenticated, navigate, isTvMode, hasAdminDashboardAccess]);
 
   const handleMenuClick = (tab) => {
     if (tab !== activeTab) {
@@ -141,7 +152,12 @@ const renderContent = () => {
       case 'orders':
         return <OrdersTab />;
       case 'kitchen':
-        return <KitchenDisplayTab readOnly={!canWritePage('adminDashboard') || !canWritePage('staffOrdersCooking')} />;
+        return (
+          <KitchenDisplayTab
+            readOnly={isTvMode || !canWritePage('adminDashboard') || !canWritePage('staffOrdersCooking')}
+            tvMode={isTvMode}
+          />
+        );
       case 'staff':
         return <StaffTab />;
       case 'menu':
@@ -175,21 +191,25 @@ const renderContent = () => {
   }
 
   return (
-    <div className="admin-dashboard">
-      <button 
-        className="mobile-menu-toggle"
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-      >
-        {mobileMenuOpen ? '✕' : '☰'}
-      </button>
+    <div className={`admin-dashboard ${isTvMode ? 'tv-mode' : ''}`}>
+      {!isTvMode && (
+        <button
+          className="mobile-menu-toggle"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? '✕' : '☰'}
+        </button>
+      )}
 
-      <Sidebar 
-        activeTab={activeTab}
-        onMenuClick={handleMenuClick}
-        mobileMenuOpen={mobileMenuOpen}
-        user={user}
-        onClose={() => setMobileMenuOpen(false)}
-      />
+      {!isTvMode && (
+        <Sidebar
+          activeTab={activeTab}
+          onMenuClick={handleMenuClick}
+          mobileMenuOpen={mobileMenuOpen}
+          user={user}
+          onClose={() => setMobileMenuOpen(false)}
+        />
+      )}
 
       <div className="admin-content">
         {renderContent()}

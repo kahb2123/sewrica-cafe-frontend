@@ -40,13 +40,15 @@ const ROLE_OPTIONS = [
   { value: 'all', label: 'All Roles' },
   { value: 'cook', label: 'Chef' },
   { value: 'delivery', label: 'Delivery' },
-  { value: 'cashier', label: 'Cashier' }
+  { value: 'cashier', label: 'Cashier' },
+  { value: 'waiter', label: 'Waiter' }
 ];
 
 const ROLE_LABELS = {
   cook: 'Chef',
   delivery: 'Delivery',
   cashier: 'Cashier',
+  waiter: 'Waiter',
   admin: 'Admin',
   customer: 'Customer'
 };

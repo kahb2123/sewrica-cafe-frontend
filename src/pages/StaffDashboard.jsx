@@ -1,5 +1,5 @@
 // src/pages/StaffDashboard.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { staffService, PERMISSIONS } from '../services/api';
@@ -9,15 +9,26 @@ import KitchenDisplayTab from './admin/tabs/KitchenDisplayTab';
 import StockTab from './admin/tabs/StockTab';
 import ExpenseTab from './admin/tabs/ExpenseTab';
 import ReportsTab from './admin/tabs/ReportsTab';
+import StaffOrderEntry from './staff/StaffOrderEntry';
 import { toast } from 'react-toastify';
 import scrollToPageTop from '../utils/scrollToPageTop';
 import './StaffDashboard.css';
 
+const extractArray = (response, defaultArray = []) => {
+  if (!response) return defaultArray;
+  if (Array.isArray(response)) return response;
+  if (response.orders && Array.isArray(response.orders)) return response.orders;
+  if (response.deliveries && Array.isArray(response.deliveries)) return response.deliveries;
+  if (response.data && Array.isArray(response.data)) return response.data;
+  if (response.tasks && Array.isArray(response.tasks)) return response.tasks;
+  return defaultArray;
+};
+
 const StaffDashboard = () => {
   const { user, logout, hasRole, canReadPage, canWritePage } = useAuth();
   const navigate = useNavigate();
-  const { connected, onOrderAssigned } = useSocket();
-  const [activeTab, setActiveTab] = useState('tasks');
+  const { connected, onOrderAssigned, onOrderReady } = useSocket();
+  const [activeTab, setActiveTab] = useState(user?.role?.toLowerCase() === 'waiter' ? 'order-entry' : 'tasks');
   const [activeSubTab, setActiveSubTab] = useState('tasks');
   const [tasks, setTasks] = useState([]);
   const [completedTasks, setCompletedTasks] = useState([]);
@@ -40,43 +51,6 @@ const StaffDashboard = () => {
       scrollToPageTop();
       setActiveSubTab(tab);
     }
-  };
-
-  useEffect(() => {
-    if (!user) {
-      navigate('/staff-login');
-      return;
-    }
-
-    if (!canReadPage('staffDashboard')) {
-      toast.error('Unauthorized access. Staff only.');
-      navigate('/');
-      return;
-    }
-
-    fetchTasks();
-  }, [user]);
-
-  useEffect(() => {
-    if (connected && onOrderAssigned) {
-      const unsubscribe = onOrderAssigned((data) => {
-        toast.info(`New task assigned: Order #${data.orderNumber}`);
-        fetchTasks();
-      });
-      return () => {
-        if (unsubscribe) unsubscribe();
-      };
-    }
-  }, [connected, onOrderAssigned]);
-
-  const extractArray = (response, defaultArray = []) => {
-    if (!response) return defaultArray;
-    if (Array.isArray(response)) return response;
-    if (response.orders && Array.isArray(response.orders)) return response.orders;
-    if (response.deliveries && Array.isArray(response.deliveries)) return response.deliveries;
-    if (response.data && Array.isArray(response.data)) return response.data;
-    if (response.tasks && Array.isArray(response.tasks)) return response.tasks;
-    return defaultArray;
   };
 
   // ========== CHEF ACTION HANDLERS ==========
@@ -172,7 +146,7 @@ const StaffDashboard = () => {
     }
   };
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     setLoading(true);
     try {
       const userRole = user?.role?.toLowerCase();
@@ -250,7 +224,33 @@ const StaffDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, canReadPage, logout, navigate]);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/staff-login');
+      return;
+    }
+
+    if (!canReadPage('staffDashboard')) {
+      toast.error('Unauthorized access. Staff only.');
+      navigate('/');
+      return;
+    }
+
+    fetchTasks();
+  }, [user, canReadPage, fetchTasks, navigate]);
+
+  useEffect(() => {
+    if (connected) {
+      const unsubscribeAssigned = onOrderAssigned?.(() => fetchTasks());
+      const unsubscribeReady = onOrderReady?.(() => fetchTasks());
+      return () => {
+        unsubscribeAssigned?.();
+        unsubscribeReady?.();
+      };
+    }
+  }, [connected, onOrderAssigned, onOrderReady, fetchTasks]);
 
   const handleTaskUpdate = () => {
     fetchTasks();
@@ -266,6 +266,8 @@ const StaffDashboard = () => {
         return '🚚';
       case 'cashier':
         return '💰';
+      case 'waiter':
+        return '🧑‍🍽️';
       default:
         return '👤';
     }
@@ -281,6 +283,8 @@ const StaffDashboard = () => {
         return 'Delivery Personnel';
       case 'cashier':
         return 'Cashier';
+      case 'waiter':
+        return 'Waiter';
       default:
         return 'Staff';
     }
@@ -308,6 +312,9 @@ const StaffDashboard = () => {
 
   const getNavTabs = () => {
     const tabs = [];
+    if (canReadPage('staffOrderEntry')) {
+      tabs.push({ id: 'order-entry', label: 'New Order', icon: '🧾' });
+    }
     if (canReadPage('staffDashboard')) {
       tabs.push({ id: 'tasks', label: 'My Tasks', icon: '📋' });
     }
@@ -372,6 +379,10 @@ const StaffDashboard = () => {
       )}
 
       <div className="staff-content">
+        {activeTab === 'order-entry' && canReadPage('staffOrderEntry') && (
+          <StaffOrderEntry />
+        )}
+
         {activeTab === 'tasks' && (
           <>
             <div className="stats-grid">

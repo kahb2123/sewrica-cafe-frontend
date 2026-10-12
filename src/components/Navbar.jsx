@@ -108,7 +108,7 @@ const Navbar = () => {
 
   // Helper to check if user is staff
   const isStaff = () => {
-    return user && ['cook', 'delivery', 'cashier', 'admin'].includes(user.role);
+    return user && ['cook', 'delivery', 'cashier', 'waiter', 'admin'].includes(user.role);
   };
 
   // Get staff dashboard link based on role

@@ -186,6 +186,7 @@ export const authService = {
             customer: 0,
             supply_chain: 1,
             cashier: 2,
+            waiter: 2,
             delivery: 3,
             cook: 4,
             chef: 4,
@@ -198,6 +199,7 @@ export const authService = {
 
         const PERMISSIONS = data.PERMISSIONS || {
           ORDERS_VIEW: 'orders:view',
+          ORDERS_CREATE: 'orders:create',
           ORDERS_ALL: 'orders:all',
           ORDERS_ASSIGN_CHEF: 'orders:assign_chef',
           ORDERS_ASSIGN_DELIVERY: 'orders:assign_delivery',
@@ -887,6 +889,15 @@ export const orderService = {
     }
   },
 
+  createStaffOrder: async (orderData) => {
+    try {
+      const response = await api.post('/orders/staff', orderData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to place staff order' };
+    }
+  },
+
   getUserOrders: async () => {
     try {
       const response = await api.get('/orders/my-orders');
@@ -1367,7 +1378,8 @@ export const ROLE_PERMISSIONS = {
   customer: ['orders:view'],
   supply_chain: ['ingredients:manage'],
   cashier: ['orders:view', 'payments:process', 'payments:view', 'staff:view'],
-  delivery: ['orders:view_assigned', 'orders:accept', 'orders:reject', 'orders:start_delivery', 'orders:complete_delivery'],
+  waiter: ['orders:create'],
+  delivery: ['orders:create', 'orders:view_assigned', 'orders:accept', 'orders:reject', 'orders:start_delivery', 'orders:complete_delivery'],
   cook: ['orders:view_assigned', 'orders:accept', 'orders:reject', 'orders:start_cooking', 'orders:complete_cooking'],
   chef: ['orders:view_assigned', 'orders:accept', 'orders:reject', 'orders:start_cooking', 'orders:complete_cooking'],
   admin: [
@@ -1385,8 +1397,12 @@ export const ROLE_PERMISSIONS = {
 
 export const PAGE_ACCESS = {
   staffDashboard: {
-    read: ['cook', 'chef', 'delivery', 'cashier', 'admin'],
-    write: ['cook', 'chef', 'delivery', 'cashier', 'admin'],
+    read: ['cook', 'chef', 'delivery', 'cashier', 'waiter', 'admin'],
+    write: ['cook', 'chef', 'delivery', 'cashier', 'waiter', 'admin'],
+  },
+  staffOrderEntry: {
+    read: ['waiter', 'delivery', 'admin'],
+    write: ['waiter', 'delivery', 'admin'],
   },
   staffOrdersCooking: {
     read: ['cook', 'chef', 'admin'],
@@ -1401,8 +1417,8 @@ export const PAGE_ACCESS = {
     write: ['admin'],
   },
   staffProfile: {
-    read: ['cook', 'chef', 'delivery', 'cashier', 'admin'],
-    write: ['cook', 'chef', 'delivery', 'cashier', 'admin'],
+    read: ['cook', 'chef', 'delivery', 'cashier', 'waiter', 'admin'],
+    write: ['cook', 'chef', 'delivery', 'cashier', 'waiter', 'admin'],
   },
   adminDashboard: {
     read: ['admin', 'supply_chain'],
@@ -1465,6 +1481,7 @@ export const getPageAccessForRole = (userRole) => {
 };
 
 export const PERMISSIONS = {
+  ORDERS_CREATE: 'orders:create',
   ORDERS_VIEW: 'orders:view',
   ORDERS_ALL: 'orders:all',
   ORDERS_ASSIGN_CHEF: 'orders:assign_chef',
@@ -1503,6 +1520,7 @@ export const ROLE_HIERARCHY = {
   customer: 0,
   supply_chain: 1,
   cashier: 2,
+  waiter: 2,
   delivery: 3,
   cook: 4,
   chef: 4,

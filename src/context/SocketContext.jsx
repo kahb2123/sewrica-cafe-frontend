@@ -181,12 +181,15 @@ export const SocketProvider = ({ children }) => {
 
   const onOrderAssigned = (callback) => {
     if (socket) {
-      socket.on('order-assigned', (data) => {
+      const handleOrderAssigned = (data) => {
         console.log('📢 Order assigned:', data);
         toast.info(`New task: Order #${data.orderNumber} assigned to you`);
         callback(data);
-      });
+      };
+      socket.on('order-assigned', handleOrderAssigned);
+      return () => socket.off('order-assigned', handleOrderAssigned);
     }
+    return undefined;
   };
 
   const onChefAccepted = (callback) => {
@@ -201,12 +204,15 @@ export const SocketProvider = ({ children }) => {
 
   const onOrderReady = (callback) => {
     if (socket) {
-      socket.on('order-ready', (data) => {
+      const handleOrderReady = (data) => {
         console.log('✅ Order ready:', data);
         toast.success(`Order #${data.orderNumber} is ready for delivery`);
         callback(data);
-      });
+      };
+      socket.on('order-ready', handleOrderReady);
+      return () => socket.off('order-ready', handleOrderReady);
     }
+    return undefined;
   };
 
   const onDeliveryAccepted = (callback) => {

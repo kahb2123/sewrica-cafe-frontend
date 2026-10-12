@@ -123,7 +123,7 @@ export const AuthProvider = ({ children }) => {
   
   const isStaff = () => {
     const role = getUserRole();
-    return ['cook', 'chef', 'delivery', 'cashier'].includes(role);
+    return ['cook', 'chef', 'delivery', 'cashier', 'waiter'].includes(role);
   };
   
   const isChef = () => {

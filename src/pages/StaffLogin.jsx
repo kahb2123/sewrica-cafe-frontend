@@ -26,7 +26,7 @@ const StaffLogin = () => {
         console.log('User role:', user?.role);
         
          // Check if user is staff (not customer)
-         if (user && ['cook', 'chef', 'delivery', 'cashier', 'admin', 'supply_chain'].includes(user.role)) {
+         if (user && ['cook', 'chef', 'delivery', 'cashier', 'waiter', 'admin', 'supply_chain'].includes(user.role)) {
           toast.success(`Welcome back, ${user.name}!`);
           
           const permData = await authService.getPermissions();

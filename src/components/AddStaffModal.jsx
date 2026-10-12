@@ -5,6 +5,7 @@ import './AddStaffModal.css';
 
 const PAGE_ACCESS_LABELS = {
   staffOrdersCooking: 'Kitchen Display',
+  staffOrderEntry: 'Staff Order Entry',
   adminIngredients: 'Ingredients',
   adminExpenses: 'Expenses',
   adminReports: 'Reports',
@@ -216,6 +217,7 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded, editMode = false, staffD
             >
               <option value="cook">👨‍🍳 Chef / Cook</option>
               <option value="delivery">🚚 Delivery Person</option>
+              <option value="waiter">🧑‍🍽️ Waiter</option>
               <option value="cashier">💰 Cashier</option>
               <option value="supply_chain">📦 Supply Chain</option>
               <option value="admin">👑 Admin</option>

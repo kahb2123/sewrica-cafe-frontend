@@ -7,7 +7,7 @@ import './UsersTab.css';
 const UsersTab = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const roles = ['customer', 'cook', 'delivery', 'cashier', 'supply_chain', 'admin'];
+  const roles = ['customer', 'cook', 'delivery', 'waiter', 'cashier', 'supply_chain', 'admin'];
   const roleLabels = {
     customer: 'Customer',
     cook: 'Chef / Cook',

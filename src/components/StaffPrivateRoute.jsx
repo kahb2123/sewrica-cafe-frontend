@@ -24,7 +24,7 @@ const StaffPrivateRoute = ({ children, allowedRoles = [] }) => {
   }
 
   // Check if user is staff (not customer)
-  if (!['cook', 'delivery', 'cashier', 'admin'].includes(user.role)) {
+  if (!['cook', 'delivery', 'cashier', 'waiter', 'admin'].includes(user.role)) {
     return <Navigate to="/" />;
   }
 

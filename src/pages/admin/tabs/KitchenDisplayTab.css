@@ -44,10 +44,129 @@
 }
 
 .kitchen-display-tab.tv-mode .kds-queue-head {
-  font-size: clamp(14px, 1vw, 18px);
+  font-size: clamp(16px, 1.15vw, 22px);
   font-weight: 800;
   letter-spacing: 0.8px;
   color: #34495e;
+}
+
+.kitchen-display-tab.tv-mode .kds-row {
+  min-height: 94px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.kitchen-display-tab.tv-mode .kds-queue-head .kds-col-position { color: #b42318; }
+.kitchen-display-tab.tv-mode .kds-queue-head .kds-col-order { color: #1d4ed8; }
+.kitchen-display-tab.tv-mode .kds-queue-head .kds-col-items { color: #0f766e; }
+.kitchen-display-tab.tv-mode .kds-queue-head .kds-col-ordered { color: #6d28d9; }
+.kitchen-display-tab.tv-mode .kds-queue-head .kds-col-elapsed { color: #c2410c; }
+.kitchen-display-tab.tv-mode .kds-queue-head .kds-col-chef { color: #1e40af; }
+.kitchen-display-tab.tv-mode .kds-queue-head .kds-col-delivery { color: #be185d; }
+
+.kitchen-display-tab.tv-mode .kds-col-order,
+.kitchen-display-tab.tv-mode .kds-col-items,
+.kitchen-display-tab.tv-mode .kds-col-ordered,
+.kitchen-display-tab.tv-mode .kds-col-elapsed,
+.kitchen-display-tab.tv-mode .kds-col-chef,
+.kitchen-display-tab.tv-mode .kds-col-delivery {
+  align-self: stretch;
+  padding: 9px 10px;
+  border-left: 4px solid transparent;
+  border-radius: 8px;
+}
+
+.kitchen-display-tab.tv-mode .kds-col-order {
+  background: #eff6ff;
+  border-left-color: #3b82f6;
+}
+
+.kitchen-display-tab.tv-mode .kds-col-items {
+  align-content: center;
+  background: #ecfdf5;
+  border-left-color: #0f766e;
+}
+
+.kitchen-display-tab.tv-mode .kds-col-ordered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f3ff;
+  border-left-color: #8b5cf6;
+}
+
+.kitchen-display-tab.tv-mode .kds-col-elapsed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff7ed;
+  border-left-color: #ea580c;
+}
+
+.kitchen-display-tab.tv-mode .kds-col-chef {
+  background: #eff6ff;
+  border-left-color: #2563eb;
+}
+
+.kitchen-display-tab.tv-mode .kds-col-delivery {
+  background: #fdf2f8;
+  border-left-color: #db2777;
+}
+
+.kitchen-display-tab.tv-mode .kds-position-badge {
+  width: 48px;
+  height: 48px;
+  font-size: clamp(22px, 1.4vw, 30px);
+  background: #c0392b;
+}
+
+.kitchen-display-tab.tv-mode .kds-order-number {
+  color: #1e40af;
+  font-size: clamp(21px, 1.35vw, 28px);
+}
+
+.kitchen-display-tab.tv-mode .kds-item {
+  font-size: clamp(17px, 1.1vw, 22px);
+  padding: 7px 12px;
+  background: #d1fae5;
+  border-color: #6ee7b7;
+}
+
+.kitchen-display-tab.tv-mode .kds-item-qty { color: #047857; }
+
+.kitchen-display-tab.tv-mode .kds-ordered-time {
+  color: #5b21b6;
+  font-size: clamp(16px, 1vw, 20px);
+  font-weight: 700;
+}
+
+.kitchen-display-tab.tv-mode .kds-elapsed-time {
+  padding: 8px 12px;
+  background: #ffedd5;
+  color: #9a3412;
+  font-size: clamp(21px, 1.4vw, 29px);
+}
+
+.kitchen-display-tab.tv-mode .kds-chef-name,
+.kitchen-display-tab.tv-mode .kds-delivery-name {
+  font-size: clamp(16px, 1vw, 20px);
+  padding: 8px 12px;
+}
+
+.kitchen-display-tab.tv-mode .kds-chef-name {
+  color: #1e40af;
+  background: #dbeafe;
+}
+
+.kitchen-display-tab.tv-mode .kds-delivery-name {
+  color: #9d174d;
+  background: #fce7f3;
+}
+
+.kitchen-display-tab.tv-mode .kds-chef-select,
+.kitchen-display-tab.tv-mode .kds-delivery-select {
+  min-height: 48px;
+  font-size: clamp(15px, 0.95vw, 19px);
 }
 
 .kitchen-display-tab *,

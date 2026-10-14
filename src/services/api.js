@@ -874,6 +874,11 @@ export const adminService = {
 };
 
 // ========== ORDER SERVICES ==========
+const getOrderAccessConfig = (orderId) => {
+  const accessToken = localStorage.getItem(`guestOrderAccess:${orderId}`);
+  return accessToken ? { headers: { 'x-order-access-token': accessToken } } : {};
+};
+
 export const orderService = {
   // Compatibility wrapper for older kitchen bundles.
   getAllOrders: async (status = 'all') => {
@@ -910,7 +915,7 @@ export const orderService = {
 
   getOrder: async (orderId) => {
     try {
-      const response = await api.get(`/orders/${orderId}`);
+      const response = await api.get(`/orders/${orderId}`, getOrderAccessConfig(orderId));
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch order' };
@@ -928,7 +933,11 @@ export const orderService = {
 
   createPaymentIntent: async (orderId) => {
     try {
-      const response = await api.post('/payments/create-payment-intent', { orderId });
+      const response = await api.post(
+        '/payments/create-payment-intent',
+        { orderId },
+        getOrderAccessConfig(orderId)
+      );
       return response.data;
     } catch (error) {
       console.error('Create payment intent error:', error);
@@ -938,7 +947,11 @@ export const orderService = {
 
   confirmOrderPayment: async (orderId, paymentIntentId) => {
     try {
-      const response = await api.post(`/orders/${orderId}/confirm-payment`, { paymentIntentId });
+      const response = await api.post(
+        `/orders/${orderId}/confirm-payment`,
+        { paymentIntentId },
+        getOrderAccessConfig(orderId)
+      );
       return response.data;
     } catch (error) {
       console.error('Confirm payment error:', error);

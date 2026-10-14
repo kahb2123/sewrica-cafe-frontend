@@ -206,24 +206,12 @@ const Cart = () => {
       return;
     }
 
-    if (!user) {
-      toast.info('Please sign in to continue your order.');
-      navigate('/login?returnTo=/cart&mode=login');
-      return;
-    }
-
     setCheckoutStep(2);
     window.scrollTo(0, 0);
   };
 
   // Proceed to payment
   const proceedToPayment = () => {
-    if (!user) {
-      toast.info('Please sign in before finishing your order.');
-      navigate('/login?returnTo=/cart&mode=login');
-      return;
-    }
-
     const errors = validateCheckoutForm();
     
     if (Object.keys(errors).length > 0) {
@@ -339,13 +327,6 @@ const Cart = () => {
   const placeOrder = async () => {
     if (placingOrderRef.current) return;
 
-    // Check if user is logged in
-    if (!user) {
-      toast.error('Please login to place an order');
-      navigate('/login');
-      return;
-    }
-
     // Validate form for card payments
     if (customerInfo.paymentMethod === 'card') {
       if (!stripe || !elements) {
@@ -396,6 +377,9 @@ const Cart = () => {
       console.log('Order created:', response);
       
       const order = response.order;
+      if (response.orderAccessToken) {
+        localStorage.setItem(`guestOrderAccess:${order._id}`, response.orderAccessToken);
+      }
 
       // Handle payment based on method
       switch (customerInfo.paymentMethod) {
@@ -507,10 +491,9 @@ const Cart = () => {
                 <div className="cart-items">
                   {!user && (
                     <div className="order-step-banner">
-                      <strong>Step 1 of 3:</strong> Please sign in to confirm your order and receive updates.
+                      <strong>Checkout as guest:</strong> No account is required. We’ll use your contact details to confirm and track your order.
                       <div className="step-banner-actions">
-                        <button type="button" onClick={() => navigate('/login?returnTo=/cart&mode=login')}>Sign in</button>
-                        <button type="button" className="secondary" onClick={() => navigate('/login?returnTo=/cart&mode=signup')}>Create account</button>
+                        <button type="button" className="secondary" onClick={() => navigate('/login?returnTo=/cart&mode=signup')}>Create account instead</button>
                       </div>
                     </div>
                   )}

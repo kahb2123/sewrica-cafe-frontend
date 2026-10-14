@@ -355,6 +355,9 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                           <span className="kds-item-name">{item.name}</span>
                         </li>
                       ))}
+                      <li className="kds-customer-name">
+                        Customer: {order.customerName || order.customer?.name || 'Guest'}
+                      </li>
                     </ul>
 
                     <div className="kds-col-ordered" data-label="Ordered">

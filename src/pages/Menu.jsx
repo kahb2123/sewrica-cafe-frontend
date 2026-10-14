@@ -4,7 +4,7 @@ import {
   FaLeaf, FaSearch, FaFilter, FaShoppingCart,
   FaTimes, FaPlus, FaMinus, FaHamburger, 
   FaBreadSlice, FaPepperHot, FaUtensils, FaCoffee,
-  FaCheck, FaRegClock, FaExclamationTriangle
+  FaGlassWhiskey, FaCheck, FaRegClock, FaExclamationTriangle
 } from 'react-icons/fa';
 import { GiMeat, GiBowlOfRice, GiChickenLeg } from 'react-icons/gi';
 import { MdLocalPizza, MdRestaurantMenu } from 'react-icons/md';
@@ -19,7 +19,9 @@ const Menu = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeCategory, setActiveCategory] = useState(
+    () => new URLSearchParams(window.location.search).get('category') || 'all'
+  );
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -30,11 +32,13 @@ const Menu = () => {
     vegetarian: false,
     spicy: false,
     signature: false,
+    availableOnly: true,
     minPrice: '',
     maxPrice: ''
   });
   const [imageErrors, setImageErrors] = useState({});
   const [apiError, setApiError] = useState(false);
+  const displayedCategories = [...new Set([...categories, 'soft-drinks', 'hot-drinks'])];
 
   useEffect(() => {
     fetchMenuItems();
@@ -53,7 +57,7 @@ const Menu = () => {
     try {
       console.log('Fetching menu items...');
       // Pass any active filters to the API
-      const response = await menuService.getAllItems(filters);
+      const response = await menuService.getAllItems({ ...filters, includeUnavailable: true });
       console.log('API Response:', response);
       
       // Handle the response structure from your API
@@ -172,6 +176,10 @@ const Menu = () => {
     // Filter by signature
     if (filters.signature) {
       filtered = filtered.filter(item => item.isSignature);
+    }
+
+    if (filters.availableOnly) {
+      filtered = filtered.filter(item => item.isAvailable);
     }
 
     // Filter by price range
@@ -320,10 +328,21 @@ const Menu = () => {
       case 'wraps': return <RiTakeawayLine />;
       case 'appetizers': return <GiMeat />;
       case 'beverages': return <FaCoffee />;
+      case 'hot-drinks': return <FaCoffee />;
+      case 'soft-drinks': return <FaGlassWhiskey />;
       case 'traditional': return <GiBowlOfRice />;
       case 'fetira': return <GiBowlOfRice />;
       default: return <RiRestaurantLine />;
     }
+  };
+
+  const getCategoryLabel = (category) => {
+    const labels = {
+      all: 'All Menu Items',
+      'soft-drinks': 'Soft Drinks',
+      'hot-drinks': 'Hot Drinks'
+    };
+    return labels[category] || category.charAt(0).toUpperCase() + category.slice(1);
   };
 
   const getSpiceLevelIcon = (level) => {
@@ -432,6 +451,14 @@ const Menu = () => {
                   />
                   <FaStar className="filter-icon" /> Signature
                 </label>
+                <label className="filter-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={filters.availableOnly}
+                    onChange={(e) => setFilters({...filters, availableOnly: e.target.checked})}
+                  />
+                  <FaCheck className="filter-icon" /> Available only
+                </label>
               </div>
               
               <div className="filter-row price-range">
@@ -459,6 +486,7 @@ const Menu = () => {
                     vegetarian: false,
                     spicy: false,
                     signature: false,
+                    availableOnly: true,
                     minPrice: '',
                     maxPrice: ''
                   });
@@ -482,30 +510,16 @@ const Menu = () => {
               <MdRestaurantMenu className="category-icon" />
               <span>All Items</span>
             </button>
-            {categories.length > 0 ? (
-              categories.map(category => (
+            {displayedCategories.map(category => (
                 <button
                   key={category}
                   className={`category-btn ${activeCategory === category ? 'active' : ''}`}
                   onClick={() => setActiveCategory(category)}
                 >
                   <span className="category-icon">{getCategoryIcon(category)}</span>
-                  <span>{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                  <span>{getCategoryLabel(category)}</span>
                 </button>
-              ))
-            ) : (
-              // Extract categories from menu items if API fails
-              [...new Set(menuItems.map(item => item.category))].map(category => (
-                <button
-                  key={category}
-                  className={`category-btn ${activeCategory === category ? 'active' : ''}`}
-                  onClick={() => setActiveCategory(category)}
-                >
-                  <span className="category-icon">{getCategoryIcon(category)}</span>
-                  <span>{category.charAt(0).toUpperCase() + category.slice(1)}</span>
-                </button>
-              ))
-            )}
+            ))}
           </div>
         </div>
       </section>
@@ -514,8 +528,7 @@ const Menu = () => {
         <div className="container">
           <div className="section-header">
             <h2 className="section-title">
-              {activeCategory === 'all' ? 'All Menu Items' : 
-                activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}
+              {getCategoryLabel(activeCategory)}
             </h2>
             <p className="section-description">
               {filteredItems.length} items available

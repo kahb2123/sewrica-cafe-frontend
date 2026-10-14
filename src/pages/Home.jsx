@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   FaUtensils, FaClock, FaMapMarkerAlt, FaPhone, 
   FaStar, FaStarHalfAlt, FaRegStar, FaChevronLeft,
   FaChevronRight, FaCheckCircle, FaCoffee, FaLeaf,
   FaUsers, FaTrophy, FaHeart, FaInstagram, FaTelegram,
   FaPizzaSlice, FaHamburger, FaDrumstickBite, FaFish,
-  FaPepperHot, FaCheese, FaEgg, FaBreadSlice
+  FaPepperHot, FaCheese, FaEgg, FaBreadSlice, FaGlassWhiskey
 } from 'react-icons/fa';
 import { GiMeat, GiBowlOfRice, GiChickenLeg, GiCoffeeBeans, GiFrenchFries } from 'react-icons/gi';
 import { MdDeliveryDining, MdRestaurantMenu, MdLocalPizza } from 'react-icons/md';
@@ -16,6 +16,7 @@ import { TbBread } from 'react-icons/tb';
 import './Home.css';
 
 const Home = () => {
+  const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeCategory, setActiveCategory] = useState('all');
   const [stats, setStats] = useState({
@@ -542,6 +543,20 @@ const Home = () => {
               <RiRestaurantLine className="category-icon" />
               <span>Traditional</span>
             </button>
+            <button
+              className="category-btn"
+              onClick={() => navigate('/menu?category=soft-drinks')}
+            >
+              <FaGlassWhiskey className="category-icon" />
+              <span>Soft Drinks</span>
+            </button>
+            <button
+              className="category-btn"
+              onClick={() => navigate('/menu?category=hot-drinks')}
+            >
+              <FaCoffee className="category-icon" />
+              <span>Hot Drinks</span>
+            </button>
           </div>
         </div>
       </section>
@@ -590,6 +605,8 @@ const Home = () => {
                 activeCategory === 'fastfood' ? 'Fast Food' :
                 activeCategory === 'pizza' ? 'Pizza' :
                 activeCategory === 'wraps' ? 'Wraps' :
+                activeCategory === 'soft-drinks' ? 'Soft Drinks' :
+                activeCategory === 'hot-drinks' ? 'Hot Drinks' :
                 activeCategory === 'fetira' ? 'Fetia' : 'Traditional'}
             </h2>
             <div className="title-underline"></div>
@@ -606,6 +623,8 @@ const Home = () => {
                      item.category === 'fastfood' ? 'Fast Food' :
                      item.category === 'pizza' ? 'Pizza' :
                      item.category === 'wraps' ? 'Wraps' :
+                     item.category === 'soft-drinks' ? 'Soft Drinks' :
+                     item.category === 'hot-drinks' ? 'Hot Drinks' :
                      item.category === 'fetira' ? 'Fetia' : 'Traditional'}
                   </div>
                   {item.isVegetarian && (

@@ -229,6 +229,8 @@ const MenuTab = () => {
       'traditional': '🍛',
       'fastfood': '🍟',
       'beverages': '☕',
+      'soft-drinks': '🥤',
+      'hot-drinks': '☕',
       'desserts': '🍰',
       'fetira': '🥙'
     };
@@ -405,6 +407,8 @@ const MenuTab = () => {
                     <option value="wraps">Wraps</option>
                     <option value="fetira">Fetira</option>
                     <option value="beverages">Beverages</option>
+                    <option value="soft-drinks">Soft Drinks</option>
+                    <option value="hot-drinks">Hot Drinks</option>
                     <option value="desserts">Desserts</option>
                   </select>
                 </div>

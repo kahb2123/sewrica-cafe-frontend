@@ -288,6 +288,7 @@ export const menuService = {
       if (filters.signature) params.append('signature', filters.signature);
       if (filters.minPrice) params.append('minPrice', filters.minPrice);
       if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
+      if (filters.includeUnavailable) params.append('includeUnavailable', 'true');
       
       const queryString = params.toString() ? `?${params.toString()}` : '';
       const response = await api.get(`/menu${queryString}`);

@@ -154,6 +154,25 @@ Thank you for choosing SEWRICA Cafe!
     }
   };
 
+  const formatDeliveryAddress = (address, order) => {
+    if (typeof address === 'string') {
+      return address;
+    }
+
+    if (address && typeof address === 'object') {
+      return [
+        address.street,
+        address.area,
+        address.building,
+        address.floor,
+        address.city,
+        address.additionalInfo
+      ].filter(Boolean).join(', ') || 'Address not provided';
+    }
+
+    return `${order.area || 'Megenagna'}, ${order.building || 'Metebaber Building'}, ${order.floor || '2nd Floor'}`;
+  };
+
   if (loading) {
     return (
       <div className="confirmation-page loading">
@@ -361,8 +380,7 @@ Thank you for choosing SEWRICA Cafe!
                 <div>
                   <span className="info-label">Delivery Address</span>
                   <span className="info-value">
-                    {order.deliveryAddress || 
-                     `${order.area || 'Megenagna'}, ${order.building || 'Metebaber Building'}, ${order.floor || '2nd Floor'}`}
+                    {formatDeliveryAddress(order.deliveryAddress, order)}
                   </span>
                 </div>
               </div>

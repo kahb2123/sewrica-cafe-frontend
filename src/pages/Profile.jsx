@@ -99,6 +99,20 @@ const Profile = () => {
     }
   };
 
+  const formatDeliveryAddress = (address) => {
+    if (typeof address === 'string') return address;
+    if (!address || typeof address !== 'object') return 'Megenagna, Metebaber Building';
+
+    return [
+      address.street,
+      address.area,
+      address.building,
+      address.floor,
+      address.city,
+      address.additionalInfo
+    ].filter(Boolean).join(', ') || 'Address not provided';
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -373,7 +387,7 @@ const Profile = () => {
             <div className="modal-section">
               <h3>Delivery</h3>
               <p><strong>Method:</strong> {selectedOrder.deliveryMethod}</p>
-              <p><strong>Address:</strong> {selectedOrder.deliveryAddress || 'Megenagna, Metebaber Building'}</p>
+              <p><strong>Address:</strong> {formatDeliveryAddress(selectedOrder.deliveryAddress)}</p>
             </div>
 
             <button className="modal-close" onClick={() => setShowModal(false)}>

@@ -190,9 +190,7 @@ const Cart = () => {
       errors.name = 'Name is required';
     }
     
-    if (!customerInfo.phone.trim()) {
-      errors.phone = 'Phone number is required';
-    } else if (!/^\+?[0-9]{10,15}$/.test(customerInfo.phone.replace(/\s/g, ''))) {
+    if (customerInfo.phone.trim() && !/^\+?[0-9]{10,15}$/.test(customerInfo.phone.replace(/\s/g, ''))) {
       errors.phone = 'Invalid phone number';
     }
     
@@ -661,7 +659,7 @@ const Cart = () => {
 
                   <div className="form-group">
                     <label>
-                      <FaPhone /> Phone Number *
+                      <FaPhone /> Phone Number
                     </label>
                     <input
                       type="tel"

@@ -88,6 +88,20 @@ const StaffTaskCard = ({
     });
   };
 
+  const formatDeliveryAddress = (address) => {
+    if (typeof address === 'string') return address;
+    if (!address || typeof address !== 'object') return 'Address not provided';
+
+    return [
+      address.street,
+      address.area,
+      address.building,
+      address.floor,
+      address.city,
+      address.additionalInfo
+    ].filter(Boolean).join(', ') || 'Address not provided';
+  };
+
   // ========== CHEF: ACCEPT ORDER ==========
   const handleChefAccept = async () => {
     if (!task._id || loading) return;
@@ -421,7 +435,7 @@ const StaffTaskCard = ({
           <p><span className="info-label">👤 Customer:</span> {task.customerName || task.customer?.name || 'Guest'}</p>
           <p><span className="info-label">📞 Phone:</span> {task.customerPhone || task.customer?.phone || 'N/A'}</p>
           {type === 'delivery' && task.deliveryAddress && (
-            <p><span className="info-label">📍 Address:</span> {task.deliveryAddress}</p>
+            <p><span className="info-label">📍 Address:</span> {formatDeliveryAddress(task.deliveryAddress)}</p>
           )}
           <p><span className="info-label">💰 Total:</span> ETB {task.totalAmount}</p>
         </div>

@@ -51,7 +51,8 @@ const StaffOrderEntry = () => {
   const itemCount = selectedItems.reduce((total, item) => total + item.quantity, 0);
   const total = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const filteredItems = menuItems.filter((item) =>
-    item.name?.toLowerCase().includes(search.trim().toLowerCase())
+    item.name?.toLowerCase().includes(search.trim().toLowerCase()) ||
+    item.nameAm?.toLowerCase().includes(search.trim().toLowerCase())
   );
 
   const addItem = (item) => {
@@ -59,7 +60,7 @@ const StaffOrderEntry = () => {
       ...current,
       [item._id]: current[item._id]
         ? { ...current[item._id], quantity: current[item._id].quantity + 1 }
-        : { _id: item._id, name: item.name, price: Number(item.price) || 0, image: item.image, quantity: 1 }
+        : { _id: item._id, name: item.name, nameAm: item.nameAm, price: Number(item.price) || 0, image: item.image, quantity: 1 }
     }));
   };
 
@@ -155,6 +156,7 @@ const StaffOrderEntry = () => {
                 )}
                 <span className="staff-menu-item-info">
                   <strong>{item.name}</strong>
+                  {item.nameAm && <span className="staff-menu-item-name-am">{item.nameAm}</span>}
                   <span>ETB {Number(item.price || 0).toFixed(2)}</span>
                 </span>
                 <span className="staff-menu-item-add" aria-hidden="true">+</span>
@@ -177,6 +179,7 @@ const StaffOrderEntry = () => {
                 <li key={item._id}>
                   <div>
                     <strong>{item.name}</strong>
+                    {item.nameAm && <span className="staff-menu-item-name-am">{item.nameAm}</span>}
                     <span>ETB {(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                   <div className="staff-order-quantity">

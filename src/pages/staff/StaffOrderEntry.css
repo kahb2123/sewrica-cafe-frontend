@@ -107,7 +107,13 @@
   overflow-wrap: anywhere;
 }
 
-.staff-menu-item-info > span {
+.staff-menu-item-name-am {
+  color: #66736f;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.staff-menu-item-info > span:last-child {
   color: #0f766e;
   font-weight: 700;
 }

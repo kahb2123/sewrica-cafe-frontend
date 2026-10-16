@@ -44,6 +44,7 @@ const StaffDashboard = () => {
       scrollToPageTop();
     }
     setActiveTab(tab);
+    if (tab === 'tasks') fetchTasks();
   };
 
   const handleSubTabChange = (tab) => {
@@ -177,6 +178,17 @@ const StaffDashboard = () => {
           d.status === 'delivered'
         );
         
+      } else if (userRole === 'waiter') {
+        const response = await staffService.getMyWaiterOrders();
+        const orders = extractArray(response, []);
+
+        activeTasks = orders.filter(order =>
+          ['pending', 'confirmed', 'preparing', 'cooking', 'ready', 'out-for-delivery'].includes(order.status)
+        );
+        completed = orders.filter(order =>
+          order.status === 'delivered' || order.status === 'cancelled'
+        );
+
       } else if (userRole === 'cashier') {
         const response = await staffService.getCashierTasks();
         const tasksArray = extractArray(response, []);

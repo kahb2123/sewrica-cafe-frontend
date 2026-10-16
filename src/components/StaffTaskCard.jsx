@@ -418,7 +418,7 @@ const StaffTaskCard = ({
     <div className={`staff-task-card ${type} ${task.status}`} data-status={task.status}>
       <div className="task-card-header">
         <div className="task-type-badge">
-          {type === 'cook' ? '👨‍🍳 Kitchen' : type === 'delivery' ? '🚚 Delivery' : '💰 Cashier'}
+          {type === 'cook' ? '👨‍🍳 Kitchen' : type === 'delivery' ? '🚚 Delivery' : type === 'waiter' ? '🧑‍🍽️ Waiter' : '💰 Cashier'}
         </div>
         <div className="task-status" style={{ backgroundColor: getStatusColor(task.status || task.paymentStatus) }}>
           {getStatusIcon(task.status || task.paymentStatus)} {task.status || task.paymentStatus || 'pending'}
@@ -441,7 +441,7 @@ const StaffTaskCard = ({
         </div>
 
         <div className="items-section">
-          <h4>Items to {type === 'cook' ? 'prepare' : type === 'delivery' ? 'deliver' : 'process'}:</h4>
+          <h4>{type === 'cook' ? 'Items to prepare:' : type === 'delivery' ? 'Items to deliver:' : type === 'waiter' ? 'Items in order:' : 'Items to process:'}</h4>
           <div className="items-list">
             {task.items?.map((item, idx) => (
               <div key={idx} className="item-row">

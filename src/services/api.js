@@ -1178,6 +1178,16 @@ export const staffService = {
     }
   },
 
+  getMyWaiterOrders: async () => {
+    try {
+      const response = await api.get('/staff/orders/waiter');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching waiter tasks:', error);
+      throw error.response?.data || { message: 'Failed to fetch waiter tasks' };
+    }
+  },
+
   getMyDeliveryOrders: async () => {
     try {
       const response = await api.get('/staff/orders/delivery');

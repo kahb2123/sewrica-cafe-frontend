@@ -448,6 +448,15 @@ export const ingredientService = {
     }
   },
 
+  delete: async (id, reason) => {
+    try {
+      const response = await api.delete(`/ingredients/${id}`, { data: { reason } });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to delete ingredient' };
+    }
+  },
+
   getWithdrawals: async (limit = 50) => {
     try {
       const response = await api.get('/ingredients/withdrawals', { params: { limit } });

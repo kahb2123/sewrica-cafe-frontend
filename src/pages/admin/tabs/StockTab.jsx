@@ -49,7 +49,15 @@ const formatDateTime = (value) => {
   if (!value) return '--';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '--';
-  return date.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+  return new Intl.DateTimeFormat('en-ET', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Africa/Addis_Ababa',
+    timeZoneName: 'short'
+  }).format(date);
 };
 
 const StockTab = ({ readOnly = false }) => {
@@ -291,6 +299,32 @@ const StockTab = ({ readOnly = false }) => {
       toast.success(`${item.name} updated`);
     } catch (error) {
       toast.error(error.message || 'Failed to update ingredient');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const deleteIngredient = async (item) => {
+    if (readOnly) return;
+    const confirmed = window.confirm(
+      `Delete ${item.name}? It will be removed from available stock, but its history will be kept.`
+    );
+    if (!confirmed) return;
+
+    const reason = window.prompt(`Why are you deleting ${item.name}?`);
+    if (reason === null) return;
+    if (!reason.trim()) {
+      toast.error('Enter a reason to delete this ingredient');
+      return;
+    }
+
+    try {
+      setSavingId(item._id);
+      await ingredientService.delete(item._id, reason.trim());
+      setIngredients((current) => current.filter((entry) => entry._id !== item._id));
+      toast.success(`${item.name} deleted`);
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete ingredient');
     } finally {
       setSavingId(null);
     }
@@ -683,11 +717,12 @@ const StockTab = ({ readOnly = false }) => {
           <thead>
             <tr>
               <th>Ingredient</th>
+              <th>Supply name</th>
               <th>Available</th>
               <th>Reorder at</th>
               <th>Unit price (ETB)</th>
               <th>Total price (ETB)</th>
-              <th>Status</th>
+              <th>Last updated (Addis Ababa)</th>
               {!readOnly && <th><span className="sr-only">Actions</span></th>}
             </tr>
           </thead>
@@ -700,6 +735,7 @@ const StockTab = ({ readOnly = false }) => {
                     <strong>{item.name}</strong>
                     <small className="stock-unit">{item.unit}</small>
                   </td>
+                  <td>{item.supplier || '--'}</td>
                   <td><span className="stock-quantity">{item.quantity} {item.unit}</span></td>
                   <td>{readOnly ? item.reorderLevel : (
                     <input
@@ -724,16 +760,26 @@ const StockTab = ({ readOnly = false }) => {
                     />
                   )}</td>
                   <td><span className="stock-line-total">ETB {currency.format(lineValue(item))}</span></td>
-                  <td><span className={`stock-status ${low ? 'low' : 'healthy'}`}>{low ? 'Reorder soon' : 'Healthy'}</span></td>
+                  <td>{formatDateTime(item.updatedAt || item.createdAt)}</td>
                   {!readOnly && <td>
-                    <button
-                      className="stock-save"
-                      type="button"
-                      disabled={savingId === item._id}
-                      onClick={() => saveIngredient(item)}
-                    >
-                      {savingId === item._id ? 'Saving...' : 'Save'}
-                    </button>
+                    <div className="stock-row-actions">
+                      <button
+                        className="stock-save"
+                        type="button"
+                        disabled={savingId === item._id}
+                        onClick={() => saveIngredient(item)}
+                      >
+                        {savingId === item._id ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        className="stock-delete"
+                        type="button"
+                        disabled={savingId === item._id}
+                        onClick={() => deleteIngredient(item)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>}
                 </tr>
               );
@@ -742,7 +788,7 @@ const StockTab = ({ readOnly = false }) => {
           {ingredients.length > 0 && (
             <tfoot>
               <tr className="stock-total-row">
-                <td colSpan={readOnly ? '3' : '4'}>Total price of all stock</td>
+                <td colSpan={5}>Total price of all stock</td>
                 <td><span className="stock-line-total">ETB {currency.format(stats.totalPrice)}</span></td>
                 <td colSpan={readOnly ? '1' : '2'} />
               </tr>

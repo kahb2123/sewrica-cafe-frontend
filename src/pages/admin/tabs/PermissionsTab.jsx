@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { adminService, PERMISSIONS, PAGE_ACCESS, hasPermission } from '../../../services/api';
 import { toast } from 'react-toastify';
+import { useLanguage } from '../../../context/useLanguage';
 import './PermissionsTab.css';
 
 const PermissionLabels = {
@@ -57,6 +58,7 @@ const PageLabels = {
 };
 
 const PermissionsTab = () => {
+  const { t } = useLanguage();
   const [roleMap, setRoleMap] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -72,11 +74,11 @@ const PermissionsTab = () => {
       }
     } catch (error) {
       console.error('Error fetching role map:', error);
-      toast.error(error.message || 'Failed to load role map');
+      toast.error(error.message || t('Failed to load role map'));
     } finally {
       setLoading(false);
     }
-  }, [selectedRole]);
+  }, [selectedRole, t]);
 
   useEffect(() => {
     fetchRoleMap();
@@ -115,12 +117,12 @@ const PermissionsTab = () => {
           });
         }
 
-        toast.success(`Page access updated`);
+        toast.success(t('Page access updated'));
       } else {
-        toast.error(result.message || 'Failed to update page access');
+        toast.error(result.message || t('Failed to update page access'));
       }
     } catch (error) {
-      toast.error(error.message || 'Failed to update page access');
+      toast.error(error.message || t('Failed to update page access'));
     } finally {
       setSaving(false);
     }
@@ -130,7 +132,7 @@ const PermissionsTab = () => {
     if (!role || !role.permissions) return [];
     return role.permissions.map(perm => ({
       key: perm,
-      label: PermissionLabels[perm] || perm,
+      label: t(PermissionLabels[perm] || perm),
     }));
   };
 
@@ -147,12 +149,12 @@ const PermissionsTab = () => {
 
     return (
       <div className="permission-matrix">
-        <h3>Role Permission Matrix</h3>
+        <h3>{t('Role Permission Matrix')}</h3>
         <div className="matrix-table">
           <table>
             <thead>
               <tr>
-                <th className="sticky-col">Role</th>
+                <th className="sticky-col">{t('Role')}</th>
                 {allPermissionKeys.map(perm => (
                   <th key={perm}>{PermissionLabels[perm] || perm}</th>
                 ))}
@@ -161,13 +163,13 @@ const PermissionsTab = () => {
             <tbody>
               {roles.map(roleInfo => (
                 <tr key={roleInfo.role}>
-                  <td className="sticky-col">{RoleLabels[roleInfo.role] || roleInfo.role}</td>
+                  <td className="sticky-col">{t(RoleLabels[roleInfo.role] || roleInfo.role)}</td>
                   {allPermissionKeys.map(perm => (
                     <td key={perm} className="matrix-cell">
                       {hasPermission(roleInfo.role, perm) ? (
-                        <span className="check-icon">Yes</span>
+                        <span className="check-icon">{t('Yes')}</span>
                       ) : (
-                        <span className="x-icon">No</span>
+                        <span className="x-icon">{t('No')}</span>
                       )}
                     </td>
                   ))}
@@ -188,13 +190,13 @@ const PermissionsTab = () => {
 
     return (
       <div className="role-detail">
-        <h3>{RoleLabels[selectedRole.role] || selectedRole.role} Role</h3>
+        <h3>{t(RoleLabels[selectedRole.role] || selectedRole.role)} {t('Role')}</h3>
         <div className="role-level">
-          <span className="level-badge">Level {selectedRole.level}</span>
+          <span className="level-badge">{t('Level')} {selectedRole.level}</span>
         </div>
 
         <div className="role-section">
-          <h4>Action Permissions ({rolePermissions.length})</h4>
+          <h4>{t('Action Permissions')} ({rolePermissions.length})</h4>
           <div className="permissions-grid">
             {rolePermissions.map(p => (
               <span key={p.key} className="permission-item granted">
@@ -205,26 +207,26 @@ const PermissionsTab = () => {
         </div>
 
         <div className="role-section">
-          <h4>Page Access</h4>
+          <h4>{t('Page Access')}</h4>
           <table className="page-access-table">
             <thead>
               <tr>
-                <th>Page</th>
-                <th>Read</th>
-                <th>Write</th>
+                <th>{t('Page')}</th>
+                <th>{t('Read')}</th>
+                <th>{t('Write')}</th>
               </tr>
             </thead>
             <tbody>
               {pageAccessRows.map(([page, access]) => (
                 <tr key={page}>
-                  <td>{PageLabels[page] || page}</td>
+                  <td>{t(PageLabels[page] || page)}</td>
                   <td>
                     <button
                       className={`page-access-toggle ${access.canRead ? 'granted' : 'revoked'}`}
                       onClick={() => handlePageAccessToggle(page, 'read')}
                       disabled={saving}
                     >
-                      {access.canRead ? 'Yes' : 'No'}
+                      {t(access.canRead ? 'Yes' : 'No')}
                     </button>
                   </td>
                   <td>
@@ -233,7 +235,7 @@ const PermissionsTab = () => {
                       onClick={() => handlePageAccessToggle(page, 'write')}
                       disabled={saving}
                     >
-                      {access.canWrite ? 'Yes' : 'No'}
+                      {t(access.canWrite ? 'Yes' : 'No')}
                     </button>
                   </td>
                 </tr>
@@ -249,7 +251,7 @@ const PermissionsTab = () => {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p>Loading role map...</p>
+        <p>{t('Loading role map...')}</p>
       </div>
     );
   }
@@ -257,13 +259,13 @@ const PermissionsTab = () => {
   return (
     <div className="permissions-tab">
       <div className="permissions-header">
-        <h1 className="page-title">Role Permissions</h1>
-        <p className="page-subtitle">View and manage role-based access control (RBAC) for all staff roles</p>
+        <h1 className="page-title">{t('Role Permissions')}</h1>
+        <p className="page-subtitle">{t('View and manage role-based access control (RBAC) for all staff roles')}</p>
       </div>
 
       <div className="permissions-layout">
         <div className="permissions-sidebar">
-          <h3>Roles</h3>
+          <h3>{t('Roles')}</h3>
           <div className="role-list">
             {roleMap?.roles?.map(roleInfo => (
               <button
@@ -271,8 +273,8 @@ const PermissionsTab = () => {
                 className={`role-item ${selectedRole?.role === roleInfo.role ? 'active' : ''}`}
                 onClick={() => setSelectedRole(roleInfo)}
               >
-                <span className="role-name">{RoleLabels[roleInfo.role] || roleInfo.role}</span>
-                <span className="role-permissions-count">{roleInfo.permissions?.length || 0} permissions</span>
+                <span className="role-name">{t(RoleLabels[roleInfo.role] || roleInfo.role)}</span>
+                <span className="role-permissions-count">{roleInfo.permissions?.length || 0} {t('permissions')}</span>
               </button>
             ))}
           </div>
@@ -281,7 +283,7 @@ const PermissionsTab = () => {
         <div className="permissions-main">
           {selectedRole ? renderRoleDetail() : (
             <div className="empty-state">
-              <p>Select a role to view its permissions</p>
+              <p>{t('Select a role to view its permissions')}</p>
             </div>
           )}
         </div>

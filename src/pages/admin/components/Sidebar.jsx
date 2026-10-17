@@ -2,11 +2,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../context/useLanguage';
 import './Sidebar.css';
 
 const Sidebar = ({ activeTab, onMenuClick, mobileMenuOpen, user, onClose }) => {
   const navigate = useNavigate();
   const { canReadPage } = useAuth();
+  const { t } = useLanguage();
 
   const menuItems = [
     { id: 'overview', icon: '📊', label: 'Overview', page: 'adminDashboard' },
@@ -33,7 +35,7 @@ const Sidebar = ({ activeTab, onMenuClick, mobileMenuOpen, user, onClose }) => {
       <div className={`admin-sidebar ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <h2>Sewrica Cafe</h2>
-          <p>Admin Panel</p>
+          <p>{t('Admin Panel')}</p>
         </div>
         
         <ul className="sidebar-menu">
@@ -44,7 +46,7 @@ const Sidebar = ({ activeTab, onMenuClick, mobileMenuOpen, user, onClose }) => {
               onClick={() => onMenuClick(item.id)}
             >
               <span className="menu-icon">{item.icon}</span>
-              <span className="menu-text">{item.label}</span>
+              <span className="menu-text">{t(item.label)}</span>
             </li>
           ))}
         </ul>
@@ -55,7 +57,7 @@ const Sidebar = ({ activeTab, onMenuClick, mobileMenuOpen, user, onClose }) => {
             <span className="user-role">{user?.role || 'admin'}</span>
           </div>
           <button className="logout-btn" onClick={() => navigate('/')}>
-            ← Back to Site
+            ← {t('Back to Site')}
           </button>
         </div>
       </div>

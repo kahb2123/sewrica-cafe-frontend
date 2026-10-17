@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { adminService } from '../../services/api';
 import { toast } from 'react-toastify';
 import { useSocket } from '../../context/SocketContext';
+import { useLanguage } from '../../context/useLanguage';
 import scrollToPageTop from '../../utils/scrollToPageTop';
 import './AdminDashboard.css';
 
@@ -27,6 +28,7 @@ import KitchenDisplayTab from './tabs/KitchenDisplayTab';
 
 const AdminDashboard = () => {
   const { user, isAuthenticated, canReadPage, canWritePage } = useAuth();
+  const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
   const { onNewOrder, connected } = useSocket();
@@ -187,7 +189,7 @@ const renderContent = () => {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p>Loading Dashboard...</p>
+        <p>{t('Loading Dashboard...')}</p>
       </div>
     );
   }

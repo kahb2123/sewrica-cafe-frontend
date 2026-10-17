@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { menuService, orderService, getImageUrl } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/useLanguage';
 import { toast } from 'react-toastify';
 import './StaffOrderEntry.css';
 
@@ -13,9 +14,11 @@ const PAYMENT_METHODS = [
 
 const StaffOrderEntry = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const isDeliveryStaff = user?.role?.toLowerCase() === 'delivery';
   const [menuItems, setMenuItems] = useState([]);
   const [cart, setCart] = useState({});
+  const [showMobileSummary, setShowMobileSummary] = useState(false);
   const [search, setSearch] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [deliveryMethod, setDeliveryMethod] = useState(isDeliveryStaff ? 'delivery' : 'pickup');
@@ -108,6 +111,7 @@ const StaffOrderEntry = () => {
         deliveryAddress
       });
       setCart({});
+      setShowMobileSummary(false);
       setCustomerInfo({ name: '', phone: '' });
       setDeliveryAddress({ street: '', area: '', city: 'Addis Ababa' });
       toast.success(`Order #${response.order.orderNumber} placed and paid · ETB ${Number(response.order.totalAmount).toFixed(2)}`);
@@ -123,24 +127,36 @@ const StaffOrderEntry = () => {
     <section className="staff-order-entry">
       <header className="staff-order-header">
         <div>
-          <h1>Quick Order</h1>
-          <p>Tap menu items to build an order. Submit once when it is ready.</p>
+          <h1>{t('Quick Order')}</h1>
+          <p>{t('Tap menu items to build an order. Submit once when it is ready.')}</p>
         </div>
         <label className="staff-order-search">
-          <span>Search menu</span>
+          <span>{t('Search menu')}</span>
           <input
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Find food or drink"
+            placeholder={t('Find food or drink')}
           />
         </label>
       </header>
 
-      <div className="staff-order-layout">
-        <div className="staff-order-menu" aria-label="Available menu items">
+      <button
+        className="staff-order-summary-toggle"
+        type="button"
+        aria-expanded={showMobileSummary}
+        aria-controls="staff-order-summary"
+        onClick={() => setShowMobileSummary((current) => !current)}
+      >
+        {showMobileSummary
+          ? `← ${t('Back to menu')}`
+          : `${t('Order summary')} · ${itemCount} ${itemCount === 1 ? t('item') : t('items')} · ETB ${total.toFixed(2)}`}
+      </button>
+
+      <div className={`staff-order-layout${showMobileSummary ? ' show-mobile-summary' : ''}`}>
+        <div className="staff-order-menu" aria-label={t('Available menu items')}>
           {loadingMenu ? (
-            <p className="staff-order-message">Loading menu...</p>
+            <p className="staff-order-message">{t('Loading menu...')}</p>
           ) : filteredItems.length ? (
             filteredItems.map((item) => (
               <button
@@ -163,14 +179,14 @@ const StaffOrderEntry = () => {
               </button>
             ))
           ) : (
-            <p className="staff-order-message">No available menu items found.</p>
+            <p className="staff-order-message">{t('No available menu items found.')}</p>
           )}
         </div>
 
-        <form className="staff-order-summary" onSubmit={placeOrder}>
+        <form className="staff-order-summary" id="staff-order-summary" onSubmit={placeOrder}>
           <div className="staff-order-summary-heading">
-            <h2>Order summary</h2>
-            <span>{itemCount} {itemCount === 1 ? 'item' : 'items'}</span>
+            <h2>{t('Order summary')}</h2>
+            <span>{itemCount} {itemCount === 1 ? t('item') : t('items')}</span>
           </div>
 
           {selectedItems.length ? (
@@ -183,20 +199,20 @@ const StaffOrderEntry = () => {
                     <span>ETB {(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                   <div className="staff-order-quantity">
-                    <button type="button" onClick={() => changeQuantity(item._id, -1)} aria-label={`Remove one ${item.name}`}>−</button>
+                    <button type="button" onClick={() => changeQuantity(item._id, -1)} aria-label={`${t('Remove one')} ${item.name}`}>−</button>
                     <span>{item.quantity}</span>
-                    <button type="button" onClick={() => changeQuantity(item._id, 1)} aria-label={`Add one ${item.name}`}>+</button>
+                    <button type="button" onClick={() => changeQuantity(item._id, 1)} aria-label={`${t('Add one')} ${item.name}`}>+</button>
                   </div>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="staff-order-empty">Tap a food item to add it to this order.</p>
+            <p className="staff-order-empty">{t('Tap a food item to add it to this order.')}</p>
           )}
 
           <div className="staff-order-options">
             <fieldset>
-              <legend>Order type</legend>
+              <legend>{t('Order type')}</legend>
               <label>
                 <input
                   type="radio"
@@ -205,7 +221,7 @@ const StaffOrderEntry = () => {
                   checked={deliveryMethod === 'pickup'}
                   onChange={() => setDeliveryMethod('pickup')}
                 />
-                Dine in / pickup
+                {t('Dine in / pickup')}
               </label>
               <label>
                 <input
@@ -215,36 +231,36 @@ const StaffOrderEntry = () => {
                   checked={deliveryMethod === 'delivery'}
                   onChange={() => setDeliveryMethod('delivery')}
                 />
-                Delivery
+                {t('Delivery')}
               </label>
             </fieldset>
 
             {deliveryMethod === 'delivery' && (
               <div className="staff-order-customer-fields">
-                <input name="name" value={customerInfo.name} onChange={updateCustomerInfo} placeholder="Customer name" aria-label="Customer name" required />
-                <input name="phone" value={customerInfo.phone} onChange={updateCustomerInfo} placeholder="Customer phone" aria-label="Customer phone" required />
-                <input name="street" value={deliveryAddress.street} onChange={updateDeliveryAddress} placeholder="Delivery address" aria-label="Delivery address" required />
-                <input name="area" value={deliveryAddress.area} onChange={updateDeliveryAddress} placeholder="Area (optional)" aria-label="Delivery area" />
+                <input name="name" value={customerInfo.name} onChange={updateCustomerInfo} placeholder={t('Customer name')} aria-label={t('Customer name')} required />
+                <input name="phone" value={customerInfo.phone} onChange={updateCustomerInfo} placeholder={t('Customer phone')} aria-label={t('Customer phone')} required />
+                <input name="street" value={deliveryAddress.street} onChange={updateDeliveryAddress} placeholder={t('Delivery address')} aria-label={t('Delivery address')} required />
+                <input name="area" value={deliveryAddress.area} onChange={updateDeliveryAddress} placeholder={t('Area (optional)')} aria-label={t('Area (optional)')} />
               </div>
             )}
 
             <label className="staff-order-payment">
-              Payment method
+              {t('Payment method')}
               <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}>
                 {PAYMENT_METHODS.map((method) => (
                   <option value={method.value} key={method.value}>{method.label}</option>
                 ))}
               </select>
-              <small>Payment is recorded as received when the order is submitted.</small>
+              <small>{t('Payment is recorded as received when the order is submitted.')}</small>
             </label>
           </div>
 
           <div className="staff-order-total">
-            <span>Total</span>
+            <span>{t('Total')}</span>
             <strong>ETB {total.toFixed(2)}</strong>
           </div>
           <button className="staff-order-submit" type="submit" disabled={submitting || !selectedItems.length || loadingMenu}>
-            {submitting ? 'Placing order…' : `Place order · ETB ${total.toFixed(2)}`}
+            {submitting ? t('Placing order…') : `${t('Place order')} · ETB ${total.toFixed(2)}`}
           </button>
         </form>
       </div>

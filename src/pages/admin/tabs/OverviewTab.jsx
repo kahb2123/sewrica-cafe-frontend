@@ -1,9 +1,11 @@
 // src/pages/admin/tabs/OverviewTab.jsx
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../../services/api';
+import { useLanguage } from '../../../context/useLanguage';
 import './OverviewTab.css';
 
 const OverviewTab = ({ stats, onRefresh }) => {
+  const { language, t } = useLanguage();
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,7 +32,8 @@ const OverviewTab = ({ stats, onRefresh }) => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const locale = language === 'am' ? 'am-ET' : language === 'om' ? 'om-ET' : 'en-US';
+    return date.toLocaleDateString(locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
   const safeStats = stats || {
@@ -46,9 +49,9 @@ const OverviewTab = ({ stats, onRefresh }) => {
   return (
     <div className="overview-tab">
       <div className="tab-header">
-        <h1 className="page-title">Dashboard Overview</h1>
-        <button className="btn-refresh" onClick={onRefresh} title="Refresh Data">
-          🔄 Refresh
+        <h1 className="page-title">{t('Dashboard Overview')}</h1>
+        <button className="btn-refresh" onClick={onRefresh} title={t('Refresh Data')}>
+          🔄 {t('Refresh')}
         </button>
       </div>
       
@@ -56,63 +59,63 @@ const OverviewTab = ({ stats, onRefresh }) => {
         <div className="stat-card">
           <div className="stat-icon">📊</div>
           <div className="stat-details">
-            <h3>Total Orders</h3>
+            <h3>{t('Total Orders')}</h3>
             <p className="stat-number">{safeStats.totalOrders}</p>
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">💰</div>
           <div className="stat-details">
-            <h3>Total Revenue</h3>
+            <h3>{t('Total Revenue')}</h3>
             <p className="stat-number">{safeStats.totalRevenue?.toLocaleString() || 0} ETB</p>
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">⏳</div>
           <div className="stat-details">
-            <h3>Pending Orders</h3>
+            <h3>{t('Pending Orders')}</h3>
             <p className="stat-number">{safeStats.pendingOrders}</p>
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">🍔</div>
           <div className="stat-details">
-            <h3>Menu Items</h3>
+            <h3>{t('Menu Items')}</h3>
             <p className="stat-number">{safeStats.totalMenuItems}</p>
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">👥</div>
           <div className="stat-details">
-            <h3>Total Users</h3>
+            <h3>{t('Total Users')}</h3>
             <p className="stat-number">{safeStats.totalUsers}</p>
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">📅</div>
           <div className="stat-details">
-            <h3>Today's Orders</h3>
+            <h3>{t("Today's Orders")}</h3>
             <p className="stat-number">{safeStats.todayOrders}</p>
           </div>
         </div>
       </div>
 
       <div className="recent-orders-section">
-        <h2>Recent Orders</h2>
+        <h2>{t('Recent Orders')}</h2>
         {loading ? (
-          <div className="table-loading">Loading recent orders...</div>
+          <div className="table-loading">{t('Loading recent orders...')}</div>
         ) : (
           <div className="table-responsive">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th>Items</th>
-                  <th>Total</th>
-                  <th>Status</th>
-                  <th>Time</th>
-                  <th>Action</th>
+                  <th>{t('Order ID')}</th>
+                  <th>{t('Customer')}</th>
+                  <th>{t('Items')}</th>
+                  <th>{t('Total')}</th>
+                  <th>{t('Status')}</th>
+                  <th>{t('Time')}</th>
+                  <th>{t('Action')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -120,23 +123,23 @@ const OverviewTab = ({ stats, onRefresh }) => {
                   recentOrders.map(order => (
                     <tr key={order._id}>
                       <td>#{order._id.slice(-6)}</td>
-                      <td>{order.customer?.name || 'Guest'}</td>
-                      <td>{order.items?.length || 0} items</td>
+                      <td>{order.customer?.name || t('Guest')}</td>
+                      <td>{order.items?.length || 0} {t('items')}</td>
                       <td>{order.totalAmount} ETB</td>
                       <td>
                         <span className={`status-badge ${order.status}`}>
-                          {order.status}
+                          {t(order.status.charAt(0).toUpperCase() + order.status.slice(1))}
                         </span>
                       </td>
                       <td>{formatDate(order.createdAt)}</td>
                       <td>
-                        <button className="action-btn view-btn">View</button>
+                        <button className="action-btn view-btn">{t('View')}</button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7" className="no-data">No recent orders</td>
+                    <td colSpan="7" className="no-data">{t('No recent orders')}</td>
                   </tr>
                 )}
               </tbody>

@@ -7,6 +7,7 @@ import {
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/useLanguage';
 import './Navbar.css';
 
 const Navbar = () => {
@@ -16,6 +17,22 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { language, setLanguage, t, languages } = useLanguage();
+
+  const languageSelector = (className) => (
+    <label className={className}>
+      <span className="sr-only">{t('Language')}</span>
+      <select
+        value={language}
+        onChange={(event) => setLanguage(event.target.value)}
+        aria-label={t('Select language')}
+      >
+        {Object.entries(languages).map(([code, option]) => (
+          <option value={code} key={code}>{option.nativeLabel}</option>
+        ))}
+      </select>
+    </label>
+  );
 
   useEffect(() => {
     // Load cart count from localStorage
@@ -129,7 +146,7 @@ const Navbar = () => {
         <div className="top-bar-container">
           <div className="top-bar-info">
             <FaMapMarkerAlt className="top-bar-icon" />
-            <span>Megenagna, Metebaber Building, 2nd Floore</span>
+            <span>{t('Megenagna, Metebaber Building, 2nd Floor')}</span>
           </div>
           <div className="top-bar-info">
             <FaPhone className="top-bar-icon" />
@@ -152,7 +169,7 @@ const Navbar = () => {
             </div>
             <div className="logo-text">
               <span className="restaurant-name">SEWRICA</span>
-              <span className="restaurant-cuisine">Cafe & Restaurant</span>
+              <span className="restaurant-cuisine">{t('Cafe & Restaurant')}</span>
             </div>
           </Link>
 
@@ -160,25 +177,26 @@ const Navbar = () => {
           <ul className="nav-menu-desktop">
             <li className="nav-item">
               <Link to="/" className={`nav-link ${isActive('/')}`}>
-                Home
+                {t('Home')}
               </Link>
             </li>
             <li className="nav-item">
               <Link to="/menu" className={`nav-link ${isActive('/menu')}`}>
-                Menu
+                {t('Menu')}
               </Link>
             </li>
             <li className="nav-item">
               <Link to="/contact" className={`nav-link ${isActive('/contact')}`}>
-                Contact
+                {t('Contact')}
               </Link>
             </li>
           </ul>
 
           {/* Right Side Icons */}
           <div className="nav-right">
+            {languageSelector('language-selector desktop-language-selector')}
             {/* Cart Icon */}
-            <Link to="/cart" className="nav-icon cart-icon-nav" title="Shopping Cart">
+            <Link to="/cart" className="nav-icon cart-icon-nav" title={t('Shopping Cart')}>
               <FaShoppingCart />
               {cartCount > 0 && <span className="cart-badge-nav">{cartCount}</span>}
             </Link>
@@ -186,13 +204,13 @@ const Navbar = () => {
             {/* User Menu */}
             {user ? (
               <div className="user-menu">
-                <button className="user-menu-btn" title="User Menu">
+                <button className="user-menu-btn" title={t('User Menu')}>
                   <FaUser className="user-icon" />
                   <span className="user-name">{user?.name?.split(' ')[0] || 'User'}</span>
                 </button>
                 <div className="user-dropdown">
                   <Link to="/profile" className="dropdown-item" onClick={closeMenu}>
-                    <FaUser /> My Profile
+                    <FaUser /> {t('My Profile')}
                   </Link>
                   
                   {/* Staff Portal Link */}
@@ -203,24 +221,24 @@ const Navbar = () => {
                       onClick={closeMenu}
                     >
                       <FaUsers /> 
-                      {user.role === 'admin' ? 'Admin Dashboard' : 'My Staff Dashboard'}
+                      {t(user.role === 'admin' ? 'Admin Dashboard' : 'My Staff Dashboard')}
                     </Link>
                   )}
                   
                   <Link to="/orders" className="dropdown-item" onClick={closeMenu}>
-                    <FaShoppingCart /> My Orders
+                    <FaShoppingCart /> {t('My Orders')}
                   </Link>
                   <button onClick={handleLogout} className="dropdown-item logout-item">
-                    <FaSignOutAlt /> Logout
+                    <FaSignOutAlt /> {t('Logout')}
                   </button>
                 </div>
               </div>
             ) : (
               <div className="auth-links">
-                <Link to="/login" className="nav-icon user-icon-nav" title="Customer Login">
+                <Link to="/login" className="nav-icon user-icon-nav" title={t('Customer Login')}>
                   <FaUser />
                 </Link>
-                <Link to="/staff/login" className="nav-icon staff-icon-nav" title="Staff Login">
+                <Link to="/staff/login" className="nav-icon staff-icon-nav" title={t('Staff Login')}>
                   <FaUsers />
                 </Link>
               </div>
@@ -238,17 +256,17 @@ const Navbar = () => {
           <ul className="nav-menu-mobile">
             <li className="mobile-nav-item" style={{ '--i': 1 }}>
               <Link to="/" className="mobile-nav-link" onClick={closeMenu}>
-                Home
+                {t('Home')}
               </Link>
             </li>
             <li className="mobile-nav-item" style={{ '--i': 2 }}>
               <Link to="/menu" className="mobile-nav-link" onClick={closeMenu}>
-                Menu
+                {t('Menu')}
               </Link>
             </li>
             <li className="mobile-nav-item" style={{ '--i': 3 }}>
               <Link to="/contact" className="mobile-nav-link" onClick={closeMenu}>
-                Contact
+                {t('Contact')}
               </Link>
             </li>
             
@@ -256,12 +274,12 @@ const Navbar = () => {
               <>
                 <li className="mobile-nav-item" style={{ '--i': 4 }}>
                   <Link to="/profile" className="mobile-nav-link" onClick={closeMenu}>
-                    My Profile
+                    {t('My Profile')}
                   </Link>
                 </li>
                 <li className="mobile-nav-item" style={{ '--i': 5 }}>
                   <Link to="/orders" className="mobile-nav-link" onClick={closeMenu}>
-                    My Orders
+                    {t('My Orders')}
                   </Link>
                 </li>
               </>
@@ -276,14 +294,14 @@ const Navbar = () => {
                   onClick={closeMenu}
                 >
                   <FaUsers /> 
-                  {user.role === 'admin' ? 'Admin Dashboard' : 'My Staff Dashboard'}
+                  {t(user.role === 'admin' ? 'Admin Dashboard' : 'My Staff Dashboard')}
                 </Link>
               </li>
             )}
             
             <li className="mobile-nav-item" style={{ '--i': 7 }}>
               <Link to="/cart" className="mobile-nav-link" onClick={closeMenu}>
-                Cart {cartCount > 0 && `(${cartCount})`}
+                {t('Cart')} {cartCount > 0 && `(${cartCount})`}
               </Link>
             </li>
             
@@ -291,12 +309,12 @@ const Navbar = () => {
               <>
                 <li className="mobile-nav-item" style={{ '--i': 8 }}>
                   <Link to="/login" className="mobile-nav-link" onClick={closeMenu}>
-                    Customer Login
+                    {t('Customer Login')}
                   </Link>
                 </li>
                 <li className="mobile-nav-item" style={{ '--i': 9 }}>
                   <Link to="/staff/login" className="mobile-nav-link" onClick={closeMenu}>
-                    👨‍🍳 Staff Login
+                    👨‍🍳 {t('Staff Login')}
                   </Link>
                 </li>
               </>
@@ -305,17 +323,19 @@ const Navbar = () => {
             {user && (
               <li className="mobile-nav-item" style={{ '--i': 10 }}>
                 <button onClick={handleLogout} className="mobile-nav-link logout-mobile">
-                  Logout
+                  {t('Logout')}
                 </button>
               </li>
             )}
           </ul>
           
+          {languageSelector('language-selector mobile-language-selector')}
+
           {/* Mobile Address */}
           <div className="mobile-menu-address">
             <div className="mobile-address-item">
               <FaMapMarkerAlt className="mobile-address-icon" />
-              <span>Megenagna, Metebaber Building, 2nd Floor</span>
+              <span>{t('Megenagna, Metebaber Building, 2nd Floor')}</span>
             </div>
             <div className="mobile-address-item">
               <FaPhone className="mobile-address-icon" />

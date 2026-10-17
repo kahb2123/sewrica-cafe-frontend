@@ -14,11 +14,13 @@ import { RiTakeawayLine } from 'react-icons/ri';
 import { toast } from 'react-toastify';
 import { orderService, UPLOADS_URL } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/useLanguage';
 import './Cart.css';
 
 const Cart = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
   // NEW: Initialize Stripe hooks
   const stripe = useStripe();
   const elements = useElements();
@@ -420,7 +422,7 @@ const Cart = () => {
     return (
       <div className="cart-page loading">
         <div className="loader"></div>
-        <p>Loading your cart...</p>
+        <p>{t('Loading your cart...')}</p>
       </div>
     );
   }
@@ -431,22 +433,22 @@ const Cart = () => {
         {/* Header */}
         <div className="cart-header">
           <h1 className="cart-title">
-            <FaShoppingCart /> Your Cart
+            <FaShoppingCart /> {t('Your Cart')}
           </h1>
           <div className="cart-steps">
             <div className={`step ${checkoutStep >= 1 ? 'active' : ''}`}>
               <span className="step-number">1</span>
-              <span className="step-label">Cart</span>
+              <span className="step-label">{t('Cart')}</span>
             </div>
             <div className={`step-line ${checkoutStep >= 2 ? 'active' : ''}`}></div>
             <div className={`step ${checkoutStep >= 2 ? 'active' : ''}`}>
               <span className="step-number">2</span>
-              <span className="step-label">Checkout</span>
+              <span className="step-label">{t('Checkout')}</span>
             </div>
             <div className={`step-line ${checkoutStep >= 3 ? 'active' : ''}`}></div>
             <div className={`step ${checkoutStep >= 3 ? 'active' : ''}`}>
               <span className="step-number">3</span>
-              <span className="step-label">Payment</span>
+              <span className="step-label">{t('Payment')}</span>
             </div>
           </div>
         </div>
@@ -455,18 +457,18 @@ const Cart = () => {
           // Empty Cart
           <div className="empty-cart">
             <FaShoppingCart className="empty-cart-icon" />
-            <h2>Your cart is empty</h2>
-            <p>Looks like you haven't added any items to your cart yet.</p>
+            <h2>{t('Your cart is empty')}</h2>
+            <p>{t("Looks like you haven't added any items to your cart yet.")}</p>
             <div className="empty-cart-actions">
               <Link to="/menu" className="btn-primary">
-                <MdRestaurantMenu /> Browse Menu
+                <MdRestaurantMenu /> {t('Browse Menu')}
               </Link>
               <Link to="/" className="btn-secondary">
-                <FaArrowLeft /> Go Home
+                <FaArrowLeft /> {t('Go Home')}
               </Link>
             </div>
             <div className="popular-suggestions">
-              <h3>Popular Items</h3>
+              <h3>{t('Popular Items')}</h3>
               <div className="suggestion-items">
                 <div className="suggestion-item" onClick={() => navigate('/menu')}>
                   <FaUtensils /> Sewrica Burger
@@ -489,13 +491,13 @@ const Cart = () => {
                 <div className="cart-items">
                   {!user && (
                     <div className="order-step-banner">
-                      <strong>Checkout as guest:</strong> No account is required. We’ll use your contact details to confirm and track your order.
+                      <strong>{t('Checkout as guest:')}</strong> {t('No account is required. We’ll use your contact details to confirm and track your order.')}
                       <div className="step-banner-actions">
-                        <button type="button" className="secondary" onClick={() => navigate('/login?returnTo=/cart&mode=signup')}>Create account instead</button>
+                        <button type="button" className="secondary" onClick={() => navigate('/login?returnTo=/cart&mode=signup')}>{t('Create account instead')}</button>
                       </div>
                     </div>
                   )}
-                  <h2>Cart Items ({getItemCount()})</h2>
+                  <h2>{t('Cart Items')} ({getItemCount()})</h2>
                   {cartItems.map(item => (
                     <div key={item.id} className="cart-item">
                       {/* ========== IMAGE FIX: Updated image section with error handling ========== */}
@@ -547,12 +549,12 @@ const Cart = () => {
                             className="remove-btn"
                             onClick={() => removeItem(item.id)}
                           >
-                            <FaTrash /> Remove
+                            <FaTrash /> {t('Remove')}
                           </button>
                         </div>
                       </div>
                       <div className="cart-item-total">
-                        <span>Total:</span>
+                        <span>{t('Total:')}</span>
                         <strong>ETB {(item.price * item.quantity).toFixed(2)}</strong>
                       </div>
                     </div>
@@ -560,34 +562,34 @@ const Cart = () => {
                   
                   <div className="cart-actions">
                     <button onClick={clearCart} className="clear-cart-btn">
-                      <FaTrash /> Clear Cart
+                      <FaTrash /> {t('Clear Cart')}
                     </button>
                     <Link to="/menu" className="continue-shopping">
-                      <FaArrowLeft /> Continue Shopping
+                      <FaArrowLeft /> {t('Continue Shopping')}
                     </Link>
                   </div>
                 </div>
 
                 <div className="cart-summary">
-                  <h2>Order Summary</h2>
+                  <h2>{t('Order Summary')}</h2>
                   <div className="summary-details">
                     <div className="summary-row">
-                      <span>Subtotal ({getItemCount()} items)</span>
+                      <span>{t('Subtotal')} ({getItemCount()} {t('items')})</span>
                       <span>ETB {calculateSubtotal().toFixed(2)}</span>
                     </div>
                     <div className="summary-row">
-                      <span>Delivery Fee</span>
-                      <span className="free-delivery">FREE</span>
+                      <span>{t('Delivery Fee')}</span>
+                      <span className="free-delivery">{t('FREE')}</span>
                     </div>
                     <div className="summary-row total">
-                      <span>Total</span>
+                      <span>{t('Total')}</span>
                       <span>ETB {calculateTotal().toFixed(2)}</span>
                     </div>
                   </div>
                   
                   <div className="delivery-note">
                     <FaClock className="note-icon" />
-                    <p>Free delivery • Estimated time: 30-45 minutes</p>
+                    <p>{t('Free delivery • Estimated time: 30-45 minutes')}</p>
                   </div>
                   
                   <button 
@@ -598,7 +600,7 @@ const Cart = () => {
                   </button>
                   
                   <div className="payment-methods-preview">
-                    <p>We accept:</p>
+                    <p>{t('We accept:')}</p>
                     <div className="payment-icons">
                       <span className="payment-icon">Cash</span>
                       <span className="payment-icon">Tele Birr</span>
@@ -615,9 +617,9 @@ const Cart = () => {
               <div className="checkout-grid">
                 <div className="checkout-form">
                   <div className="order-step-banner compact">
-                    <strong>Step 2 of 3:</strong> Confirm your delivery details before payment.
+                    <strong>{t('Step 2 of 3:')}</strong> {t('Confirm your delivery details before payment.')}
                   </div>
-                  <h2>Contact Information</h2>
+                  <h2>{t('Contact Information')}</h2>
                   
                   <div className="delivery-method">
                     <label className={`method-option ${customerInfo.deliveryMethod === 'delivery' ? 'selected' : ''}`}>
@@ -628,7 +630,7 @@ const Cart = () => {
                         checked={customerInfo.deliveryMethod === 'delivery'}
                         onChange={handleInputChange}
                       />
-                      <MdDeliveryDining /> Free Delivery
+                      <MdDeliveryDining /> {t('Free Delivery')}
                     </label>
                     <label className={`method-option ${customerInfo.deliveryMethod === 'pickup' ? 'selected' : ''}`}>
                       <input
@@ -638,13 +640,13 @@ const Cart = () => {
                         checked={customerInfo.deliveryMethod === 'pickup'}
                         onChange={handleInputChange}
                       />
-                      <RiTakeawayLine /> Pickup
+                      <RiTakeawayLine /> {t('Pickup')}
                     </label>
                   </div>
 
                   <div className="form-group">
                     <label>
-                      <FaUser /> Full Name *
+                      <FaUser /> {t('Full Name *')}
                     </label>
                     <input
                       type="text"
@@ -652,14 +654,14 @@ const Cart = () => {
                       value={customerInfo.name}
                       onChange={handleInputChange}
                       className={formErrors.name ? 'error' : ''}
-                      placeholder="Enter your full name"
+                      placeholder={t('Enter your full name')}
                     />
                     {formErrors.name && <span className="error-message">{formErrors.name}</span>}
                   </div>
 
                   <div className="form-group">
                     <label>
-                      <FaPhone /> Phone Number
+                      <FaPhone /> {t('Phone Number')}
                     </label>
                     <input
                       type="tel"
@@ -674,7 +676,7 @@ const Cart = () => {
 
                   <div className="form-group">
                     <label>
-                      <FaEnvelope /> Email Address
+                      <FaEnvelope /> {t('Email Address')}
                     </label>
                     <input
                       type="email"
@@ -689,11 +691,11 @@ const Cart = () => {
 
                   {customerInfo.deliveryMethod === 'delivery' && (
                     <>
-                      <h2 style={{ marginTop: '30px' }}>Delivery Address</h2>
+                      <h2 style={{ marginTop: '30px' }}>{t('Delivery Address')}</h2>
                       
                       <div className="form-row">
                         <div className="form-group">
-                          <label>Area</label>
+                          <label>{t('Area')}</label>
                           <input
                             type="text"
                             name="area"
@@ -703,20 +705,20 @@ const Cart = () => {
                           />
                         </div>
                         <div className="form-group">
-                          <label>Building</label>
+                          <label>{t('Building')}</label>
                           <input
                             type="text"
                             name="building"
                             value={customerInfo.building}
                             onChange={handleInputChange}
-                            placeholder="Building name"
+                            placeholder={t('Building name')}
                           />
                         </div>
                       </div>
 
                       <div className="form-row">
                         <div className="form-group">
-                          <label>Floor/Office</label>
+                          <label>{t('Floor/Office')}</label>
                           <input
                             type="text"
                             name="floor"
@@ -726,24 +728,24 @@ const Cart = () => {
                           />
                         </div>
                         <div className="form-group">
-                          <label>City</label>
+                          <label>{t('City')}</label>
                           <input
                             type="text"
                             name="city"
                             value={customerInfo.city}
                             onChange={handleInputChange}
-                            placeholder="Addis Ababa"
+                            placeholder={t('Addis Ababa')}
                           />
                         </div>
                       </div>
 
                       <div className="form-group">
-                        <label>Additional Information</label>
+                        <label>{t('Additional Information')}</label>
                         <textarea
                           name="additionalInfo"
                           value={customerInfo.additionalInfo}
                           onChange={handleInputChange}
-                          placeholder="Landmarks, gate number, special instructions..."
+                          placeholder={t('Landmarks, gate number, special instructions...')}
                           rows="3"
                         ></textarea>
                       </div>
@@ -752,17 +754,17 @@ const Cart = () => {
 
                   {customerInfo.deliveryMethod === 'pickup' && (
                     <div className="pickup-info">
-                      <h3>Pickup Location</h3>
+                      <h3>{t('Pickup Location')}</h3>
                       <p>
-                        <FaMapMarkerAlt /> Megenagna, Metebaber Building, 2nd Floor
+                        <FaMapMarkerAlt /> {t('Megenagna, Metebaber Building, 2nd Floor')}
                       </p>
-                      <p>Please bring your ID when picking up your order.</p>
+                      <p>{t('Please bring your ID when picking up your order.')}</p>
                     </div>
                   )}
                 </div>
 
                 <div className="checkout-summary">
-                  <h2>Order Summary</h2>
+                  <h2>{t('Order Summary')}</h2>
                   <div className="checkout-items">
                     {cartItems.map(item => (
                       <div key={item.id} className="checkout-item">
@@ -877,7 +879,7 @@ const Cart = () => {
                   {/* ========== NEW: Card Payment Section ========== */}
                   {customerInfo.paymentMethod === 'card' && (
                     <div className="card-payment-section">
-                      <h3>Card Details</h3>
+                      <h3>{t('Card Details')}</h3>
                       <div className="card-element-container">
                         <CardElement 
                           options={{
@@ -899,7 +901,7 @@ const Cart = () => {
                       
                       {/* Test card hint */}
                       <div className="test-card-hint">
-                        <p>Test Card: 4242 4242 4242 4242 | Any future date | Any CVC</p>
+                        <p>{t('Test Card: 4242 4242 4242 4242 | Any future date | Any CVC')}</p>
                       </div>
 
                       {/* Payment error display */}
@@ -910,39 +912,39 @@ const Cart = () => {
                       )}
 
                       <p className="secure-note">
-                        🔒 Your payment information is secure and encrypted by Stripe
+                        🔒 {t('Your payment information is secure and encrypted by Stripe')}
                       </p>
                     </div>
                   )}
 
                   {customerInfo.paymentMethod === 'tele_birr' && (
                     <div className="payment-instructions">
-                      <h3>Tele Birr Payment Instructions:</h3>
+                      <h3>{t('Tele Birr Payment Instructions:')}</h3>
                       <ol>
-                        <li>Dial *127# on your mobile</li>
-                        <li>Select "Payment"</li>
-                        <li>Enter business number: <strong>+251911234567</strong></li>
-                        <li>Enter amount: <strong>ETB {calculateTotal().toFixed(2)}</strong></li>
-                        <li>Enter your PIN to confirm</li>
-                        <li>You'll receive a confirmation SMS</li>
+                        <li>{t('Dial *127# on your mobile')}</li>
+                        <li>{t('Select "Payment"')}</li>
+                        <li>{t('Enter business number:')} <strong>+251911234567</strong></li>
+                        <li>{t('Enter amount:')} <strong>ETB {calculateTotal().toFixed(2)}</strong></li>
+                        <li>{t('Enter your PIN to confirm')}</li>
+                        <li>{t("You'll receive a confirmation SMS")}</li>
                       </ol>
-                      <p className="note">After payment, we'll confirm your order via SMS</p>
+                      <p className="note">{t("After payment, we'll confirm your order via SMS")}</p>
                     </div>
                   )}
 
                   {customerInfo.paymentMethod === 'bank' && (
                     <div className="payment-instructions">
-                      <h3>Bank Transfer Details:</h3>
-                      <p><strong>Bank:</strong> Commercial Bank of Ethiopia</p>
-                      <p><strong>Account Name:</strong> SEWRICA Cafe</p>
-                      <p><strong>Account Number:</strong> 1000123456789</p>
-                      <p><strong>Amount:</strong> ETB {calculateTotal().toFixed(2)}</p>
-                      <p className="note">Please include your order number as reference</p>
+                      <h3>{t('Bank Transfer Details:')}</h3>
+                      <p><strong>{t('Bank:')}</strong> Commercial Bank of Ethiopia</p>
+                      <p><strong>{t('Account Name:')}</strong> SEWRICA Cafe</p>
+                      <p><strong>{t('Account Number:')}</strong> 1000123456789</p>
+                      <p><strong>{t('Amount:')}</strong> ETB {calculateTotal().toFixed(2)}</p>
+                      <p className="note">{t('Please include your order number as reference')}</p>
                     </div>
                   )}
 
                   <div className="order-review">
-                    <h3>Review Your Order</h3>
+                    <h3>{t('Review Your Order')}</h3>
                     <div className="review-items">
                       {cartItems.map(item => (
                         <div key={item.id} className="review-item">
@@ -952,14 +954,14 @@ const Cart = () => {
                       ))}
                     </div>
                     <div className="review-total">
-                      <span>Total:</span>
+                      <span>{t('Total:')}</span>
                       <strong>ETB {calculateTotal().toFixed(2)}</strong>
                     </div>
                   </div>
 
                   <div className="payment-actions">
                     <button onClick={backToCheckout} className="back-btn">
-                      <FaArrowLeft /> Back
+                      <FaArrowLeft /> {t('Back')}
                     </button>
                     <button 
                       onClick={placeOrder} 
@@ -969,11 +971,11 @@ const Cart = () => {
                       {processing ? (
                         <>
                           <span className="spinner"></span>
-                          Processing...
+                          {t('Processing...')}
                         </>
                       ) : (
                         <>
-                          Place Order <FaRegSmile />
+                          {t('Place Order')} <FaRegSmile />
                         </>
                       )}
                     </button>
@@ -981,36 +983,36 @@ const Cart = () => {
                 </div>
 
                 <div className="payment-summary">
-                  <h2>Delivery Information</h2>
+                  <h2>{t('Delivery Information')}</h2>
                   <div className="info-card">
-                    <p><strong>Name:</strong> {customerInfo.name}</p>
-                    <p><strong>Phone:</strong> {customerInfo.phone}</p>
-                    <p><strong>Email:</strong> {customerInfo.email}</p>
+                    <p><strong>{t('Name')}:</strong> {customerInfo.name}</p>
+                    <p><strong>{t('Phone')}:</strong> {customerInfo.phone}</p>
+                    <p><strong>{t('Email')}:</strong> {customerInfo.email}</p>
                     {customerInfo.deliveryMethod === 'delivery' ? (
                       <>
-                        <p><strong>Address:</strong> {customerInfo.area}, {customerInfo.building}, {customerInfo.floor}</p>
+                        <p><strong>{t('Address')}:</strong> {customerInfo.area}, {customerInfo.building}, {customerInfo.floor}</p>
                         {customerInfo.additionalInfo && (
-                          <p><strong>Note:</strong> {customerInfo.additionalInfo}</p>
+                          <p><strong>{t('Note:')}</strong> {customerInfo.additionalInfo}</p>
                         )}
                       </>
                     ) : (
-                      <p><strong>Pickup:</strong> Megenagna, Metebaber Building, 2nd Floor</p>
+                      <p><strong>{t('Pickup')}:</strong> {t('Megenagna, Metebaber Building, 2nd Floor')}</p>
                     )}
                   </div>
 
-                  <h2 style={{ marginTop: '20px' }}>Estimated Time</h2>
+                  <h2 style={{ marginTop: '20px' }}>{t('Estimated Time')}</h2>
                   <div className="time-card">
                     <FaClock className="time-icon" />
                     <div>
-                      <p><strong>Preparation:</strong> 10-15 minutes</p>
-                      <p><strong>Delivery:</strong> 5-10 minutes</p>
-                      <p><strong>Total:</strong> 15-25 minutes</p>
+                      <p><strong>{t('Preparation:')}</strong> 10-15 {t('minutes')}</p>
+                      <p><strong>{t('Delivery:')}</strong> 5-10 {t('minutes')}</p>
+                      <p><strong>{t('Total:')}</strong> 15-25 {t('minutes')}</p>
                     </div>
                   </div>
 
                   <div className="guarantee">
                     <FaCheckCircle className="guarantee-icon" />
-                    <p>Free delivery • Your satisfaction is guaranteed. If you're not happy with your order, let us know!</p>
+                    <p>{t("Free delivery • Your satisfaction is guaranteed. If you're not happy with your order, let us know!")}</p>
                   </div>
                 </div>
               </div>

@@ -5,22 +5,24 @@ import {
   FaLinkedin, FaWhatsapp, FaTelegram, FaTiktok,
   FaClock, FaHeart
 } from 'react-icons/fa';
+import { useLanguage } from '../context/useLanguage';
 import './Footer.css';
 
 const Footer = () => {
+  const { t } = useLanguage();
   const currentYear = new Date().getFullYear();
 
   const quickLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Menu', path: '/menu' },
-    { name: 'Contact', path: '/contact' },
-    { name: 'Cart', path: '/cart' },
+    { name: t('Home'), path: '/' },
+    { name: t('Menu'), path: '/menu' },
+    { name: t('Contact'), path: '/contact' },
+    { name: t('Cart'), path: '/cart' },
   ];
 
   const workingHours = [
-    { day: 'Monday - Friday', hours: '8:00 AM - 10:00 PM' },
-    { day: 'Saturday', hours: '9:00 AM - 11:00 PM' },
-    { day: 'Sunday', hours: '9:00 AM - 9:00 PM' },
+    { day: t('Monday - Friday'), hours: '8:00 AM - 10:00 PM' },
+    { day: t('Saturday'), hours: '9:00 AM - 11:00 PM' },
+    { day: t('Sunday'), hours: '9:00 AM - 9:00 PM' },
   ];
 
   const contactInfo = [
@@ -49,14 +51,12 @@ const Footer = () => {
               </div>
               <div className="footer-logo-text">
                                 <span className="footer-restaurant-name">Sewrica</span>
-                <span className="footer-restaurant-cuisine">Cafe & Restaurant</span>
+                <span className="footer-restaurant-cuisine">{t('Cafe & Restaurant')}</span>
               </div>
             </div>
                         <p className="footer-description">
-              Experience the authentic taste of Ethiopia at Sewrica Cafe. 
-              Our restaurant brings you traditional flavors passed down through generations, 
-              prepared with love and served with a smile.
-            </p>
+                          {t('Experience the authentic taste of Ethiopia at Sewrica Cafe. Our restaurant brings you traditional flavors passed down through generations, prepared with love and served with a smile.')}
+                        </p>
             <div className="footer-social">
               {socialLinks.map((social, index) => (
                 <a
@@ -76,7 +76,7 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div className="footer-section">
-            <h3 className="footer-title">Quick Links</h3>
+            <h3 className="footer-title">{t('Quick Links')}</h3>
             <ul className="footer-links">
               {quickLinks.map((link, index) => (
                 <li key={index}>
@@ -90,7 +90,7 @@ const Footer = () => {
 
           {/* Working Hours */}
           <div className="footer-section">
-            <h3 className="footer-title">Working Hours</h3>
+            <h3 className="footer-title">{t('Working Hours')}</h3>
             <ul className="footer-hours">
               {workingHours.map((item, index) => (
                 <li key={index} className="hour-item">
@@ -100,14 +100,14 @@ const Footer = () => {
               ))}
               <li className="hour-note">
                 <FaClock className="hour-note-icon" />
-                <span>Open on holidays</span>
+                <span>{t('Open on holidays')}</span>
               </li>
             </ul>
           </div>
 
           {/* Contact Info */}
           <div className="footer-section">
-            <h3 className="footer-title">Contact Us</h3>
+            <h3 className="footer-title">{t('Contact Us')}</h3>
             <ul className="footer-contact">
               {contactInfo.map((item, index) => (
                 <li key={index}>
@@ -143,15 +143,15 @@ const Footer = () => {
       <div className="footer-bottom">
         <div className="footer-bottom-container">
                     <div className="copyright">
-            © {currentYear} Sewrica Cafe & Restaurant. All rights reserved.
+            © {currentYear} Sewrica Cafe & Restaurant. {t('All rights reserved.')}
           </div>
           <div className="made-with">
             Made with <FaHeart className="heart-icon" /> in Addis Ababa
           </div>
           <div className="footer-bottom-links">
-            <Link to="/privacy" className="bottom-link">Privacy Policy</Link>
+            <Link to="/privacy" className="bottom-link">{t('Privacy Policy')}</Link>
             <span className="separator">|</span>
-            <Link to="/terms" className="bottom-link">Terms of Service</Link>
+            <Link to="/terms" className="bottom-link">{t('Terms of Service')}</Link>
           </div>
         </div>
       </div>

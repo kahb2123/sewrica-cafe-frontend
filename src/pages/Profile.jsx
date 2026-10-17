@@ -4,10 +4,12 @@ import { useAuth } from '../context/AuthContext';
 import { orderService } from '../services/api';
 import { toast } from 'react-toastify';
 import scrollToPageTop from '../utils/scrollToPageTop';
+import { useLanguage } from '../context/useLanguage';
 import './Profile.css';
 
 const Profile = () => {
   const { user, logout } = useAuth();
+  const { language, t } = useLanguage();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState([]);
@@ -37,24 +39,24 @@ const Profile = () => {
       setOrders(Array.isArray(data) ? data : data?.orders || []);
     } catch (error) {
       console.error('Error fetching orders:', error);
-      toast.error('Failed to load your orders');
+      toast.error(t('Failed to load your orders'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancelOrder = async (orderId) => {
-    if (!window.confirm('Are you sure you want to cancel this order?')) {
+    if (!window.confirm(t('Are you sure you want to cancel this order?'))) {
       return;
     }
 
     try {
       await orderService.cancelOrder(orderId);
-      toast.success('Order cancelled successfully');
+      toast.success(t('Order cancelled successfully'));
       fetchUserOrders(); // Refresh orders
     } catch (error) {
       console.error('Error cancelling order:', error);
-      toast.error(error.message || 'Failed to cancel order');
+      toast.error(error.message || t('Failed to cancel order'));
     }
   };
 
@@ -74,7 +76,7 @@ const Profile = () => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
     window.dispatchEvent(new Event('cartUpdated'));
     
-    toast.success('Items added to cart!');
+    toast.success(t('Items added to cart!'));
     navigate('/cart');
   };
 
@@ -99,9 +101,15 @@ const Profile = () => {
     }
   };
 
+  const translateLabel = (value) => {
+    if (!value) return value;
+    const label = value.replace(/[_-]+/g, ' ').replace(/\b\w/g, character => character.toUpperCase());
+    return t(label);
+  };
+
   const formatDeliveryAddress = (address) => {
     if (typeof address === 'string') return address;
-    if (!address || typeof address !== 'object') return 'Megenagna, Metebaber Building';
+    if (!address || typeof address !== 'object')     return t('Megenagna, Metebaber Building');
 
     return [
       address.street,
@@ -110,12 +118,13 @@ const Profile = () => {
       address.floor,
       address.city,
       address.additionalInfo
-    ].filter(Boolean).join(', ') || 'Address not provided';
+    ].filter(Boolean).join(', ') || t('Address not provided');
   };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    const locale = language === 'am' ? 'am-ET' : language === 'om' ? 'om-ET' : 'en-US';
+    return date.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -131,7 +140,7 @@ const Profile = () => {
   const handleLogout = () => {
     logout();
     navigate('/');
-    toast.success('Logged out successfully');
+    toast.success(t('Logged out successfully'));
   };
 
   if (!user) {
@@ -142,8 +151,8 @@ const Profile = () => {
     <div className="profile-page">
       <div className="container">
         <div className="profile-header">
-          <h1>My Profile</h1>
-          <p>Welcome back, {user.name}!</p>
+          <h1>{t('My Profile')}</h1>
+          <p>{t('Welcome back,')} {user.name}!</p>
         </div>
 
         <div className="profile-content">
@@ -156,7 +165,7 @@ const Profile = () => {
                 <h3>{user.name}</h3>
                 <p>{user.email}</p>
                 <p>{user.phone}</p>
-                <span className="user-role">{user.role}</span>
+                <span className="user-role">{translateLabel(user.role)}</span>
               </div>
             </div>
 
@@ -164,17 +173,17 @@ const Profile = () => {
             <div className="user-stats">
               <div className="stat-item">
                 <span className="stat-value">{orders.length}</span>
-                <span className="stat-label">Total Orders</span>
+                <span className="stat-label">{t('Total Orders')}</span>
               </div>
               <div className="stat-item">
                 <span className="stat-value">
                   {orders.filter(o => o.status === 'delivered').length}
                 </span>
-                <span className="stat-label">Delivered</span>
+                <span className="stat-label">{t('Delivered')}</span>
               </div>
               <div className="stat-item">
                 <span className="stat-value">{calculateTotalSpent()} ETB</span>
-                <span className="stat-label">Total Spent</span>
+                <span className="stat-label">{t('Total Spent')}</span>
               </div>
             </div>
 
@@ -183,41 +192,41 @@ const Profile = () => {
                 className={activeTab === 'orders' ? 'active' : ''}
                 onClick={() => handleTabChange('orders')}
               >
-                📦 My Orders
+                📦 {t('My Orders')}
               </button>
               <button
                 className={activeTab === 'account' ? 'active' : ''}
                 onClick={() => handleTabChange('account')}
               >
-                👤 Account Settings
+                👤 {t('Account Settings')}
               </button>
             </div>
 
             <button className="logout-btn" onClick={handleLogout}>
-              🚪 Logout
+              🚪 {t('Logout')}
             </button>
           </div>
 
           <div className="profile-main">
             {activeTab === 'orders' && (
               <div className="orders-section">
-                <h2>My Orders</h2>
+                <h2>{t('My Orders')}</h2>
 
                 {loading ? (
                   <div className="loading-container">
                     <div className="loading-spinner"></div>
-                    <p>Loading your orders...</p>
+                    <p>{t('Loading your orders...')}</p>
                   </div>
                 ) : orders.length === 0 ? (
                   <div className="empty-orders">
                     <div className="empty-icon">📦</div>
-                    <h3>No orders yet</h3>
-                    <p>You haven't placed any orders yet.</p>
+                    <h3>{t('No orders yet')}</h3>
+                    <p>{t("You haven't placed any orders yet.")}</p>
                     <button
                       className="btn-primary"
                       onClick={() => navigate('/menu')}
                     >
-                      Browse Menu
+                      {t('Browse Menu')}
                     </button>
                   </div>
                 ) : (
@@ -226,7 +235,7 @@ const Profile = () => {
                       <div key={order._id} className="order-card">
                         <div className="order-header">
                           <div className="order-info">
-                            <h3>Order #{order.orderNumber || order._id.slice(-8)}</h3>
+                            <h3>{t('Order #')}{order.orderNumber || order._id.slice(-8)}</h3>
                             <p className="order-date">
                               {formatDate(order.createdAt)}
                             </p>
@@ -236,7 +245,7 @@ const Profile = () => {
                               className="status-badge"
                               style={{ backgroundColor: getStatusColor(order.status) }}
                             >
-                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                              {t(order.status.charAt(0).toUpperCase() + order.status.slice(1))}
                             </span>
                           </div>
                         </div>
@@ -256,16 +265,16 @@ const Profile = () => {
                         {/* Payment Info */}
                         <div className="order-payment-info">
                           <span className="payment-method">
-                            {getPaymentIcon(order.paymentMethod)} {order.paymentMethod}
+                            {getPaymentIcon(order.paymentMethod)} {translateLabel(order.paymentMethod)}
                           </span>
                           <span className={`payment-status ${order.paymentStatus}`}>
-                            {order.paymentStatus}
+                            {translateLabel(order.paymentStatus)}
                           </span>
                         </div>
 
                         <div className="order-footer">
                           <div className="order-total">
-                            <strong>Total: {order.totalAmount} ETB</strong>
+                            <strong>{t('Total:')} {order.totalAmount} ETB</strong>
                           </div>
                           <div className="order-actions">
                             <button 
@@ -275,7 +284,7 @@ const Profile = () => {
                                 setShowModal(true);
                               }}
                             >
-                              View Details
+                              {t('View Details')}
                             </button>
                             
                             {order.status === 'pending' && (
@@ -283,7 +292,7 @@ const Profile = () => {
                                 className="btn-danger"
                                 onClick={() => handleCancelOrder(order._id)}
                               >
-                                Cancel Order
+                                {t('Cancel Order')}
                               </button>
                             )}
                             
@@ -292,7 +301,7 @@ const Profile = () => {
                                 className="btn-reorder"
                                 onClick={() => handleReorder(order)}
                               >
-                                🔄 Reorder
+                                🔄 {t('Reorder')}
                               </button>
                             )}
                           </div>
@@ -306,11 +315,11 @@ const Profile = () => {
 
             {activeTab === 'account' && (
               <div className="account-section">
-                <h2>Account Settings</h2>
+                <h2>{t('Account Settings')}</h2>
 
                 <div className="account-form">
                   <div className="form-group">
-                    <label>Name</label>
+                    <label>{t('Name')}</label>
                     <input
                       type="text"
                       value={user.name}
@@ -320,7 +329,7 @@ const Profile = () => {
                   </div>
 
                   <div className="form-group">
-                    <label>Email</label>
+                    <label>{t('Email')}</label>
                     <input
                       type="email"
                       value={user.email}
@@ -330,7 +339,7 @@ const Profile = () => {
                   </div>
 
                   <div className="form-group">
-                    <label>Phone</label>
+                    <label>{t('Phone')}</label>
                     <input
                       type="tel"
                       value={user.phone}
@@ -341,7 +350,7 @@ const Profile = () => {
 
                   <div className="account-note">
                     <p>
-                      <strong>Note:</strong> Account information can only be updated by contacting our support team.
+                      <strong>{t('Note:')}</strong> {t('Account information can only be updated by contacting our support team.')}
                     </p>
                   </div>
                 </div>
@@ -355,11 +364,11 @@ const Profile = () => {
       {showModal && selectedOrder && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2>Order Details</h2>
-            <p className="order-number">Order #{selectedOrder.orderNumber || selectedOrder._id.slice(-8)}</p>
+            <h2>{t('Order Details')}</h2>
+            <p className="order-number">{t('Order #')}{selectedOrder.orderNumber || selectedOrder._id.slice(-8)}</p>
             
             <div className="modal-section">
-              <h3>Items</h3>
+              <h3>{t('Items')}</h3>
               {selectedOrder.items?.map((item, idx) => (
                 <div key={idx} className="modal-item">
                   <span>{item.name} x{item.quantity}</span>
@@ -369,29 +378,29 @@ const Profile = () => {
             </div>
 
             <div className="modal-section">
-              <h3>Summary</h3>
-              <p><strong>Subtotal:</strong> {selectedOrder.subtotal || selectedOrder.totalAmount} ETB</p>
-              <p><strong>Delivery:</strong> FREE</p>
-              <p><strong>Total:</strong> {selectedOrder.totalAmount} ETB</p>
+              <h3>{t('Summary')}</h3>
+              <p><strong>{t('Subtotal:')}</strong> {selectedOrder.subtotal || selectedOrder.totalAmount} ETB</p>
+              <p><strong>{t('Delivery:')}</strong> {t('FREE')}</p>
+              <p><strong>{t('Total:')}</strong> {selectedOrder.totalAmount} ETB</p>
             </div>
 
             <div className="modal-section">
-              <h3>Payment</h3>
-              <p><strong>Method:</strong> {selectedOrder.paymentMethod}</p>
-              <p><strong>Status:</strong> {selectedOrder.paymentStatus}</p>
+              <h3>{t('Payment')}</h3>
+              <p><strong>{t('Method:')}</strong> {translateLabel(selectedOrder.paymentMethod)}</p>
+              <p><strong>{t('Status:')}</strong> {translateLabel(selectedOrder.paymentStatus)}</p>
               {selectedOrder.paidAt && (
-                <p><strong>Paid At:</strong> {formatDate(selectedOrder.paidAt)}</p>
+                <p><strong>{t('Paid At:')}</strong> {formatDate(selectedOrder.paidAt)}</p>
               )}
             </div>
 
             <div className="modal-section">
-              <h3>Delivery</h3>
-              <p><strong>Method:</strong> {selectedOrder.deliveryMethod}</p>
-              <p><strong>Address:</strong> {formatDeliveryAddress(selectedOrder.deliveryAddress)}</p>
+              <h3>{t('Delivery')}</h3>
+              <p><strong>{t('Method:')}</strong> {translateLabel(selectedOrder.deliveryMethod)}</p>
+              <p><strong>{t('Address:')}</strong> {formatDeliveryAddress(selectedOrder.deliveryAddress)}</p>
             </div>
 
             <button className="modal-close" onClick={() => setShowModal(false)}>
-              Close
+              {t('Close')}
             </button>
           </div>
         </div>

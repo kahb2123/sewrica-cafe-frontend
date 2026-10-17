@@ -26,6 +26,7 @@ import Contact from './pages/Contact';
 import Admin from './pages/Admin'; // ← Updated: Import from Admin.jsx
 import StaffDashboard from './pages/StaffDashboard';
 import StaffLogin from './pages/StaffLogin';
+import { useLanguage } from './context/useLanguage';
 import scrollToPageTop from './utils/scrollToPageTop';
 
 // Import CSS
@@ -43,6 +44,7 @@ function ScrollToTop() {
 
 function App() {
   const location = useLocation();
+  const { t } = useLanguage();
   const isKitchenTvMode = location.pathname.startsWith('/admin')
     && new URLSearchParams(location.search).get('mode') === 'tv';
 
@@ -92,7 +94,7 @@ function App() {
                 } />
                 
                 {/* Catch-all route for 404 */}
-                <Route path="*" element={<div className="not-found">Page Not Found</div>} />
+                <Route path="*" element={<div className="not-found">{t('Page Not Found')}</div>} />
               </Routes>
             </main>
             {!isKitchenTvMode && <Footer />}

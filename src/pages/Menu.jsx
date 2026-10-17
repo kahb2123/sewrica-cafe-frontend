@@ -13,9 +13,11 @@ import { RiTakeawayLine, RiRestaurantLine } from 'react-icons/ri';
 import { toast } from 'react-toastify';
 import { menuService, UPLOADS_URL } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useLanguage } from '../context/useLanguage';
 import './Menu.css';
 
 const Menu = () => {
+  const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -342,7 +344,8 @@ const Menu = () => {
       'soft-drinks': 'Soft Drinks',
       'hot-drinks': 'Hot Drinks'
     };
-    return labels[category] || category.charAt(0).toUpperCase() + category.slice(1);
+    const label = labels[category] || category.charAt(0).toUpperCase() + category.slice(1);
+    return t(label);
   };
 
   const getSpiceLevelIcon = (level) => {
@@ -367,7 +370,7 @@ const Menu = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner message="Loading our delicious menu..." />;
+    return <LoadingSpinner message={t('Loading our delicious menu...')} />;
   }
 
   if (apiError) {
@@ -376,10 +379,10 @@ const Menu = () => {
         <div className="container">
           <div className="error-state">
             <FaExclamationTriangle className="error-icon" />
-            <h2>Unable to load menu</h2>
-            <p>Please check your connection and try again</p>
+            <h2>{t('Unable to load menu')}</h2>
+            <p>{t('Please check your connection and try again')}</p>
             <button onClick={fetchMenuItems} className="retry-btn">
-              Retry
+              {t('Retry')}
             </button>
           </div>
         </div>
@@ -391,9 +394,9 @@ const Menu = () => {
     <div className="menu-page">
       <section className="menu-hero">
         <div className="container">
-          <h1 className="menu-hero-title">Our Menu</h1>
+          <h1 className="menu-hero-title">{t('Our Menu')}</h1>
           <p className="menu-hero-subtitle">
-            Discover our delicious selection of Ethiopian and international dishes
+            {t('Discover our delicious selection of Ethiopian and international dishes')}
           </p>
         </div>
       </section>
@@ -405,7 +408,7 @@ const Menu = () => {
               <FaSearch className="search-icon" />
               <input
                 type="text"
-                placeholder="Search menu items..."
+                placeholder={t('Search menu items...')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="search-input"
@@ -416,13 +419,13 @@ const Menu = () => {
               className={`filter-toggle ${showFilters ? 'active' : ''}`}
               onClick={() => setShowFilters(!showFilters)}
             >
-              <FaFilter /> Filters
+              <FaFilter /> {t('Filters')}
             </button>
           </div>
 
           {showFilters && (
             <div className="filter-panel">
-              <h4 className="filter-title">Filter Options</h4>
+              <h4 className="filter-title">{t('Filter Options')}</h4>
               
               <div className="filter-row">
                 <label className="filter-checkbox">
@@ -431,7 +434,7 @@ const Menu = () => {
                     checked={filters.vegetarian}
                     onChange={(e) => setFilters({...filters, vegetarian: e.target.checked})}
                   />
-                  <FaLeaf className="filter-icon" /> Vegetarian
+                  <FaLeaf className="filter-icon" /> {t('Vegetarian')}
                 </label>
                 
                 <label className="filter-checkbox">
@@ -440,7 +443,7 @@ const Menu = () => {
                     checked={filters.spicy}
                     onChange={(e) => setFilters({...filters, spicy: e.target.checked})}
                   />
-                  <FaPepperHot className="filter-icon" /> Spicy
+                  <FaPepperHot className="filter-icon" /> {t('Spicy')}
                 </label>
                 
                 <label className="filter-checkbox">
@@ -449,7 +452,7 @@ const Menu = () => {
                     checked={filters.signature}
                     onChange={(e) => setFilters({...filters, signature: e.target.checked})}
                   />
-                  <FaStar className="filter-icon" /> Signature
+                  <FaStar className="filter-icon" /> {t('Signature')}
                 </label>
                 <label className="filter-checkbox">
                   <input
@@ -457,7 +460,7 @@ const Menu = () => {
                     checked={filters.availableOnly}
                     onChange={(e) => setFilters({...filters, availableOnly: e.target.checked})}
                   />
-                  <FaCheck className="filter-icon" /> Available only
+                  <FaCheck className="filter-icon" /> {t('Available only')}
                 </label>
               </div>
               
@@ -465,14 +468,14 @@ const Menu = () => {
                 <div className="price-inputs">
                   <input
                     type="number"
-                    placeholder="Min Price"
+                    placeholder={t('Min Price')}
                     value={filters.minPrice}
                     onChange={(e) => setFilters({...filters, minPrice: e.target.value})}
                   />
-                  <span>to</span>
+                  <span>{t('to')}</span>
                   <input
                     type="number"
-                    placeholder="Max Price"
+                    placeholder={t('Max Price')}
                     value={filters.maxPrice}
                     onChange={(e) => setFilters({...filters, maxPrice: e.target.value})}
                   />
@@ -493,7 +496,7 @@ const Menu = () => {
                   setSearchTerm('');
                 }}
               >
-                Clear Filters
+                {t('Clear Filters')}
               </button>
             </div>
           )}
@@ -508,7 +511,7 @@ const Menu = () => {
               onClick={() => setActiveCategory('all')}
             >
               <MdRestaurantMenu className="category-icon" />
-              <span>All Items</span>
+              <span>{t('All Items')}</span>
             </button>
             {displayedCategories.map(category => (
                 <button
@@ -531,15 +534,15 @@ const Menu = () => {
               {getCategoryLabel(activeCategory)}
             </h2>
             <p className="section-description">
-              {filteredItems.length} items available
+              {filteredItems.length} {t('items available')}
             </p>
           </div>
 
           {filteredItems.length === 0 ? (
             <div className="no-items">
               <FaUtensils className="no-items-icon" />
-              <h3>No items found</h3>
-              <p>Try adjusting your filters or search term</p>
+              <h3>{t('No items found')}</h3>
+              <p>{t('Try adjusting your filters or search term')}</p>
             </div>
           ) : (
             <div className="menu-grid">
@@ -559,7 +562,7 @@ const Menu = () => {
                       </div>
                     )}
                     {item.isSignature && (
-                      <div className="signature-badge">Signature</div>
+                      <div className="signature-badge">{t('Signature')}</div>
                     )}
                   </div>
                   <div className="menu-card-content">
@@ -588,12 +591,12 @@ const Menu = () => {
                         <FaRegClock /> {item.prepTime}
                       </span>
                       {item.isVegetarian && (
-                        <span className="veg-icon" title="Vegetarian">
+                        <span className="veg-icon" title={t('Vegetarian')}>
                           <FaLeaf />
                         </span>
                       )}
                       {item.isSpicy && (
-                        <span className="spicy-icon" title="Spicy">
+                        <span className="spicy-icon" title={t('Spicy')}>
                           <FaPepperHot />
                         </span>
                       )}
@@ -606,7 +609,7 @@ const Menu = () => {
                         onClick={(e) => quickAddToCart(item, e)}
                         disabled={!item.isAvailable}
                       >
-                        <FaShoppingCart /> Add
+                        <FaShoppingCart /> {t('Add')}
                       </button>
                     </div>
                   </div>
@@ -645,7 +648,7 @@ const Menu = () => {
                   </div>
                 )}
                 {selectedItem.isSignature && (
-                  <div className="modal-signature-badge">Signature Dish</div>
+                  <div className="modal-signature-badge">{t('Signature Dish')}</div>
                 )}
               </div>
               
@@ -672,19 +675,19 @@ const Menu = () => {
                   {/* Info Cards */}
                   <div className="modal-info-cards">
                     <div className="info-card">
-                      <span className="info-card-label">Price</span>
+                      <span className="info-card-label">{t('Price')}</span>
                       <span className="info-card-value price">ETB {selectedItem.price}</span>
                     </div>
                     
                     <div className="info-card">
-                      <span className="info-card-label">Prep Time</span>
+                      <span className="info-card-label">{t('Prep Time')}</span>
                       <span className="info-card-value">
                         <FaRegClock className="info-icon" /> {selectedItem.prepTime}
                       </span>
                     </div>
                     
                     <div className="info-card">
-                      <span className="info-card-label">Spice Level</span>
+                      <span className="info-card-label">{t('Spice Level')}</span>
                       <span className="info-card-value spice">
                         {getSpiceLevelIcon(selectedItem.spiceLevel)} {selectedItem.spiceLevel}
                       </span>
@@ -694,7 +697,7 @@ const Menu = () => {
                   {/* Ingredients */}
                   {selectedItem.ingredients && selectedItem.ingredients.length > 0 && (
                     <div className="modal-ingredients">
-                      <h4 className="ingredients-title">Ingredients</h4>
+                      <h4 className="ingredients-title">{t('Ingredients')}</h4>
                       <div className="ingredients-grid">
                         {selectedItem.ingredients.map((ingredient, index) => (
                           <div key={index} className="ingredient-item">
@@ -730,7 +733,7 @@ const Menu = () => {
                       disabled={!selectedItem.isAvailable}
                     >
                       <FaShoppingCart className="btn-icon" />
-                      <span className="btn-text">Add to Cart</span>
+                      <span className="btn-text">{t('Add to Cart')}</span>
                       <span className="btn-total">ETB {selectedItem.price * quantity}</span>
                     </button>
                   </div>

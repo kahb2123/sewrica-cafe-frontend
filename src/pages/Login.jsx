@@ -10,12 +10,14 @@ import { MdRestaurantMenu } from 'react-icons/md';
 import { toast } from 'react-toastify';
 import { authService } from '../services/api';
 import { useAuth } from '../context/AuthContext'; // ✅ ADD THIS IMPORT
+import { useLanguage } from '../context/useLanguage';
 import './Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading, login } = useAuth();
+  const { t } = useLanguage();
   const params = new URLSearchParams(location.search);
   const returnTo = params.get('returnTo') || '/';
   const [isLogin, setIsLogin] = useState(params.get('mode') !== 'signup');
@@ -79,13 +81,13 @@ const Login = () => {
     const newErrors = {};
     
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('Email is required');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Invalid email address';
+      newErrors.email = t('Invalid email address');
     }
     
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = t('Password is required');
     }
     
     return newErrors;
@@ -96,29 +98,29 @@ const Login = () => {
     const newErrors = {};
     
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = t('Name is required');
     }
     
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('Email is required');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Invalid email address';
+      newErrors.email = t('Invalid email address');
     }
     
     if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
+      newErrors.phone = t('Phone number is required');
     } else if (!/^\+?[0-9]{10,15}$/.test(formData.phone.replace(/\s/g, ''))) {
-      newErrors.phone = 'Invalid phone number';
+      newErrors.phone = t('Invalid phone number');
     }
     
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = t('Password is required');
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = t('Password must be at least 6 characters');
     }
     
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = t('Passwords do not match');
     }
     
     return newErrors;
@@ -160,7 +162,7 @@ const Login = () => {
         }
       } else {
         // REGISTRATION - using your backend API
-        const result = await authService.register({
+        await authService.register({
           name: formData.name,
           email: formData.email,
           password: formData.password,
@@ -220,7 +222,7 @@ const Login = () => {
         <div className="login-brand">
           <div className="brand-content">
             <Link to="/" className="back-home">
-              <FaArrowLeft /> Back to Home
+              <FaArrowLeft /> {t('Back to Home')}
             </Link>
             
             <div className="brand-logo">
@@ -228,25 +230,25 @@ const Login = () => {
                 <FaUtensils />
               </div>
               <h1 className="brand-name">SEWRICA</h1>
-              <p className="brand-tagline">Cafe & Restaurant</p>
+              <p className="brand-tagline">{t('Cafe & Restaurant')}</p>
             </div>
 
             <div className="brand-features">
               <div className="brand-feature">
                 <FaCheckCircle className="feature-check" />
-                <span>Best City View in Addis</span>
+                <span>{t('Best City View in Addis')}</span>
               </div>
               <div className="brand-feature">
                 <FaCheckCircle className="feature-check" />
-                <span>Authentic Ethiopian Cuisine</span>
+                <span>{t('Authentic Ethiopian Cuisine')}</span>
               </div>
               <div className="brand-feature">
                 <FaCheckCircle className="feature-check" />
-                <span>Free Delivery Available</span>
+                <span>{t('Free Delivery Available')}</span>
               </div>
               <div className="brand-feature">
                 <FaCheckCircle className="feature-check" />
-                <span>24/7 Customer Support</span>
+                <span>{t('24/7 Customer Support')}</span>
               </div>
             </div>
 
@@ -255,7 +257,7 @@ const Login = () => {
             </div>
 
             <Link to="/menu" className="browse-menu">
-              <MdRestaurantMenu /> Browse Menu
+              <MdRestaurantMenu /> {t('Browse Menu')}
             </Link>
           </div>
         </div>
@@ -266,12 +268,12 @@ const Login = () => {
             {/* Header */}
             <div className="form-header">
               <h2 className="form-title">
-                {isLogin ? 'Welcome Back!' : 'Create Account'}
+                {isLogin ? t('Welcome Back!') : t('Create Account')}
               </h2>
               <p className="form-subtitle">
                 {isLogin 
-                  ? 'Sign in to continue to SEWRICA Cafe' 
-                  : 'Join us to enjoy exclusive offers and faster checkout'}
+                  ? t('Sign in to continue to SEWRICA Cafe')
+                  : t('Join us to enjoy exclusive offers and faster checkout')}
               </p>
             </div>
 
@@ -293,7 +295,7 @@ const Login = () => {
 
             <div className="divider">
               <span className="divider-line"></span>
-              <span className="divider-text">or</span>
+              <span className="divider-text">{t('or')}</span>
               <span className="divider-line"></span>
             </div>
 
@@ -305,7 +307,7 @@ const Login = () => {
                   <div className="form-group">
                     <label htmlFor="name">
                       <FaUser className="input-icon" />
-                      Full Name *
+                      {t('Full Name *')}
                     </label>
                     <input
                       type="text"
@@ -313,7 +315,7 @@ const Login = () => {
                       name="name"
                       value={formData.name}
                       onChange={handleInputChange}
-                      placeholder="Enter your full name"
+                      placeholder={t('Enter your full name')}
                       className={errors.name ? 'error' : ''}
                     />
                     {errors.name && <span className="error-message">{errors.name}</span>}
@@ -323,7 +325,7 @@ const Login = () => {
                   <div className="form-group">
                     <label htmlFor="phone">
                       <FaPhone className="input-icon" />
-                      Phone Number *
+                      {t('Phone Number *')}
                     </label>
                     <input
                       type="tel"
@@ -343,7 +345,7 @@ const Login = () => {
               <div className="form-group">
                 <label htmlFor="email">
                   <FaEnvelope className="input-icon" />
-                  Email Address *
+                  {t('Email Address *')}
                 </label>
                 <input
                   type="email"
@@ -361,7 +363,7 @@ const Login = () => {
               <div className="form-group">
                 <label htmlFor="password">
                   <FaLock className="input-icon" />
-                  Password *
+                  {t('Password *')}
                 </label>
                 <div className="password-input-wrapper">
                   <input
@@ -389,7 +391,7 @@ const Login = () => {
                 <div className="form-group">
                   <label htmlFor="confirmPassword">
                     <FaLock className="input-icon" />
-                    Confirm Password *
+                    {t('Confirm Password *')}
                   </label>
                   <div className="password-input-wrapper">
                     <input
@@ -422,10 +424,10 @@ const Login = () => {
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
                     />
-                    <span>Remember me</span>
+                    <span>{t('Remember me')}</span>
                   </label>
                   <Link to="/forgot-password" className="forgot-password">
-                    Forgot Password?
+                    {t('Forgot Password?')}
                   </Link>
                 </div>
               )}
@@ -439,7 +441,7 @@ const Login = () => {
                 {loading ? (
                   <span className="loading-spinner"></span>
                 ) : (
-                  isLogin ? 'Sign In' : 'Create Account'
+                  isLogin ? t('Sign In') : t('Create Account')
                 )}
               </button>
             </form>
@@ -447,22 +449,22 @@ const Login = () => {
             {/* Toggle between Login and Signup */}
             <div className="toggle-mode">
               <p>
-                {isLogin ? "Don't have an account?" : "Already have an account?"}
+                {isLogin ? t('Don’t have an account?') : t('Already have an account?')}
                 <button 
                   type="button"
                   onClick={toggleMode}
                   className="toggle-btn"
                 >
-                  {isLogin ? 'Sign Up' : 'Sign In'}
+                  {isLogin ? t('Sign Up') : t('Sign In')}
                 </button>
               </p>
             </div>
 
             {/* Terms and Privacy */}
             <p className="terms-text">
-              By continuing, you agree to our{' '}
-              <Link to="/terms">Terms of Service</Link> and{' '}
-              <Link to="/privacy">Privacy Policy</Link>
+              {t('By continuing, you agree to our')}{' '}
+              <Link to="/terms">{t('Terms of Service')}</Link> {t('and')}{' '}
+              <Link to="/privacy">{t('Privacy Policy')}</Link>
             </p>
           </div>
         </div>

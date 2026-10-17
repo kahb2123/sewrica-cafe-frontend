@@ -220,6 +220,26 @@
   justify-content: flex-end;
 }
 
+.language-selector select {
+  min-height: 36px;
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 248, 233, 0.45);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ethiopian-cream);
+  font: inherit;
+  cursor: pointer;
+}
+
+.language-selector option {
+  color: #263431;
+  background: #fff;
+}
+
+.mobile-language-selector {
+  display: none;
+}
+
 .nav-icon {
   color: var(--ethiopian-cream) !important;
   font-size: 1.2rem;
@@ -416,6 +436,23 @@
 }
 
 @media screen and (max-width: 968px) {
+  .desktop-language-selector {
+    display: none;
+  }
+
+  .mobile-language-selector {
+    display: block;
+    margin: 0 30px 20px;
+  }
+
+  .mobile-language-selector select {
+    width: 100%;
+    min-height: 44px;
+    border-color: rgba(22, 63, 57, 0.25);
+    background: #fff;
+    color: #163f39;
+  }
+
   .nav-menu-desktop {
     display: none;
   }

@@ -13,10 +13,12 @@ import { MdDeliveryDining, MdRestaurantMenu, MdLocalPizza } from 'react-icons/md
 import { RiRestaurantLine, RiTakeawayLine } from 'react-icons/ri';
 import { IoFastFoodOutline } from 'react-icons/io5';
 import { TbBread } from 'react-icons/tb';
+import { useLanguage } from '../context/useLanguage';
 import './Home.css';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeCategory, setActiveCategory] = useState('all');
   const [stats, setStats] = useState({
@@ -442,13 +444,13 @@ const Home = () => {
               style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${slide.image})` }}
             >
               <div className="hero-content">
-                <h1 className="hero-title">{slide.title}</h1>
-                <h2 className="hero-subtitle">{slide.subtitle}</h2>
-                <p className="hero-description">{slide.description}</p>
+                <h1 className="hero-title">{t(slide.title)}</h1>
+                <h2 className="hero-subtitle">{t(slide.subtitle)}</h2>
+                <p className="hero-description">{t(slide.description)}</p>
                 
                 <div className="hero-buttons">
                   <Link to={slide.buttonLink} className="btn-primary btn-large">
-                    {slide.buttonText}
+                    {t(slide.buttonText)}
                   </Link>
                 </div>
               </div>
@@ -476,13 +478,12 @@ const Home = () => {
 
 
       {/* Welcome Section */}
-      ?
       {/* Category Filter */}
       <section className="categories-section">
         <div className="container">
           <div className="section-header">
-            <span className="section-subtitle">Our Menu</span>
-            <h2 className="section-title">Browse Categories</h2>
+            <span className="section-subtitle">{t('Our Menu')}</span>
+            <h2 className="section-title">{t('Browse Categories')}</h2>
             <div className="title-underline"></div>
           </div>
 
@@ -492,70 +493,70 @@ const Home = () => {
               onClick={() => setActiveCategory('all')}
             >
               <MdRestaurantMenu className="category-icon" />
-              <span>All Items</span>
+              <span>{t('All Items')}</span>
             </button>
             <button
               className={`category-btn ${activeCategory === 'burgers' ? 'active' : ''}`}
               onClick={() => setActiveCategory('burgers')}
             >
               <FaHamburger className="category-icon" />
-              <span>Burgers</span>
+              <span>{t('Burgers')}</span>
             </button>
             <button
               className={`category-btn ${activeCategory === 'sandwiches' ? 'active' : ''}`}
               onClick={() => setActiveCategory('sandwiches')}
             >
               <FaBreadSlice className="category-icon" />
-              <span>Sandwiches</span>
+              <span>{t('Sandwiches')}</span>
             </button>
             <button
               className={`category-btn ${activeCategory === 'fastfood' ? 'active' : ''}`}
               onClick={() => setActiveCategory('fastfood')}
             >
               <IoFastFoodOutline className="category-icon" />
-              <span>Fast Food</span>
+              <span>{t('Fast Food')}</span>
             </button>
             <button
               className={`category-btn ${activeCategory === 'pizza' ? 'active' : ''}`}
               onClick={() => setActiveCategory('pizza')}
             >
               <MdLocalPizza className="category-icon" />
-              <span>Pizza</span>
+              <span>{t('Pizza')}</span>
             </button>
             <button
               className={`category-btn ${activeCategory === 'wraps' ? 'active' : ''}`}
               onClick={() => setActiveCategory('wraps')}
             >
               <RiTakeawayLine className="category-icon" />
-              <span>Wraps</span>
+              <span>{t('Wraps')}</span>
             </button>
             <button
               className={`category-btn ${activeCategory === 'fetira' ? 'active' : ''}`}
               onClick={() => setActiveCategory('fetira')}
             >
               <TbBread className="category-icon" />
-              <span>Fetia</span>
+              <span>{t('Fetia')}</span>
             </button>
             <button
               className={`category-btn ${activeCategory === 'traditional' ? 'active' : ''}`}
               onClick={() => setActiveCategory('traditional')}
             >
               <RiRestaurantLine className="category-icon" />
-              <span>Traditional</span>
+              <span>{t('Traditional')}</span>
             </button>
             <button
               className="category-btn"
               onClick={() => navigate('/menu?category=soft-drinks')}
             >
               <FaGlassWhiskey className="category-icon" />
-              <span>Soft Drinks</span>
+              <span>{t('Soft Drinks')}</span>
             </button>
             <button
               className="category-btn"
               onClick={() => navigate('/menu?category=hot-drinks')}
             >
               <FaCoffee className="category-icon" />
-              <span>Hot Drinks</span>
+              <span>{t('Hot Drinks')}</span>
             </button>
           </div>
         </div>
@@ -566,15 +567,15 @@ const Home = () => {
         <section className="signature-section">
           <div className="container">
             <div className="signature-banner">
-              <h3 className="signature-title">SEWRICA Signature Specials</h3>
-              <p className="signature-subtitle">Our chef's special creations you won't find anywhere else</p>
+              <h3 className="signature-title">{t('SEWRICA Signature Specials')}</h3>
+              <p className="signature-subtitle">{t("Our chef's special creations you won't find anywhere else")}</p>
             </div>
             <div className="signature-grid">
               {signatureItems.map(item => (
                 <div key={item.id} className="signature-card">
                   <div className="signature-image">
                     <img src={item.image} alt={item.name} />
-                    <div className="signature-badge">Signature</div>
+                    <div className="signature-badge">{t('Signature')}</div>
                   </div>
                   <div className="signature-info">
                     <h4 className="signature-item-name">{item.name}</h4>
@@ -583,7 +584,7 @@ const Home = () => {
                     <p className="signature-item-desc">{item.description.substring(0, 40)}...</p>
                     <div className="signature-footer">
                       <span className="signature-price">ETB {item.price}</span>
-                      <Link to={`/menu/${item.id}`} className="btn-signature">Order Now</Link>
+                      <Link to={`/menu/${item.id}`} className="btn-signature">{t('Order Now')}</Link>
                     </div>
                   </div>
                 </div>
@@ -597,9 +598,9 @@ const Home = () => {
       <section className="featured-section">
         <div className="container">
           <div className="section-header">
-            <span className="section-subtitle">Our Specialties</span>
+            <span className="section-subtitle">{t('Our Specialties')}</span>
             <h2 className="section-title">
-              {activeCategory === 'all' ? 'Popular Items' : 
+              {t(activeCategory === 'all' ? 'Popular Items' : 
                 activeCategory === 'burgers' ? 'Burgers' :
                 activeCategory === 'sandwiches' ? 'Sandwiches' :
                 activeCategory === 'fastfood' ? 'Fast Food' :
@@ -607,7 +608,7 @@ const Home = () => {
                 activeCategory === 'wraps' ? 'Wraps' :
                 activeCategory === 'soft-drinks' ? 'Soft Drinks' :
                 activeCategory === 'hot-drinks' ? 'Hot Drinks' :
-                activeCategory === 'fetira' ? 'Fetia' : 'Traditional'}
+                activeCategory === 'fetira' ? 'Fetia' : 'Traditional')}
             </h2>
             <div className="title-underline"></div>
           </div>
@@ -618,22 +619,22 @@ const Home = () => {
                 <div className="dish-image">
                   <img src={item.image} alt={item.name} />
                   <div className="dish-badge">
-                    {item.category === 'burgers' ? 'Burgers' :
+                    {t(item.category === 'burgers' ? 'Burgers' :
                      item.category === 'sandwiches' ? 'Sandwiches' :
                      item.category === 'fastfood' ? 'Fast Food' :
                      item.category === 'pizza' ? 'Pizza' :
                      item.category === 'wraps' ? 'Wraps' :
                      item.category === 'soft-drinks' ? 'Soft Drinks' :
                      item.category === 'hot-drinks' ? 'Hot Drinks' :
-                     item.category === 'fetira' ? 'Fetia' : 'Traditional'}
+                     item.category === 'fetira' ? 'Fetia' : 'Traditional')}
                   </div>
                   {item.isVegetarian && (
                     <div className="veg-badge">
-                      <FaLeaf /> Veg
+                      <FaLeaf /> {t('Veg')}
                     </div>
                   )}
                   {item.signature && (
-                    <div className="signature-badge-small">Signature</div>
+                    <div className="signature-badge-small">{t('Signature')}</div>
                   )}
                 </div>
                 <div className="dish-info">
@@ -658,7 +659,7 @@ const Home = () => {
                   <div className="dish-footer">
                     <span className="dish-price">ETB {item.price}</span>
                     <Link to={`/menu/${item.id}`} className="btn-order">
-                      Order Now
+                      {t('Order Now')}
                     </Link>
                   </div>
                 </div>
@@ -668,7 +669,7 @@ const Home = () => {
 
           <div className="section-footer">
             <Link to="/menu" className="btn-primary">
-              View Full Menu
+              {t('View Full Menu')}
             </Link>
           </div>
         </div>
@@ -683,21 +684,21 @@ const Home = () => {
                 <FaUsers />
               </div>
               <div className="stat-number">{Math.round(stats.customers)}+</div>
-              <div className="stat-label">Happy Customers</div>
+              <div className="stat-label">{t('Happy Customers')}</div>
             </div>
             <div className="stat-item">
               <div className="stat-icon">
                 <MdRestaurantMenu />
               </div>
               <div className="stat-number">{Math.round(stats.dishes)}+</div>
-              <div className="stat-label">Menu Items</div>
+              <div className="stat-label">{t('Menu Items')}</div>
             </div>
             <div className="stat-item">
               <div className="stat-icon">
                 <GiCoffeeBeans />
               </div>
               <div className="stat-number">{Math.round(stats.years)}+</div>
-              <div className="stat-label">Years Serving</div>
+              <div className="stat-label">{t('Years Serving')}</div>
             </div>
           </div>
         </div>
@@ -707,34 +708,34 @@ const Home = () => {
       <section className="features-section">
         <div className="container">
           <div className="section-header">
-            <span className="section-subtitle">Why Choose Us</span>
-            <h2 className="section-title">The SEWRICA Experience</h2>
+            <span className="section-subtitle">{t('Why Choose Us')}</span>
+            <h2 className="section-title">{t('The SEWRICA Experience')}</h2>
             <div className="title-underline"></div>
           </div>
 
           <div className="features-grid">
             <div className="feature-card">
               <div className="feature-icon-wrapper"><FaMapMarkerAlt /></div>
-              <h3 className="feature-title">Best City View</h3>
+              <h3 className="feature-title">{t('Best City View')}</h3>
               <h4 className="feature-title-am">ምርጥ የከተማ እይታ</h4>
-              <p className="feature-description">Enjoy panoramic views of Addis Ababa from our 2nd floor location at Metebaber Building.</p>
+              <p className="feature-description">{t('Enjoy panoramic views of Addis Ababa from our 2nd floor location at Metebaber Building.')}</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon-wrapper"><FaHamburger /></div>
-              <h3 className="feature-title">Signature Burgers</h3>
+              <h3 className="feature-title">{t('Signature Burgers')}</h3>
               <h4 className="feature-title-am">ልዩ በርገር</h4>
-              <p className="feature-description">Try our famous Sewrica Burger and other unique burger creations.</p>
+              <p className="feature-description">{t('Try our famous Sewrica Burger and other unique burger creations.')}</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon-wrapper"><MdLocalPizza /></div>
               <h3 className="feature-title">Sewrica Pizza</h3>
-              <p className="feature-description">From classic to signature Sewrica Pizza, we have something for everyone.</p>
+              <p className="feature-description">{t('From classic to signature Sewrica Pizza, we have something for everyone.')}</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon-wrapper"><RiRestaurantLine /></div>
-              <h3 className="feature-title">Traditional Dishes</h3>
+              <h3 className="feature-title">{t('Traditional Dishes')}</h3>
               <h4 className="feature-title-am">ባህላዊ ምግቦች</h4>
-              <p className="feature-description">Authentic Ethiopian cuisine including Beyaynet, Shero wot, and Chechebsa.</p>
+              <p className="feature-description">{t('Authentic Ethiopian cuisine including Beyaynet, Shero wot, and Chechebsa.')}</p>
             </div>
           </div>
         </div>
@@ -744,8 +745,8 @@ const Home = () => {
       <section className="testimonials-section">
         <div className="container">
           <div className="section-header">
-            <span className="section-subtitle">Customer Reviews</span>
-            <h2 className="section-title">What Our Guests Say</h2>
+            <span className="section-subtitle">{t('Customer Reviews')}</span>
+            <h2 className="section-title">{t('What Our Guests Say')}</h2>
             <div className="title-underline"></div>
           </div>
 
@@ -778,16 +779,16 @@ const Home = () => {
       <section className="cta-section">
         <div className="container">
           <div className="cta-content">
-            <h2 className="cta-title">Ready to Experience the Best City View & Delicious Food?</h2>
+            <h2 className="cta-title">{t('Ready to Experience the Best City View & Delicious Food?')}</h2>
             <p className="cta-description">
-              Order your favorites online for delivery or take-out, or visit us at Megenagna, Metebaber Building, 2nd Floor
+              {t('Order your favorites online for delivery or take-out, or visit us at Megenagna, Metebaber Building, 2nd Floor')}
             </p>
             <div className="cta-buttons">
               <Link to="/menu" className="btn-primary btn-large">
-                Order Online
+                {t('Order Online')}
               </Link>
               <Link to="/contact" className="btn-secondary btn-large">
-                <FaMapMarkerAlt /> Find Us
+                <FaMapMarkerAlt /> {t('Find Us')}
               </Link>
             </div>
             <div className="cta-contact">
@@ -795,7 +796,7 @@ const Home = () => {
               <span className="cta-phone">+251 911060930</span>
             </div>
             <p className="cta-hours">
-              <FaClock /> Open Daily: 8:00 AM - 10:00 PM
+              <FaClock /> {t('Open Daily: 8:00 AM - 10:00 PM')}
             </p>
           </div>
         </div>

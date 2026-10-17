@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { adminService, ROLE_PERMISSIONS, PERMISSIONS } from '../../../services/api';
 import { toast } from 'react-toastify';
+import { useLanguage } from '../../../context/useLanguage';
 import PermissionGate from '../../../components/PermissionGate';
 import AddStaffModal from '../../../components/AddStaffModal';
 import './StaffTab.css';
@@ -45,6 +46,7 @@ const roleLabels = {
 };
 
 const StaffTab = () => {
+  const { t } = useLanguage();
   const [staff, setStaff] = useState({
     cooks: [],
     delivery: [],
@@ -78,7 +80,7 @@ const StaffTab = () => {
       });
     } catch (error) {
       console.error('Error fetching staff:', error);
-      toast.error('Failed to load staff data');
+      toast.error(t('Failed to load staff data'));
       setStaff({
         cooks: [],
         delivery: [],
@@ -90,7 +92,7 @@ const StaffTab = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchStaff();
@@ -110,7 +112,7 @@ const StaffTab = () => {
       const detail = response?.data?.staffDetail;
 
       if (!detail) {
-        toast.info('No activity recorded for this staff member yet');
+        toast.info(t('No activity recorded for this staff member yet'));
         setStaffPerformance(null);
         setSelectedStaff({ id: staffId, role });
         setShowPerformanceModal(true);
@@ -122,22 +124,22 @@ const StaffTab = () => {
       setShowPerformanceModal(true);
     } catch (error) {
       console.error('Error fetching performance:', error);
-      toast.error(error.message || 'Failed to load performance');
+      toast.error(error.message || t('Failed to load performance'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteStaff = async (staffId, role) => {
-    if (!window.confirm(`Are you sure you want to remove this ${role}?`)) return;
+  const handleDeleteStaff = async (staffId) => {
+    if (!window.confirm(t('Are you sure you want to remove this staff member?'))) return;
     
     try {
       await adminService.deleteStaff(staffId);
-      toast.success('Staff member removed');
+      toast.success(t('Staff member removed'));
       fetchStaff();
     } catch (error) {
       console.error('Error deleting staff:', error);
-      toast.error(error.message || 'Failed to remove staff');
+      toast.error(error.message || t('Failed to remove staff'));
     }
   };
 
@@ -152,7 +154,7 @@ const StaffTab = () => {
       });
       setShowEditModal(true);
     } catch (error) {
-      toast.error(error.message || 'Failed to load staff permissions');
+      toast.error(error.message || t('Failed to load staff permissions'));
     }
   };
 
@@ -194,7 +196,7 @@ const StaffTab = () => {
     const perms = ROLE_PERMISSIONS[role] || [];
     return perms.map(perm => ({
       key: perm,
-      label: PermissionDescriptions[perm] || perm,
+      label: t(PermissionDescriptions[perm] || perm),
     }));
   };
 
@@ -202,7 +204,7 @@ const StaffTab = () => {
     const perms = getRolePermissionList(role);
     return (
       <div className="staff-permissions">
-        <span className="permissions-label">Permissions ({perms.length}):</span>
+        <span className="permissions-label">{t('Permissions')} ({perms.length}):</span>
         <div className="permission-badges">
           {perms.map(p => (
             <span key={p.key} className="permission-badge" title={p.label}>
@@ -215,7 +217,7 @@ const StaffTab = () => {
   };
 
   const renderStaffCard = (staffMember, role, statsConfig) => {
-    const roleLabel = roleLabels[role] || role;
+    const roleLabel = t(roleLabels[role] || role);
 
     return (
       <div key={staffMember._id} className="staff-card" data-role={role}>
@@ -224,23 +226,23 @@ const StaffTab = () => {
           <div className="staff-info">
             <h3>{staffMember.name}</h3>
             <span className="staff-status" style={{ backgroundColor: getStatusColor(staffMember.status || (staffMember.isActive ? 'active' : 'offline')) }}>
-              {getStatusText(staffMember.status || (staffMember.isActive ? 'active' : 'offline'))}
+              {t(getStatusText(staffMember.status || (staffMember.isActive ? 'active' : 'offline')))}
             </span>
           </div>
         </div>
 
         <div className="staff-card-body">
           <div className="staff-detail">
-            <span className="detail-label">Email:</span>
+            <span className="detail-label">{t('Email')}:</span>
             <span className="detail-value">{staffMember.email}</span>
           </div>
           <div className="staff-detail">
-            <span className="detail-label">Phone:</span>
+            <span className="detail-label">{t('Phone')}:</span>
             <span className="detail-value">{staffMember.phone}</span>
           </div>
           {staffMember.rating && (
             <div className="staff-detail">
-              <span className="detail-label">Performance:</span>
+              <span className="detail-label">{t('Performance')}:</span>
               <span className="detail-value rating">
                 {renderStars(staffMember.rating)} ({staffMember.rating})
               </span>
@@ -267,18 +269,18 @@ const StaffTab = () => {
           {statsConfig && (
             <PermissionGate permission={PERMISSIONS.REPORTS_VIEW} fallback={null}>
               <button className="btn-view" onClick={() => handleViewPerformance(staffMember._id, role)}>
-                View Report
+                {t('View Report')}
               </button>
             </PermissionGate>
           )}
           <PermissionGate permission={PERMISSIONS.STAFF_UPDATE} fallback={null}>
             <button className="btn-edit" onClick={() => handleEditStaff(staffMember)}>
-              Edit
+              {t('Edit')}
             </button>
           </PermissionGate>
           <PermissionGate permission={PERMISSIONS.STAFF_DELETE} fallback={null}>
-            <button className="btn-delete" onClick={() => handleDeleteStaff(staffMember._id, role)}>
-              Delete
+            <button className="btn-delete" onClick={() => handleDeleteStaff(staffMember._id)}>
+              {t('Delete')}
             </button>
           </PermissionGate>
         </div>
@@ -290,7 +292,7 @@ const StaffTab = () => {
     return (
       <div className="loading-container staff-tab-loading">
         <div className="loading-spinner"></div>
-        <p>Loading staff data...</p>
+        <p>{t('Loading staff data...')}</p>
       </div>
     );
   }
@@ -317,7 +319,7 @@ const StaffTab = () => {
         <div className="modal-overlay" onClick={() => setShowPerformanceModal(false)}>
           <div className="modal-content performance-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Staff Performance Report</h2>
+              <h2>{t('Staff Performance Report')}</h2>
               <button className="modal-close-btn" onClick={() => setShowPerformanceModal(false)}>x</button>
             </div>
             
@@ -325,30 +327,30 @@ const StaffTab = () => {
               <div className="performance-data">
                 <div className="summary-cards">
                   <div className="summary-card">
-                    <span className="label">Total Orders</span>
+                    <span className="label">{t('Total Orders')}</span>
                     <span className="value">{staffPerformance.summary?.totalOrders || 0}</span>
                   </div>
                   <div className="summary-card">
-                    <span className="label">Items Cooked</span>
+                    <span className="label">{t('Items Cooked')}</span>
                     <span className="value">{staffPerformance.summary?.totalItemsCooked || 0}</span>
                   </div>
                   <div className="summary-card">
-                    <span className="label">Total Time</span>
+                    <span className="label">{t('Total Time')}</span>
                     <span className="value">{staffPerformance.summary?.totalCookingTime || 0} min</span>
                   </div>
                   <div className="summary-card">
-                    <span className="label">Avg. Time</span>
+                    <span className="label">{t('Avg. Time')}</span>
                     <span className="value">{staffPerformance.summary?.averageCookingTime || 0} min</span>
                   </div>
                 </div>
 
-                <h3 className="section-title">Items Cooked Breakdown</h3>
+                <h3 className="section-title">{t('Items Cooked Breakdown')}</h3>
                 <div className="table-responsive">
                   <table className="report-table">
                     <thead>
                       <tr>
-                        <th>Menu Item</th>
-                        <th>Quantity</th>
+                        <th>{t('Menu Item')}</th>
+                        <th>{t('Quantity')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -368,31 +370,31 @@ const StaffTab = () => {
               <div className="performance-data">
                 <div className="summary-cards">
                   <div className="summary-card">
-                    <span className="label">Total Deliveries</span>
+                    <span className="label">{t('Total Deliveries')}</span>
                     <span className="value">{staffPerformance.summary?.totalDeliveries || 0}</span>
                   </div>
                   <div className="summary-card">
-                    <span className="label">Total Amount</span>
+                    <span className="label">{t('Total Amount')}</span>
                     <span className="value">ETB {staffPerformance.summary?.totalAmount?.toLocaleString() || 0}</span>
                   </div>
                   <div className="summary-card">
-                    <span className="label">Total Time</span>
+                    <span className="label">{t('Total Time')}</span>
                     <span className="value">{staffPerformance.summary?.totalDeliveryTime || 0} min</span>
                   </div>
                   <div className="summary-card">
-                    <span className="label">Avg. Time</span>
+                    <span className="label">{t('Avg. Time')}</span>
                     <span className="value">{staffPerformance.summary?.averageDeliveryTime || 0} min</span>
                   </div>
                 </div>
 
-                <h3 className="section-title">Daily Performance</h3>
+                <h3 className="section-title">{t('Daily Performance')}</h3>
                 <div className="table-responsive">
                   <table className="report-table">
                     <thead>
                       <tr>
-                        <th>Date</th>
-                        <th>Deliveries</th>
-                        <th>Total Amount</th>
+                        <th>{t('Date')}</th>
+                        <th>{t('Deliveries')}</th>
+                        <th>{t('Total Amount')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -413,10 +415,10 @@ const StaffTab = () => {
       )}
 
       <div className="staff-tab-header">
-        <h1 className="page-title">Staff Management</h1>
+        <h1 className="page-title">{t('Staff Management')}</h1>
         <PermissionGate permission={PERMISSIONS.STAFF_CREATE} fallback={null}>
           <button className="btn-primary" onClick={() => setShowAddModal(true)}>
-            + Add New Staff
+            + {t('Add New Staff')}
           </button>
         </PermissionGate>
       </div>
@@ -426,37 +428,37 @@ const StaffTab = () => {
           className={`staff-tab-btn ${activeSection === 'cooks' ? 'active' : ''}`}
           onClick={() => setActiveSection('cooks')}
         >
-          Chefs ({staff.cooks.length})
+          {t('Chefs')} ({staff.cooks.length})
         </button>
         <button 
           className={`staff-tab-btn ${activeSection === 'delivery' ? 'active' : ''}`}
           onClick={() => setActiveSection('delivery')}
         >
-          Delivery ({staff.delivery.length})
+          {t('Delivery')} ({staff.delivery.length})
         </button>
         <button 
           className={`staff-tab-btn ${activeSection === 'cashiers' ? 'active' : ''}`}
           onClick={() => setActiveSection('cashiers')}
         >
-          Cashiers ({staff.cashiers.length})
+          {t('Cashiers')} ({staff.cashiers.length})
         </button>
         <button
           className={`staff-tab-btn ${activeSection === 'waiters' ? 'active' : ''}`}
           onClick={() => setActiveSection('waiters')}
         >
-          Waiters ({staff.waiters.length})
+          {t('Waiters')} ({staff.waiters.length})
         </button>
         <button
           className={`staff-tab-btn ${activeSection === 'supplyChain' ? 'active' : ''}`}
           onClick={() => setActiveSection('supplyChain')}
         >
-          Supply Chain ({staff.supplyChain.length})
+          {t('Supply Chain')} ({staff.supplyChain.length})
         </button>
         <button
           className={`staff-tab-btn ${activeSection === 'admins' ? 'active' : ''}`}
           onClick={() => setActiveSection('admins')}
         >
-          Admins ({staff.admins.length})
+          {t('Admins')} ({staff.admins.length})
         </button>
       </div>
 
@@ -502,8 +504,8 @@ const StaffTab = () => {
                     : activeSection === 'supplyChain' ? 'Supply Chain'
                       : 'Admin'}
           </div>
-          <h3>No {activeSection === 'supplyChain' ? 'Supply Chain staff' : activeSection} found</h3>
-          <p>Click "Add New Staff" to add a {activeSection === 'supplyChain' ? 'Supply Chain staff member' : activeSection === 'waiters' ? 'waiter' : activeSection.slice(0, -1)}.</p>
+          <h3>{t('No staff members found')}</h3>
+          <p>{t('Click "Add New Staff" to add a staff member.')}</p>
         </div>
       )}
     </div>

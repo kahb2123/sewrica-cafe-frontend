@@ -7,9 +7,11 @@ import {
 } from 'react-icons/fa';
 import { MdDeliveryDining, MdRestaurantMenu } from 'react-icons/md';
 import { toast } from 'react-toastify';
+import { useLanguage } from '../context/useLanguage';
 import './Contact.css';
 
 const Contact = () => {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -89,23 +91,23 @@ const Contact = () => {
     const errors = {};
     
     if (!formData.name.trim()) {
-      errors.name = 'Name is required';
+      errors.name = t('Name is required');
     }
     
     if (!formData.email.trim()) {
-      errors.email = 'Email is required';
+      errors.email = t('Email is required');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Email is invalid';
+      errors.email = t('Email is invalid');
     }
     
     if (!formData.phone.trim()) {
-      errors.phone = 'Phone number is required';
+      errors.phone = t('Phone number is required');
     } else if (!/^\+?[0-9]{10,15}$/.test(formData.phone.replace(/\s/g, ''))) {
-      errors.phone = 'Phone number is invalid';
+      errors.phone = t('Phone number is invalid');
     }
     
     if (!formData.message.trim()) {
-      errors.message = 'Message is required';
+      errors.message = t('Message is required');
     }
     
     return errors;
@@ -119,7 +121,7 @@ const Contact = () => {
     
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
-      toast.error('Please fill in all required fields correctly');
+      toast.error(t('Please fill in all required fields correctly'));
       return;
     }
     
@@ -136,7 +138,7 @@ const Contact = () => {
         subject: '',
         message: ''
       });
-      toast.success('Message sent successfully! We\'ll get back to you soon.');
+      toast.success(t("Message sent successfully! We'll get back to you soon."));
       
       // Reset success message after 5 seconds
       setTimeout(() => {
@@ -150,9 +152,9 @@ const Contact = () => {
       {/* Hero Section */}
       <section className="contact-hero">
         <div className="container">
-          <h1 className="contact-hero-title">Contact Us</h1>
+          <h1 className="contact-hero-title">{t('Contact Us')}</h1>
           <p className="contact-hero-subtitle">
-            We'd love to hear from you! Reach out with any questions, feedback, or special requests.
+            {t("We'd love to hear from you! Reach out with any questions, feedback, or special requests.")}
           </p>
         </div>
       </section>
@@ -165,7 +167,7 @@ const Contact = () => {
               <div className="info-icon">
                 <FaMapMarkerAlt />
               </div>
-              <h3 className="info-title">Visit Us</h3>
+              <h3 className="info-title">{t('Visit Us')}</h3>
               <p className="info-text">{businessInfo.address}</p>
               <p className="info-text">{businessInfo.city}</p>
               <a 
@@ -174,7 +176,7 @@ const Contact = () => {
                 rel="noopener noreferrer"
                 className="info-link"
               >
-                Get Directions
+                {t('Get Directions')}
               </a>
             </div>
 
@@ -182,7 +184,7 @@ const Contact = () => {
               <div className="info-icon">
                 <FaPhone />
               </div>
-              <h3 className="info-title">Call Us</h3>
+              <h3 className="info-title">{t('Call Us')}</h3>
               <p className="info-text">
                 <a href={`tel:${businessInfo.phone}`} className="phone-link">
                   {businessInfo.phone}
@@ -193,14 +195,14 @@ const Contact = () => {
                   {businessInfo.phone2}
                 </a>
               </p>
-              <p className="info-note">Available 8:00 AM - 10:00 PM</p>
+              <p className="info-note">{t('Available 8:00 AM - 10:00 PM')}</p>
             </div>
 
             <div className="info-card">
               <div className="info-icon">
                 <FaEnvelope />
               </div>
-              <h3 className="info-title">Email Us</h3>
+              <h3 className="info-title">{t('Email Us')}</h3>
               <p className="info-text">
                 <a href={`mailto:${businessInfo.email}`} className="email-link">
                   {businessInfo.email}
@@ -211,7 +213,7 @@ const Contact = () => {
                   {businessInfo.email2}
                 </a>
               </p>
-              <p className="info-note">We reply within 24 hours</p>
+              <p className="info-note">{t('We reply within 24 hours')}</p>
             </div>
           </div>
         </div>
@@ -223,10 +225,10 @@ const Contact = () => {
           <div className="map-hours-grid">
             {/* Google Map */}
             <div className="map-container">
-              <h2 className="section-title">Find Us Here</h2>
+              <h2 className="section-title">{t('Find Us Here')}</h2>
               <div className="map-wrapper">
                 <iframe
-                  title="SEWRICA Cafe Location"
+                  title={t('SEWRICA Cafe Location')}
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.7634!2d38.80108!3d9.02024!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b9a7b3c5b3c5b%3A0x3c5b3c5b3c5b3c5b!2sMetebaber%20Building!5e0!3m2!1sen!2set!4v1700000000000!5m2!1sen!2set"
                   allowFullScreen=""
                   loading="lazy"
@@ -241,36 +243,36 @@ const Contact = () => {
 
             {/* Business Hours */}
             <div className="hours-container">
-              <h2 className="section-title">Business Hours</h2>
+              <h2 className="section-title">{t('Business Hours')}</h2>
               <div className="hours-card">
                 <div className="hours-header">
                   <FaClock className="hours-icon" />
-                  <span>Opening Hours</span>
+                  <span>{t('Opening Hours')}</span>
                 </div>
                 <ul className="hours-list">
                   {businessInfo.hours.map((item, index) => (
                     <li key={index} className="hours-item">
-                      <span className="hours-day">{item.day}</span>
+                      <span className="hours-day">{t(item.day)}</span>
                       <span className="hours-time">{item.hours}</span>
                     </li>
                   ))}
                 </ul>
                 <div className="hours-note">
                   <FaStar className="note-icon" />
-                  <p>We accept walk-ins and reservations. Call ahead for large groups!</p>
+                  <p>{t('We accept walk-ins and reservations. Call ahead for large groups!')}</p>
                 </div>
               </div>
 
               {/* Quick Actions */}
               <div className="quick-actions">
                 <a href="tel:+251911234567" className="quick-action-btn">
-                  <FaPhone /> Call Now
+                  <FaPhone /> {t('Call Now')}
                 </a>
                 <a href="https://wa.me/251911234567" target="_blank" rel="noopener noreferrer" className="quick-action-btn whatsapp">
                   <FaWhatsapp /> WhatsApp
                 </a>
                 <a href="/menu" className="quick-action-btn">
-                  <MdRestaurantMenu /> View Menu
+                  <MdRestaurantMenu /> {t('View Menu')}
                 </a>
               </div>
             </div>
@@ -284,17 +286,17 @@ const Contact = () => {
           <div className="form-social-grid">
             {/* Contact Form */}
             <div className="form-container">
-              <h2 className="section-title">Send Us a Message</h2>
+              <h2 className="section-title">{t('Send Us a Message')}</h2>
               <p className="form-description">
-                Have a question, feedback, or special request? Fill out the form below and we'll get back to you as soon as possible.
+                {t("Have a question, feedback, or special request? Fill out the form below and we'll get back to you as soon as possible.")}
               </p>
 
               {submitSuccess && (
                 <div className="success-message">
                   <FaCheckCircle className="success-icon" />
                   <div>
-                    <h4>Message Sent Successfully!</h4>
-                    <p>Thank you for contacting us. We'll respond within 24 hours.</p>
+                    <h4>{t('Message Sent Successfully!')}</h4>
+                    <p>{t("Thank you for contacting us. We'll respond within 24 hours.")}</p>
                   </div>
                 </div>
               )}
@@ -302,7 +304,7 @@ const Contact = () => {
               <form onSubmit={handleSubmit} className="contact-form">
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="name">Your Name *</label>
+                    <label htmlFor="name">{t('Your Name *')}</label>
                     <input
                       type="text"
                       id="name"
@@ -310,13 +312,13 @@ const Contact = () => {
                       value={formData.name}
                       onChange={handleInputChange}
                       className={formErrors.name ? 'error' : ''}
-                      placeholder="Enter your full name"
+                      placeholder={t('Enter your full name')}
                     />
                     {formErrors.name && <span className="error-message">{formErrors.name}</span>}
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="email">Email Address *</label>
+                    <label htmlFor="email">{t('Email Address *')}</label>
                     <input
                       type="email"
                       id="email"
@@ -324,7 +326,7 @@ const Contact = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       className={formErrors.email ? 'error' : ''}
-                      placeholder="Enter your email"
+                      placeholder={t('Enter your email')}
                     />
                     {formErrors.email && <span className="error-message">{formErrors.email}</span>}
                   </div>
@@ -332,7 +334,7 @@ const Contact = () => {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="phone">Phone Number *</label>
+                    <label htmlFor="phone">{t('Phone Number *')}</label>
                     <input
                       type="tel"
                       id="phone"
@@ -346,20 +348,20 @@ const Contact = () => {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="subject">Subject</label>
+                    <label htmlFor="subject">{t('Subject')}</label>
                     <input
                       type="text"
                       id="subject"
                       name="subject"
                       value={formData.subject}
                       onChange={handleInputChange}
-                      placeholder="What is this about?"
+                      placeholder={t('What is this about?')}
                     />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="message">Message *</label>
+                  <label htmlFor="message">{t('Message *')}</label>
                   <textarea
                     id="message"
                     name="message"
@@ -367,7 +369,7 @@ const Contact = () => {
                     value={formData.message}
                     onChange={handleInputChange}
                     className={formErrors.message ? 'error' : ''}
-                    placeholder="Type your message here..."
+                    placeholder={t('Type your message here...')}
                   ></textarea>
                   {formErrors.message && <span className="error-message">{formErrors.message}</span>}
                 </div>
@@ -378,10 +380,10 @@ const Contact = () => {
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
-                    <>Sending...</>
+                    <>{t('Sending...')}</>
                   ) : (
                     <>
-                      <FaPaperPlane /> Send Message
+                      <FaPaperPlane /> {t('Send Message')}
                     </>
                   )}
                 </button>
@@ -392,9 +394,9 @@ const Contact = () => {
             <div className="social-amenities-container">
               {/* Social Media */}
               <div className="social-section">
-                <h2 className="section-title">Connect With Us</h2>
+                <h2 className="section-title">{t('Connect With Us')}</h2>
                 <p className="social-description">
-                  Follow us on social media for the latest updates, special offers, and mouth-watering photos!
+                  {t('Follow us on social media for the latest updates, special offers, and mouth-watering photos!')}
                 </p>
                 <div className="social-grid">
                   {socialLinks.map((social, index) => (
@@ -408,7 +410,7 @@ const Contact = () => {
                     >
                       <div className="social-icon">{social.icon}</div>
                       <div className="social-info">
-                        <span className="social-name">{social.name}</span>
+                        <span className="social-name">{t(social.name)}</span>
                         <span className="social-username">{social.username}</span>
                       </div>
                     </a>
@@ -418,13 +420,13 @@ const Contact = () => {
 
               {/* FAQ Preview */}
               <div className="faq-preview">
-                <h2 className="section-title">Quick Questions</h2>
+                <h2 className="section-title">{t('Quick Questions')}</h2>
                 <div className="faq-list">
                   {faqs.map((faq, index) => (
                     <div key={index} className="faq-item">
                       <details>
-                        <summary className="faq-question">{faq.question}</summary>
-                        <p className="faq-answer">{faq.answer}</p>
+                        <summary className="faq-question">{t(faq.question)}</summary>
+                        <p className="faq-answer">{t(faq.answer)}</p>
                       </details>
                     </div>
                   ))}
@@ -439,20 +441,20 @@ const Contact = () => {
       <section className="contact-cta">
         <div className="container">
           <div className="cta-content">
-            <h2 className="cta-title">Ready to Visit SEWRICA Cafe?</h2>
+            <h2 className="cta-title">{t('Ready to Visit SEWRICA Cafe?')}</h2>
             <p className="cta-description">
-              Experience the best city view and delicious food at Megenagna, Metebaber Building, 2nd Floor
+              {t('Experience the best city view and delicious food at Megenagna, Metebaber Building, 2nd Floor')}
             </p>
             <div className="cta-buttons">
               <a href="/menu" className="cta-btn primary">
-                <MdRestaurantMenu /> View Menu
+                <MdRestaurantMenu /> {t('View Menu')}
               </a>
               <a href="https://maps.google.com/?q=Megenagna+Metebaber+Building+Addis+Ababa" 
                  target="_blank" 
                  rel="noopener noreferrer" 
                  className="cta-btn secondary"
               >
-                <FaMapMarkerAlt /> Get Directions
+                <FaMapMarkerAlt /> {t('Get Directions')}
               </a>
             </div>
           </div>

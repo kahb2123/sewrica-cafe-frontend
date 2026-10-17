@@ -1,6 +1,7 @@
 // src/components/StaffTaskCard.jsx
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/useLanguage';
 import { PERMISSIONS } from '../services/api';
 import PermissionGate from './PermissionGate';
 import { toast } from 'react-toastify';
@@ -28,6 +29,7 @@ const StaffTaskCard = ({
   const [rejectionReason, setRejectionReason] = useState('');
 
   const { hasPermission } = useAuth();
+  const { t } = useLanguage();
 
   console.log('📋 StaffTaskCard - Task:', {
     id: task._id,
@@ -418,7 +420,7 @@ const StaffTaskCard = ({
     <div className={`staff-task-card ${type} ${task.status}`} data-status={task.status}>
       <div className="task-card-header">
         <div className="task-type-badge">
-          {type === 'cook' ? '👨‍🍳 Kitchen' : type === 'delivery' ? '🚚 Delivery' : type === 'waiter' ? '🧑‍🍽️ Waiter' : '💰 Cashier'}
+          {type === 'cook' ? `👨‍🍳 ${t('Kitchen')}` : type === 'delivery' ? `🚚 ${t('Delivery')}` : type === 'waiter' ? `🧑‍🍽️ ${t('Waiter')}` : `💰 ${t('Cashier')}`}
         </div>
         <div className="task-status" style={{ backgroundColor: getStatusColor(task.status || task.paymentStatus) }}>
           {getStatusIcon(task.status || task.paymentStatus)} {task.status || task.paymentStatus || 'pending'}
@@ -432,16 +434,16 @@ const StaffTaskCard = ({
         </div>
 
         <div className="customer-info">
-          <p><span className="info-label">👤 Customer:</span> {task.customerName || task.customer?.name || 'Guest'}</p>
-          <p><span className="info-label">📞 Phone:</span> {task.customerPhone || task.customer?.phone || 'N/A'}</p>
+          <p><span className="info-label">👤 {t('Customer:')}</span> {task.customerName || task.customer?.name || t('Guest')}</p>
+          <p><span className="info-label">📞 {t('Phone:')}</span> {task.customerPhone || task.customer?.phone || 'N/A'}</p>
           {type === 'delivery' && task.deliveryAddress && (
-            <p><span className="info-label">📍 Address:</span> {formatDeliveryAddress(task.deliveryAddress)}</p>
+            <p><span className="info-label">📍 {t('Address:')}</span> {formatDeliveryAddress(task.deliveryAddress)}</p>
           )}
-          <p><span className="info-label">💰 Total:</span> ETB {task.totalAmount}</p>
+          <p><span className="info-label">💰 {t('Total:')}</span> ETB {task.totalAmount}</p>
         </div>
 
         <div className="items-section">
-          <h4>{type === 'cook' ? 'Items to prepare:' : type === 'delivery' ? 'Items to deliver:' : type === 'waiter' ? 'Items in order:' : 'Items to process:'}</h4>
+          <h4>{t(type === 'cook' ? 'Items to prepare:' : type === 'delivery' ? 'Items to deliver:' : type === 'waiter' ? 'Items in order:' : 'Items to process:')}</h4>
           <div className="items-list">
             {task.items?.map((item, idx) => (
               <div key={idx} className="item-row">
@@ -451,13 +453,13 @@ const StaffTaskCard = ({
             ))}
           </div>
           <div className="order-total">
-            <strong>Total: ETB {task.totalAmount}</strong>
+            <strong>{t('Total:')} ETB {task.totalAmount}</strong>
           </div>
         </div>
 
         {task.specialRequests && (
           <div className="special-requests">
-            <span className="requests-label">📋 Special Requests:</span>
+            <span className="requests-label">📋 {t('Special Requests:')}</span>
             <p>{task.specialRequests}</p>
           </div>
         )}
@@ -482,7 +484,7 @@ const StaffTaskCard = ({
           className="btn-details"
           onClick={() => setShowDetails(!showDetails)}
         >
-          {showDetails ? 'Hide Notes' : 'Add Notes'}
+          {showDetails ? t('Hide Notes') : t('Add Notes')}
         </button>
       </div>
 

@@ -2,9 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../../services/api';
 import { toast } from 'react-toastify';
+import { useLanguage } from '../../../context/useLanguage';
 import './UsersTab.css';
 
 const UsersTab = () => {
+  const { language, t } = useLanguage();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const roles = ['customer', 'cook', 'delivery', 'waiter', 'cashier', 'supply_chain', 'admin'];
@@ -43,52 +45,53 @@ const UsersTab = () => {
   const updateUserRole = async (userId, newRole) => {
     try {
       await adminService.updateUserRole(userId, newRole);
-      toast.success('User role updated successfully');
+      toast.success(t('User role updated successfully'));
       fetchUsers();
     } catch (error) {
       console.error('Error updating role:', error);
-      toast.error('Failed to update user role');
+      toast.error(t('Failed to update user role'));
     }
   };
 
   const toggleUserStatus = async (userId) => {
     try {
       await adminService.toggleUserStatus(userId);
-      toast.success('User status toggled successfully');
+      toast.success(t('User status toggled successfully'));
       fetchUsers();
     } catch (error) {
       console.error('Error toggling status:', error);
-      toast.error('Failed to toggle user status');
+      toast.error(t('Failed to toggle user status'));
     }
   };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    const locale = language === 'am' ? 'am-ET' : language === 'om' ? 'om-ET' : 'en-US';
+    return date.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
   if (loading) return (
     <div className="loading-container">
       <div className="loading-spinner"></div>
-      <p>Loading users...</p>
+      <p>{t('Loading users...')}</p>
     </div>
   );
 
   return (
     <div className="users-tab">
-      <h1 className="page-title">User Management</h1>
+      <h1 className="page-title">{t('User Management')}</h1>
       
       <div className="table-responsive">
         <table className="data-table users-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Joined</th>
-              <th>Actions</th>
+              <th>{t('Name')}</th>
+              <th>{t('Email')}</th>
+              <th>{t('Phone')}</th>
+              <th>{t('Role')}</th>
+              <th>{t('Status')}</th>
+              <th>{t('Joined')}</th>
+              <th>{t('Actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -97,7 +100,7 @@ const UsersTab = () => {
                 <tr key={user._id}>
                   <td>{user.name}</td>
                   <td>{user.email}</td>
-                  <td>{user.phone || 'N/A'}</td>
+                  <td>{user.phone || t('N/A')}</td>
                   <td>
                     <select 
                       value={user.role} 
@@ -105,13 +108,13 @@ const UsersTab = () => {
                       className="role-select"
                     >
                       {roles.map(role => (
-                        <option key={role} value={role}>{roleLabels[role]}</option>
+                        <option key={role} value={role}>{t(roleLabels[role])}</option>
                       ))}
                     </select>
                   </td>
                   <td>
                     <span className={`status-badge ${user.status}`}>
-                      {user.status}
+                      {t(user.status)}
                     </span>
                   </td>
                   <td>{formatDate(user.createdAt)}</td>
@@ -121,16 +124,16 @@ const UsersTab = () => {
                         className={`btn-status ${user.status === 'active' ? 'btn-disable' : 'btn-enable'}`}
                         onClick={() => toggleUserStatus(user._id)}
                       >
-                        {user.status === 'active' ? 'Disable' : 'Enable'}
+                        {t(user.status === 'active' ? 'Disable' : 'Enable')}
                       </button>
-                      <button className="btn-edit-user">Edit</button>
+                      <button className="btn-edit-user">{t('Edit')}</button>
                     </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="no-data">No users found</td>
+                <td colSpan="7" className="no-data">{t('No users found')}</td>
               </tr>
             )}
           </tbody>

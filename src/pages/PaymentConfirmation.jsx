@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import { orderService } from '../services/api';
 import OrderTracker from '../components/OrderTracker';
 import { useSocket } from '../context/SocketContext';
+import { useLanguage } from '../context/useLanguage';
 import './PaymentConfirmation.css';
 
 const ORDER_REFRESH_INTERVAL_MS = 30000;
@@ -18,6 +19,7 @@ const ORDER_REFRESH_INTERVAL_MS = 30000;
 const PaymentConfirmation = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const { language, t } = useLanguage();
   const { connected, registerOrder, onOrderStatusUpdate } = useSocket();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -46,11 +48,11 @@ const PaymentConfirmation = () => {
         setOrderStatus(data.status);
         
         if (data.status === 'cancelled' && data.notes) {
-          toast.error(`Order cancelled: ${data.notes}`);
+          toast.error(`${t('Order cancelled:')} ${data.notes}`);
         }
       });
     }
-  }, [order, orderId, connected, registerOrder, onOrderStatusUpdate]);
+  }, [order, orderId, connected, registerOrder, onOrderStatusUpdate, t]);
 
   const fetchOrderDetails = async (showLoading = true) => {
     try {
@@ -67,8 +69,8 @@ const PaymentConfirmation = () => {
     } catch (error) {
       console.error('Error fetching order:', error);
       if (showLoading) {
-        setError('Failed to load order details');
-        toast.error('Could not load order confirmation');
+        setError(t('Failed to load order details'));
+        toast.error(t('Could not load order confirmation'));
       }
     } finally {
       if (showLoading) setLoading(false);
@@ -93,7 +95,7 @@ const PaymentConfirmation = () => {
   };
 
   const handleEmailReceipt = () => {
-    toast.info('Receipt will be sent to your email');
+    toast.info(t('Receipt will be sent to your email'));
   };
 
   const generateReceiptText = () => {
@@ -170,7 +172,7 @@ Thank you for choosing SEWRICA Cafe!
       ].filter(Boolean).join(', ') || 'Address not provided';
     }
 
-    return `${order.area || 'Megenagna'}, ${order.building || 'Metebaber Building'}, ${order.floor || '2nd Floor'}`;
+    return `${order.area || t('Megenagna')}, ${order.building || t('Metebaber Building')}, ${order.floor || t('2nd Floor')}`;
   };
 
   if (loading) {
@@ -178,7 +180,7 @@ Thank you for choosing SEWRICA Cafe!
       <div className="confirmation-page loading">
         <div className="loader-container">
           <div className="loader"></div>
-          <p>Loading your order details...</p>
+          <p>{t('Loading your order details...')}</p>
         </div>
       </div>
     );
@@ -188,14 +190,14 @@ Thank you for choosing SEWRICA Cafe!
     return (
       <div className="confirmation-page error">
         <div className="error-container">
-          <h2>Oops! Something went wrong</h2>
-          <p>{error || 'Order not found'}</p>
+          <h2>{t('Oops! Something went wrong')}</h2>
+          <p>{error || t('Order not found')}</p>
           <div className="error-actions">
             <Link to="/" className="btn-home">
-              <FaHome /> Go Home
+              <FaHome /> {t('Go Home')}
             </Link>
             <Link to="/menu" className="btn-menu">
-              <MdRestaurantMenu /> Browse Menu
+              <MdRestaurantMenu /> {t('Browse Menu')}
             </Link>
           </div>
         </div>
@@ -213,8 +215,8 @@ Thank you for choosing SEWRICA Cafe!
           <div className="success-icon">
             <FaCheckCircle />
           </div>
-          <h1>Order Placed Successfully!</h1>
-          <p>Your order has been received and is being processed</p>
+          <h1>{t('Order Placed Successfully!')}</h1>
+          <p>{t('Your order has been received and is being processed')}</p>
         </div>
 
         {/* Order Tracker Component - Shows real-time status */}
@@ -226,19 +228,19 @@ Thank you for choosing SEWRICA Cafe!
         {/* Order Info Bar */}
         <div className="order-info-bar">
           <div className="info-item">
-            <span className="label">Order Number</span>
+            <span className="label">{t('Order Number')}</span>
             <span className="value">#{order.orderNumber || orderId.slice(-8)}</span>
           </div>
           <div className="info-item">
-            <span className="label">Date</span>
+            <span className="label">{t('Date')}</span>
             <span className="value">
-              {new Date(order.createdAt).toLocaleDateString()}
+              {new Date(order.createdAt).toLocaleDateString(language === 'am' ? 'am-ET' : language === 'om' ? 'om-ET' : 'en-US')}
             </span>
           </div>
           <div className="info-item">
-            <span className="label">Status</span>
+            <span className="label">{t('Status')}</span>
             <span className={`value status-${orderStatus}`}>
-              {orderStatus.toUpperCase()}
+              {t(orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1))}
             </span>
           </div>
         </div>
@@ -252,19 +254,19 @@ Thank you for choosing SEWRICA Cafe!
               </div>
               <div className="lottery-info">
                 <h3>
-                  {order.lotteryWon ? '🏆 YOU WON! 🏆' : '🎫 Your Lottery Ticket'}
+                  {order.lotteryWon ? `🏆 ${t('YOU WON!')} 🏆` : `🎫 ${t('Your Lottery Ticket')}`}
                 </h3>
                 <p className="ticket-number">Ticket #: {order.lotteryTicketNumber}</p>
                 <p className="lottery-message">
                   {order.lotteryWon 
-                    ? 'Congratulations! You are a winner! Please contact us to claim your prize.'
+                    ? t('Congratulations! You are a winner! Please contact us to claim your prize.')
                     : isEligibleForLottery 
-                      ? 'Your ticket is active for the monthly giveaway! Winners get special prizes!'
-                      : 'Your ticket will be activated once your order is delivered and paid.'}
+                      ? t('Your ticket is active for the monthly giveaway! Winners get special prizes!')
+                      : t('Your ticket will be activated once your order is delivered and paid.')}
                 </p>
                 {order.lotteryWon && (
                   <button className="claim-prize-btn" onClick={() => toast.info('Please contact Sewrica Cafe to claim your prize!')}>
-                    Claim Prize →
+                    {t('Claim Prize →')}
                   </button>
                 )}
               </div>
@@ -275,7 +277,7 @@ Thank you for choosing SEWRICA Cafe!
         {/* Connection Status */}
         {!connected && (
           <div className="connection-warning">
-            <p>⚠️ Real-time updates disconnected. Reconnecting...</p>
+            <p>⚠️ {t('Real-time updates disconnected. Reconnecting...')}</p>
           </div>
         )}
 
@@ -283,7 +285,7 @@ Thank you for choosing SEWRICA Cafe!
         <div className="confirmation-grid">
           {/* Left Column - Order Details */}
           <div className="order-details">
-            <h2>Order Summary</h2>
+            <h2>{t('Order Summary')}</h2>
             
             <div className="items-list">
               {order.items?.map((item, index) => (
@@ -301,29 +303,29 @@ Thank you for choosing SEWRICA Cafe!
 
             <div className="price-breakdown">
               <div className="price-row">
-                <span>Subtotal</span>
+                <span>{t('Subtotal')}</span>
                 <span>ETB {order.subtotal?.toFixed(2) || order.totalAmount?.toFixed(2)}</span>
               </div>
               <div className="price-row">
-                <span>Delivery Fee</span>
-                <span className="free">FREE</span>
+                <span>{t('Delivery Fee')}</span>
+                <span className="free">{t('FREE')}</span>
               </div>
               <div className="price-row total">
-                <span>Total</span>
+                <span>{t('Total')}</span>
                 <span>ETB {order.totalAmount?.toFixed(2)}</span>
               </div>
             </div>
 
             {/* Payment Details */}
             <div className="payment-details">
-              <h3>Payment Details</h3>
+              <h3>{t('Payment Details')}</h3>
               <div className="payment-row">
                 <span className="payment-method">
                   {getPaymentIcon(order.paymentMethod)}
                   <span className="method-name">
-                    {order.paymentMethod === 'cash' ? 'Cash on Delivery' :
+                    {t(order.paymentMethod === 'cash' ? 'Cash on Delivery' :
                      order.paymentMethod === 'card' ? 'Card Payment' :
-                     order.paymentMethod === 'tele_birr' ? 'Tele Birr' : 'Bank Transfer'}
+                     order.paymentMethod === 'tele_birr' ? 'Tele Birr' : 'Bank Transfer')}
                   </span>
                 </span>
                 <span className={`payment-status ${order.paymentStatus}`}>
@@ -335,26 +337,26 @@ Thank you for choosing SEWRICA Cafe!
             {/* Action Buttons */}
             <div className="action-buttons">
               <button onClick={handlePrint} className="btn-print">
-                <FaPrint /> Print Receipt
+                <FaPrint /> {t('Print Receipt')}
               </button>
               <button onClick={handleDownloadReceipt} className="btn-download">
-                <FaDownload /> Download
+                <FaDownload /> {t('Download')}
               </button>
               <button onClick={handleEmailReceipt} className="btn-email">
-          <FaEnvelope /> Email
+          <FaEnvelope /> {t('Email')}
             </button>
           </div>
         </div>
 
         {/* Right Column - Customer & Delivery Info */}
         <div className="customer-info">
-            <h2>Delivery Information</h2>
+            <h2>{t('Delivery Information')}</h2>
             
             <div className="info-card">
               <div className="info-row">
                 <FaUser className="info-icon" />
                 <div>
-                  <span className="info-label">Customer</span>
+                  <span className="info-label">{t('Customer')}</span>
                   <span className="info-value">{order.customerName || order.customer?.name}</span>
                 </div>
               </div>
@@ -362,7 +364,7 @@ Thank you for choosing SEWRICA Cafe!
               <div className="info-row">
                 <FaPhone className="info-icon" />
                 <div>
-                  <span className="info-label">Phone</span>
+                  <span className="info-label">{t('Phone')}</span>
                   <span className="info-value">{order.customerPhone || order.customer?.phone}</span>
                 </div>
               </div>
@@ -370,7 +372,7 @@ Thank you for choosing SEWRICA Cafe!
               <div className="info-row">
                 <FaEnvelope className="info-icon" />
                 <div>
-                  <span className="info-label">Email</span>
+                  <span className="info-label">{t('Email')}</span>
                   <span className="info-value">{order.customerEmail || order.customer?.email}</span>
                 </div>
               </div>
@@ -378,7 +380,7 @@ Thank you for choosing SEWRICA Cafe!
               <div className="info-row">
                 <FaMapMarkerAlt className="info-icon" />
                 <div>
-                  <span className="info-label">Delivery Address</span>
+                  <span className="info-label">{t('Delivery Address')}</span>
                   <span className="info-value">
                     {formatDeliveryAddress(order.deliveryAddress, order)}
                   </span>
@@ -389,7 +391,7 @@ Thank you for choosing SEWRICA Cafe!
             {/* Special Instructions */}
             {order.specialRequests && (
               <div className="special-instructions">
-                <h3>Special Instructions</h3>
+                <h3>{t('Special Instructions')}</h3>
                 <p>{order.specialRequests}</p>
               </div>
             )}
@@ -399,23 +401,23 @@ Thank you for choosing SEWRICA Cafe!
         {/* Bottom Navigation */}
         <div className="bottom-navigation">
           <Link to="/" className="nav-link">
-            <FaHome /> Home
+            <FaHome /> {t('Home')}
           </Link>
           <Link to="/menu" className="nav-link">
-            <MdRestaurantMenu /> Menu
+            <MdRestaurantMenu /> {t('Menu')}
           </Link>
           <Link to="/profile" className="nav-link">
-            <FaUser /> My Orders
+            <FaUser /> {t('My Orders')}
           </Link>
           <button onClick={() => navigate(-1)} className="nav-link back">
-            <FaArrowLeft /> Back
+            <FaArrowLeft /> {t('Back')}
           </button>
         </div>
 
         {/* Thank You Message */}
         <div className="thank-you">
-          <p>Thank you for choosing SEWRICA Cafe!</p>
-          <p className="small">We hope you enjoy your meal</p>
+          <p>{t('Thank you for choosing SEWRICA Cafe!')}</p>
+          <p className="small">{t('We hope you enjoy your meal')}</p>
         </div>
       </div>
 
@@ -424,7 +426,7 @@ Thank you for choosing SEWRICA Cafe!
         <div className="modal-overlay" onClick={() => setShowLotteryModal(false)}>
           <div className="modal-content lottery-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>🎫 Your Lottery Ticket</h2>
+              <h2>🎫 {t('Your Lottery Ticket')}</h2>
               <button className="modal-close-btn" onClick={() => setShowLotteryModal(false)}>×</button>
             </div>
             <div className="lottery-modal-content">
@@ -445,25 +447,25 @@ Thank you for choosing SEWRICA Cafe!
                 </div>
                 <div className="ticket-status">
                   {order.lotteryWon ? (
-                    <span className="winner-badge">🏆 WINNER! 🏆</span>
+                    <span className="winner-badge">🏆 {t('YOU WON!')} 🏆</span>
                   ) : isEligibleForLottery ? (
-                    <span className="active-badge">✅ Active for Monthly Draw</span>
+                    <span className="active-badge">✅ {t('Active for Monthly Draw')}</span>
                   ) : (
-                    <span className="pending-badge">⏳ Will be active after delivery</span>
+                    <span className="pending-badge">⏳ {t('Will be active after delivery')}</span>
                   )}
                 </div>
                 <div className="ticket-footer">
-                  <p>Keep this ticket for monthly giveaways!</p>
-                  <p className="small-text">Winners announced at the end of each month</p>
+                  <p>{t('Keep this ticket for monthly giveaways!')}</p>
+                  <p className="small-text">{t('Winners announced at the end of each month')}</p>
                 </div>
               </div>
             </div>
             <div className="modal-actions">
               <button className="btn-print-ticket" onClick={() => window.print()}>
-                🖨️ Print Ticket
+                🖨️ {t('Print Ticket')}
               </button>
               <button className="btn-close" onClick={() => setShowLotteryModal(false)}>
-                Close
+                {t('Close')}
               </button>
             </div>
           </div>

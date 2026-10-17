@@ -2,9 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
+import { useLanguage } from '../context/useLanguage';
 import './GiveawayBanner.css';
 
 const GiveawayBanner = () => {
+  const { t } = useLanguage();
   const [giveaway, setGiveaway] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
@@ -77,8 +79,8 @@ const GiveawayBanner = () => {
         <button 
           className="giveaway-close-btn"
           onClick={handleCloseBanner}
-          title="Close popup"
-          aria-label="Close giveaway popup"
+          title={t('Close popup')}
+          aria-label={t('Close giveaway popup')}
         >
           ✕
         </button>
@@ -87,43 +89,43 @@ const GiveawayBanner = () => {
             <div className="giveaway-banner-content">
               <div className="giveaway-badge">
                 <span className="badge-icon">🎁</span>
-                <span className="badge-text">LIMITED TIME OFFER</span>
+                <span className="badge-text">{t('LIMITED TIME OFFER')}</span>
               </div>
               <h2 className="giveaway-title">{giveaway.title}</h2>
               <p className="giveaway-description">{giveaway.description}</p>
               <div className="giveaway-prize-card">
                 <div className="prize-icon">🏆</div>
                 <div className="prize-info">
-                  <span className="prize-label">Grand Prize</span>
+                  <span className="prize-label">{t('Grand Prize')}</span>
                   <span className="prize-value">{giveaway.prize}</span>
                 </div>
               </div>
               <div className="giveaway-timer">
                 <div className="timer-block">
                   <span className="timer-number">{String(timeLeft.days).padStart(2, '0')}</span>
-                  <span className="timer-label">Days</span>
+                  <span className="timer-label">{t('Days')}</span>
                 </div>
                 <div className="timer-block">
                   <span className="timer-number">{String(timeLeft.hours).padStart(2, '0')}</span>
-                  <span className="timer-label">Hours</span>
+                  <span className="timer-label">{t('Hours')}</span>
                 </div>
                 <div className="timer-block">
                   <span className="timer-number">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                  <span className="timer-label">Mins</span>
+                  <span className="timer-label">{t('Mins')}</span>
                 </div>
                 <div className="timer-block">
                   <span className="timer-number">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                  <span className="timer-label">Secs</span>
+                  <span className="timer-label">{t('Secs')}</span>
                 </div>
               </div>
               <div className="giveaway-actions">
                 <Link to="/menu" className="giveaway-btn">
-                  <span>Participate Now</span>
+                  <span>{t('Participate Now')}</span>
                   <svg className="btn-arrow" viewBox="0 0 24 24" width="20" height="20">
                     <path fill="currentColor" d="M5 12h14M12 5l7 7-7 7"/>
                   </svg>
                 </Link>
-                <p className="giveaway-terms">*Every order automatically enters you into the draw</p>
+                <p className="giveaway-terms">{t('*Every order automatically enters you into the draw')}</p>
               </div>
             </div>
           </div>

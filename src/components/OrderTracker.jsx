@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useSocket } from '../context/SocketContext';
+import { useLanguage } from '../context/useLanguage';
 import { FaCheckCircle, FaTimesCircle, FaClock, FaSpinner } from 'react-icons/fa';
 import './OrderTracker.css';
 
 const OrderTracker = ({ orderId, initialStatus = 'pending' }) => {
   const { registerOrder, onOrderStatusUpdate, connected } = useSocket();
+  const { t } = useLanguage();
   const [orderStatus, setOrderStatus] = useState(initialStatus);
   const [statusMessage, setStatusMessage] = useState('');
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
+
+  function playNotificationSound(type) {
+    console.log(`🔔 Order ${type} notification`);
+  }
 
   useEffect(() => {
     if (orderId && connected) {
@@ -26,7 +32,7 @@ const OrderTracker = ({ orderId, initialStatus = 'pending' }) => {
 
         // Handle rejection
         if (data.status === 'cancelled') {
-          setRejectionReason(data.notes || 'No reason provided');
+          setRejectionReason(data.notes || t('No reason provided'));
           setShowRejectionModal(true);
         }
 
@@ -38,13 +44,7 @@ const OrderTracker = ({ orderId, initialStatus = 'pending' }) => {
         }
       });
     }
-  }, [orderId, connected]);
-
-  const playNotificationSound = (type) => {
-    // You can add sound effects here
-    // For now, just console log
-    console.log(`🔔 Order ${type} notification`);
-  };
+  }, [orderId, connected, registerOrder, onOrderStatusUpdate, t]);
 
   const getStatusIcon = () => {
     switch(orderStatus) {
@@ -76,12 +76,12 @@ const OrderTracker = ({ orderId, initialStatus = 'pending' }) => {
 
   const getStatusText = () => {
     switch(orderStatus) {
-      case 'confirmed': return 'Order Accepted';
-      case 'cancelled': return 'Order Rejected';
-      case 'preparing': return 'Preparing Your Food';
-      case 'ready': return 'Ready for Pickup/Delivery';
-      case 'delivered': return 'Delivered';
-      default: return 'Order Pending';
+      case 'confirmed': return t('Order Accepted');
+      case 'cancelled': return t('Order Rejected');
+      case 'preparing': return t('Preparing Your Food');
+      case 'ready': return t('Ready for Pickup/Delivery');
+      case 'delivered': return t('Delivered');
+      default: return t('Order Pending');
     }
   };
 
@@ -100,19 +100,19 @@ const OrderTracker = ({ orderId, initialStatus = 'pending' }) => {
           <div className={`timeline-step ${orderStatus !== 'pending' ? 'completed' : ''}`}>
             <div className="step-dot"></div>
             <div className="step-label">
-              <span>Order Placed</span>
-              <small>Your order has been received</small>
+              <span>{t('Order Placed')}</span>
+              <small>{t('Your order has been received')}</small>
             </div>
           </div>
 
           <div className={`timeline-step ${orderStatus === 'confirmed' || orderStatus === 'preparing' || orderStatus === 'ready' || orderStatus === 'delivered' ? 'completed' : ''} ${orderStatus === 'cancelled' ? 'cancelled' : ''}`}>
             <div className="step-dot"></div>
             <div className="step-label">
-              <span>{orderStatus === 'cancelled' ? 'Order Rejected' : 'Order Confirmed'}</span>
+              <span>{t(orderStatus === 'cancelled' ? 'Order Rejected' : 'Order Confirmed')}</span>
               <small>
                 {orderStatus === 'cancelled' 
-                  ? 'Restaurant could not accept your order' 
-                  : 'Restaurant has accepted your order'}
+                  ? t('Restaurant could not accept your order')
+                  : t('Restaurant has accepted your order')}
               </small>
             </div>
           </div>
@@ -122,16 +122,16 @@ const OrderTracker = ({ orderId, initialStatus = 'pending' }) => {
               <div className={`timeline-step ${orderStatus === 'preparing' || orderStatus === 'ready' || orderStatus === 'delivered' ? 'completed' : ''}`}>
                 <div className="step-dot"></div>
                 <div className="step-label">
-                  <span>Preparing</span>
-                  <small>Your food is being prepared</small>
+                  <span>{t('Preparing')}</span>
+                  <small>{t('Your food is being prepared')}</small>
                 </div>
               </div>
 
               <div className={`timeline-step ${orderStatus === 'ready' || orderStatus === 'delivered' ? 'completed' : ''}`}>
                 <div className="step-dot"></div>
                 <div className="step-label">
-                  <span>Ready</span>
-                  <small>Your order is ready</small>
+                  <span>{t('Ready')}</span>
+                  <small>{t('Your order is ready')}</small>
                 </div>
               </div>
 
@@ -139,7 +139,7 @@ const OrderTracker = ({ orderId, initialStatus = 'pending' }) => {
                 <div className="step-dot"></div>
                 <div className="step-label">
                   <span>Delivered</span>
-                  <small>Enjoy your meal!</small>
+                  <small>{t('Enjoy your meal!')}</small>
                 </div>
               </div>
             </>
@@ -148,7 +148,7 @@ const OrderTracker = ({ orderId, initialStatus = 'pending' }) => {
 
         {!connected && (
           <div className="connection-warning">
-            <p>⚠️ Reconnecting to order updates...</p>
+            <p>⚠️ {t('Reconnecting to order updates...')}</p>
           </div>
         )}
       </div>
@@ -158,17 +158,16 @@ const OrderTracker = ({ orderId, initialStatus = 'pending' }) => {
         <div className="rejection-modal">
           <div className="modal-content">
             <FaTimesCircle className="rejection-icon" />
-            <h2>Order Rejected</h2>
+            <h2>{t('Order Rejected')}</h2>
             <p className="reason">{rejectionReason}</p>
             <p className="help-text">
-              Your order could not be processed at this time. 
-              Please try again or contact us for assistance.
+              {t('Your order could not be processed at this time. Please try again or contact us for assistance.')}
             </p>
             <button 
               className="close-btn"
               onClick={() => setShowRejectionModal(false)}
             >
-              Close
+              {t('Close')}
             </button>
           </div>
         </div>

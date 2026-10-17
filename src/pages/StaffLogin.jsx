@@ -2,9 +2,11 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { authService } from '../services/api';
+import { useLanguage } from '../context/useLanguage';
 import './StaffLogin.css';
 
 const StaffLogin = () => {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -62,21 +64,21 @@ const StaffLogin = () => {
       <div className="staff-login-card">
         <div className="login-header">
           <div className="staff-icon">👨‍🍳</div>
-          <h1>Staff Portal</h1>
-          <p>SEWRICA Cafe - Employee Login</p>
+          <h1>{t('Staff Portal')}</h1>
+          <p>SEWRICA Cafe - {t('Employee Login')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <label>
               <span className="input-icon">📧</span>
-              Email Address
+              {t('Email Address')}
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your work email"
+              placeholder={t('Enter your work email')}
               required
               disabled={loading}
             />
@@ -85,14 +87,14 @@ const StaffLogin = () => {
           <div className="form-group">
             <label>
               <span className="input-icon">🔒</span>
-              Password
+              {t('Password')}
             </label>
             <div className="password-input">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
+                placeholder={t('Enter your password')}
                 required
                 disabled={loading}
               />
@@ -114,20 +116,20 @@ const StaffLogin = () => {
             {loading ? (
               <>
                 <span className="spinner"></span>
-                Logging in...
+                {t('Logging in...')}
               </>
             ) : (
-              'Login to Staff Portal'
+              t('Login to Staff Portal')
             )}
           </button>
         </form>
 
         <div className="login-footer">
-          <p>Authorized personnel only</p>
+          <p>{t('Authorized personnel only')}</p>
           <div className="login-links">
-            <a href="/">← Back to Customer Site</a>
+            <a href="/">← {t('Back to Customer Site')}</a>
             <span className="separator">|</span>
-            <a href="/login">Customer Login</a>
+            <a href="/login">{t('Customer Login')}</a>
           </div>
         </div>
       </div>
@@ -135,15 +137,15 @@ const StaffLogin = () => {
       <div className="role-icons">
         <div className="role-icon">
           <span>👨‍🍳</span>
-          <small>Chefs</small>
+          <small>{t('Chefs')}</small>
         </div>
         <div className="role-icon">
           <span>🚚</span>
-          <small>Delivery</small>
+          <small>{t('Delivery')}</small>
         </div>
         <div className="role-icon">
           <span>💰</span>
-          <small>Cashiers</small>
+          <small>{t('Cashiers')}</small>
         </div>
       </div>
     </div>

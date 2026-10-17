@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { staffService, PERMISSIONS } from '../services/api';
 import { useSocket } from '../context/SocketContext';
+import { useLanguage } from '../context/useLanguage';
 import StaffTaskCard from '../components/StaffTaskCard';
 import KitchenDisplayTab from './admin/tabs/KitchenDisplayTab';
 import StockTab from './admin/tabs/StockTab';
@@ -26,6 +27,7 @@ const extractArray = (response, defaultArray = []) => {
 
 const StaffDashboard = () => {
   const { user, logout, hasRole, canReadPage, canWritePage } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { connected, onOrderAssigned, onOrderReady } = useSocket();
   const [activeTab, setActiveTab] = useState(user?.role?.toLowerCase() === 'waiter' ? 'order-entry' : 'tasks');
@@ -290,29 +292,29 @@ const StaffDashboard = () => {
     switch(role) {
       case 'cook':
       case 'chef':
-        return 'Kitchen Staff';
+        return t('Kitchen Staff');
       case 'delivery':
-        return 'Delivery Personnel';
+        return t('Delivery Personnel');
       case 'cashier':
-        return 'Cashier';
+        return t('Cashier');
       case 'waiter':
-        return 'Waiter';
+        return t('Waiter');
       default:
-        return 'Staff';
+        return t('Staff');
     }
   };
 
   const getRoleSpecificMessage = () => {
     if (canReadPage('staffOrdersCooking')) {
-      return 'Orders ready for preparation will appear here';
+      return t('Orders ready for preparation will appear here');
     }
     if (canReadPage('staffOrdersDelivery')) {
-      return 'Orders ready for delivery will appear here';
+      return t('Orders ready for delivery will appear here');
     }
     if (hasRole('cashier')) {
-      return 'Pending payments will appear here';
+      return t('Pending payments will appear here');
     }
-    return 'Your tasks will appear here';
+    return t('Your tasks will appear here');
   };
 
   const getTaskType = () => {
@@ -325,22 +327,22 @@ const StaffDashboard = () => {
   const getNavTabs = () => {
     const tabs = [];
     if (canReadPage('staffOrderEntry')) {
-      tabs.push({ id: 'order-entry', label: 'New Order', icon: '🧾' });
+      tabs.push({ id: 'order-entry', label: t('New Order'), icon: '🧾' });
     }
     if (canReadPage('staffDashboard')) {
-      tabs.push({ id: 'tasks', label: 'My Tasks', icon: '📋' });
+      tabs.push({ id: 'tasks', label: t('My Tasks'), icon: '📋' });
     }
     if (canReadPage('staffOrdersCooking')) {
-      tabs.push({ id: 'kitchen', label: 'Kitchen Display', icon: '🍳' });
+      tabs.push({ id: 'kitchen', label: t('Kitchen Display'), icon: '🍳' });
     }
     if (canReadPage('adminIngredients')) {
-      tabs.push({ id: 'stock', label: 'Stock In/Out', icon: '🔄' });
+      tabs.push({ id: 'stock', label: t('Stock In/Out'), icon: '🔄' });
     }
     if (canReadPage('adminExpenses')) {
-      tabs.push({ id: 'expenses', label: 'Expenses', icon: '💸' });
+      tabs.push({ id: 'expenses', label: t('Expenses'), icon: '💸' });
     }
     if (canReadPage('adminReports')) {
-      tabs.push({ id: 'reports', label: 'Reports', icon: '📈' });
+      tabs.push({ id: 'reports', label: t('Reports'), icon: '📈' });
     }
     return tabs;
   };
@@ -363,14 +365,14 @@ const StaffDashboard = () => {
             {getRoleIcon()}
           </div>
           <div className="staff-info">
-            <h1>Welcome, {user?.name || 'Staff'}!</h1>
+            <h1>{t('Welcome')}, {user?.name || t('Staff')}!</h1>
             <p className="role-badge">{getRoleTitle()}</p>
             <p className="staff-email">{user?.email}</p>
           </div>
         </div>
         <div className="header-right">
           <button className="logout-btn" onClick={logout}>
-            🚪 Logout
+            🚪 {t('Logout')}
           </button>
         </div>
       </div>
@@ -401,21 +403,21 @@ const StaffDashboard = () => {
               <div className="stat-card">
                 <div className="stat-icon">📋</div>
                 <div className="stat-details">
-                  <h3>Today's Tasks</h3>
+                  <h3>{t("Today's Tasks")}</h3>
                   <p className="stat-number">{stats.todayTasks}</p>
                 </div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon">✅</div>
                 <div className="stat-details">
-                  <h3>Completed Today</h3>
+                  <h3>{t('Completed Today')}</h3>
                   <p className="stat-number">{stats.completedToday}</p>
                 </div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon">⏳</div>
                 <div className="stat-details">
-                  <h3>Pending</h3>
+                  <h3>{t('Pending')}</h3>
                   <p className="stat-number">{stats.pendingTasks}</p>
                 </div>
               </div>
@@ -426,13 +428,13 @@ const StaffDashboard = () => {
                 className={`tab-btn ${activeSubTab === 'tasks' ? 'active' : ''}`}
                 onClick={() => handleSubTabChange('tasks')}
               >
-                Active Tasks ({tasks.length})
+                {t('Active Tasks')} ({tasks.length})
               </button>
               <button 
                 className={`tab-btn ${activeSubTab === 'completed' ? 'active' : ''}`}
                 onClick={() => handleSubTabChange('completed')}
               >
-                Completed ({completedTasks.length})
+                {t('Completed')} ({completedTasks.length})
               </button>
             </div>
 
@@ -440,7 +442,7 @@ const StaffDashboard = () => {
               {loading ? (
                 <div className="loading-state">
                   <div className="spinner"></div>
-                  <p>Loading your tasks...</p>
+                  <p>{t('Loading your tasks...')}</p>
                 </div>
               ) : (
                 <>
@@ -468,7 +470,7 @@ const StaffDashboard = () => {
                       ) : (
                         <div className="empty-state">
                           <div className="empty-icon">🎉</div>
-                          <h3>No Active Tasks</h3>
+                          <h3>{t('No Active Tasks')}</h3>
                           <p>{getRoleSpecificMessage()}</p>
                         </div>
                       )}
@@ -499,8 +501,8 @@ const StaffDashboard = () => {
                       ) : (
                         <div className="empty-state">
                           <div className="empty-icon">📭</div>
-                          <h3>No Completed Tasks</h3>
-                          <p>Your completed tasks will appear here.</p>
+                          <h3>{t('No Completed Tasks')}</h3>
+                          <p>{t('Your completed tasks will appear here')}</p>
                         </div>
                       )}
                     </>

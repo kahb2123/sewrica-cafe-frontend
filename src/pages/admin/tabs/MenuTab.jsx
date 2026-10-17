@@ -1,13 +1,15 @@
 // src/pages/admin/tabs/MenuTab.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext'; // Import useAuth
+import { useLanguage } from '../../../context/useLanguage';
 import { menuService, UPLOADS_URL } from '../../../services/api';
 import { toast } from 'react-toastify';
 import './MenuTab.css';
 
 const MenuTab = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth(); // Use auth context
+  const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -32,35 +34,7 @@ const MenuTab = () => {
     available: true
   });
 
-  // Check authentication using auth context
-  useEffect(() => {
-    console.log('🔐 MenuTab - isAuthenticated:', isAuthenticated);
-    console.log('🔐 MenuTab - User:', user);
-    console.log('🔐 MenuTab - Auth loading:', authLoading);
-    
-    if (authLoading) {
-      return; // Wait for auth to initialize
-    }
-    
-    if (!isAuthenticated) {
-      console.log('❌ Not authenticated, redirecting to login');
-      toast.error('Please login first');
-      navigate('/login');
-      return;
-    }
-
-    if (!user || user.role !== 'admin') {
-      console.log('❌ Not admin, role:', user?.role);
-      toast.error('Admin access required');
-      navigate('/');
-      return;
-    }
-
-    console.log('✅ Admin access granted for MenuTab');
-    fetchMenuItems();
-  }, [isAuthenticated, user, authLoading, navigate]);
-
-  const fetchMenuItems = async () => {
+  const fetchMenuItems = useCallback(async () => {
     try {
       setLoading(true);
       console.log('📦 Fetching menu items...');
@@ -86,15 +60,43 @@ const MenuTab = () => {
     } catch (error) {
       console.error('Error fetching menu:', error);
       if (error.response?.status === 401) {
-        toast.error('Session expired. Please login again');
+        toast.error(t('Session expired. Please login again'));
         navigate('/login');
       } else {
-        toast.error('Failed to load menu items');
+        toast.error(t('Failed to load menu items'));
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate, t]);
+
+  // Check authentication using auth context
+  useEffect(() => {
+    console.log('🔐 MenuTab - isAuthenticated:', isAuthenticated);
+    console.log('🔐 MenuTab - User:', user);
+    console.log('🔐 MenuTab - Auth loading:', authLoading);
+    
+    if (authLoading) {
+      return; // Wait for auth to initialize
+    }
+    
+    if (!isAuthenticated) {
+      console.log('❌ Not authenticated, redirecting to login');
+      toast.error(t('Please login first'));
+      navigate('/login');
+      return;
+    }
+
+    if (!user || user.role !== 'admin') {
+      console.log('❌ Not admin, role:', user?.role);
+      toast.error(t('Admin access required'));
+      navigate('/');
+      return;
+    }
+
+    console.log('✅ Admin access granted for MenuTab');
+    fetchMenuItems();
+  }, [isAuthenticated, user, authLoading, navigate, t, fetchMenuItems]);
 
   const resetForm = () => {
     setEditingItem(null);
@@ -119,12 +121,12 @@ const MenuTab = () => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size should be less than 5MB');
+        toast.error(t('Image size should be less than 5MB'));
         return;
       }
       
       if (!file.type.startsWith('image/')) {
-        toast.error('Please upload an image file');
+        toast.error(t('Please upload an image file'));
         return;
       }
       
@@ -141,12 +143,12 @@ const MenuTab = () => {
     e.preventDefault();
     
     if (!formData.name || !formData.description || !formData.price || !formData.category) {
-      toast.error('Please fill in all required fields');
+      toast.error(t('Please fill in all required fields'));
       return;
     }
 
     if (!editingItem && !imageFile) {
-      toast.error('Please select an image');
+      toast.error(t('Please select an image'));
       return;
     }
 
@@ -172,10 +174,10 @@ const MenuTab = () => {
         } else {
           await menuService.updateItem(editingItem._id, payload);
         }
-        toast.success('Menu item updated successfully');
+        toast.success(t('Menu item updated successfully'));
       } else {
         await menuService.createItem(payload, imageFile);
-        toast.success('Menu item created successfully');
+        toast.success(t('Menu item created successfully'));
       }
       
       setShowForm(false);
@@ -183,21 +185,21 @@ const MenuTab = () => {
       fetchMenuItems();
     } catch (error) {
       console.error('Error saving menu item:', error);
-      toast.error(error.response?.data?.message || 'Failed to save menu item');
+      toast.error(error.response?.data?.message || t('Failed to save menu item'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
+    if (window.confirm(t('Are you sure you want to delete this item?'))) {
       try {
         await menuService.deleteItem(id);
-        toast.success('Menu item deleted successfully');
+        toast.success(t('Menu item deleted successfully'));
         fetchMenuItems();
       } catch (error) {
         console.error('Error deleting item:', error);
-        toast.error('Failed to delete menu item');
+        toast.error(t('Failed to delete menu item'));
       }
     }
   };
@@ -205,11 +207,11 @@ const MenuTab = () => {
   const handleToggleAvailability = async (id) => {
     try {
       await menuService.toggleAvailability(id);
-      toast.success('Item availability toggled');
+      toast.success(t('Item availability toggled'));
       fetchMenuItems();
     } catch (error) {
       console.error('Error toggling availability:', error);
-      toast.error('Failed to toggle availability');
+      toast.error(t('Failed to toggle availability'));
     }
   };
 
@@ -218,6 +220,14 @@ const MenuTab = () => {
     if (image.startsWith('http')) return image;
     if (image === 'default-food.jpg') return null;
     return `${UPLOADS_URL}/${image}`;
+  };
+
+  const translateCategory = (category) => {
+    const label = String(category || '')
+      .split(/[-_]/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+    return t(label);
   };
 
   const getEmojiForCategory = (category) => {
@@ -263,7 +273,7 @@ const MenuTab = () => {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p>Checking authentication...</p>
+        <p>{t('Checking authentication...')}</p>
       </div>
     );
   }
@@ -272,7 +282,7 @@ const MenuTab = () => {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p>Loading menu items...</p>
+        <p>{t('Loading menu items...')}</p>
       </div>
     );
   }
@@ -286,21 +296,21 @@ const MenuTab = () => {
     <div className="menu-tab">
       <div className="tab-header">
         <div>
-          <p className="eyebrow">Catalog administration</p>
-          <h1 className="page-title">Menu Management</h1>
-          <p className="page-subtitle">Manage your dishes, pricing, availability, and categories.</p>
+          <p className="eyebrow">{t('Catalog administration')}</p>
+          <h1 className="page-title">{t('Menu Management')}</h1>
+          <p className="page-subtitle">{t('Manage your dishes, pricing, availability, and categories.')}</p>
         </div>
         <button className="btn-primary" onClick={() => {
           resetForm();
           setShowForm(true);
         }}>
-          <span aria-hidden="true">+</span> Add New Item
+          <span aria-hidden="true">+</span> {t('Add New Item')}
         </button>
       </div>
 
       <div className="menu-toolbar">
         <form className="menu-search" onSubmit={handleSearch} role="search">
-          <label htmlFor="menu-search-input">Search menu</label>
+          <label htmlFor="menu-search-input">{t('Search menu')}</label>
           <div className="search-input-wrap">
             <span className="search-icon" aria-hidden="true">⌕</span>
             <input
@@ -308,7 +318,7 @@ const MenuTab = () => {
               type="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name, description, or category"
+              placeholder={t('Search by name, description, or category')}
             />
             {searchTerm && (
               <button
@@ -318,32 +328,32 @@ const MenuTab = () => {
                   setSearchTerm('');
                   setActiveSearch('');
                 }}
-                aria-label="Clear search"
+                aria-label={t('Clear search')}
               >
                 ×
               </button>
             )}
           </div>
-          <button className="search-button" type="submit">Search</button>
+          <button className="search-button" type="submit">{t('Search')}</button>
         </form>
         <span className="menu-count">
-          {activeSearch ? `${filteredMenuItems.length} result${filteredMenuItems.length === 1 ? '' : 's'}` : `${menuItems.length} items`}
+          {activeSearch ? `${filteredMenuItems.length} ${t(filteredMenuItems.length === 1 ? 'result' : 'results')}` : `${menuItems.length} ${t('items')}`}
         </span>
       </div>
 
       {showForm && (
         <div className="modal-overlay" onMouseDown={handleModalOverlayClick}>
           <div className="modal-content menu-form-modal">
-            <h2>{editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}</h2>
+            <h2>{t(editingItem ? 'Edit Menu Item' : 'Add New Menu Item')}</h2>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Item Name (English) *</label>
+                <label>{t('Item Name (English) *')}</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   required
-                  placeholder="e.g., Cheese Burger"
+                  placeholder={t('e.g., Cheese Burger')}
                 />
               </div>
               
@@ -358,13 +368,13 @@ const MenuTab = () => {
               </div>
 
               <div className="form-group">
-                <label>Description (English) *</label>
+                <label>{t('Description (English) *')}</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
                   required
                   rows="3"
-                  placeholder="Describe the dish in English..."
+                  placeholder={t('Describe the dish in English...')}
                 />
               </div>
 
@@ -380,7 +390,7 @@ const MenuTab = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Price (ETB) *</label>
+                  <label>{t('Price (ETB) *')}</label>
                   <input
                     type="number"
                     value={formData.price}
@@ -392,24 +402,24 @@ const MenuTab = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Category *</label>
+                  <label>{t('Category')} *</label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({...formData, category: e.target.value})}
                     required
                   >
-                    <option value="">Select Category</option>
-                    <option value="burgers">Burgers</option>
-                    <option value="sandwiches">Sandwiches</option>
-                    <option value="pizza">Pizza</option>
-                    <option value="traditional">Traditional Ethiopian</option>
-                    <option value="fastfood">Fast Food</option>
-                    <option value="wraps">Wraps</option>
-                    <option value="fetira">Fetira</option>
-                    <option value="beverages">Beverages</option>
-                    <option value="soft-drinks">Soft Drinks</option>
-                    <option value="hot-drinks">Hot Drinks</option>
-                    <option value="desserts">Desserts</option>
+                    <option value="">{t('Select Category')}</option>
+                    <option value="burgers">{t('Burgers')}</option>
+                    <option value="sandwiches">{t('Sandwiches')}</option>
+                    <option value="pizza">{t('Pizza')}</option>
+                    <option value="traditional">{t('Traditional Ethiopian')}</option>
+                    <option value="fastfood">{t('Fast Food')}</option>
+                    <option value="wraps">{t('Wraps')}</option>
+                    <option value="fetira">{t('Fetira')}</option>
+                    <option value="beverages">{t('Beverages')}</option>
+                    <option value="soft-drinks">{t('Soft Drinks')}</option>
+                    <option value="hot-drinks">{t('Hot Drinks')}</option>
+                    <option value="desserts">{t('Desserts')}</option>
                   </select>
                 </div>
               </div>
@@ -421,7 +431,7 @@ const MenuTab = () => {
                     checked={formData.vegetarian}
                     onChange={(e) => setFormData({...formData, vegetarian: e.target.checked})}
                   />
-                  🌱 Vegetarian
+                  🌱 {t('Vegetarian')}
                 </label>
                 <label className="checkbox-label">
                   <input
@@ -429,7 +439,7 @@ const MenuTab = () => {
                     checked={formData.spicy}
                     onChange={(e) => setFormData({...formData, spicy: e.target.checked})}
                   />
-                  🌶️ Spicy
+                  🌶️ {t('Spicy')}
                 </label>
                 <label className="checkbox-label">
                   <input
@@ -437,12 +447,12 @@ const MenuTab = () => {
                     checked={formData.signature}
                     onChange={(e) => setFormData({...formData, signature: e.target.checked})}
                   />
-                  ⭐ Signature Dish
+                  ⭐ {t('Signature Dish')}
                 </label>
               </div>
 
               <div className="form-group">
-                <label>Image Upload {!editingItem && '*'}</label>
+                <label>{t('Image Upload')} {!editingItem && '*'}</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -453,7 +463,7 @@ const MenuTab = () => {
                   <div className="image-preview">
                     <img 
                       src={imagePreview || getImageUrl(editingItem?.image)} 
-                      alt="Preview" 
+                      alt={t('Preview')}
                     />
                   </div>
                 )}
@@ -461,13 +471,13 @@ const MenuTab = () => {
 
               <div className="modal-actions">
                 <button type="submit" className="btn-save" disabled={isSubmitting}>
-                  {isSubmitting ? 'Saving...' : (editingItem ? 'Update' : 'Create')}
+                  {isSubmitting ? t('Saving...') : (editingItem ? t('Update') : t('Create'))}
                 </button>
                 <button type="button" className="btn-cancel" onClick={() => {
                   setShowForm(false);
                   resetForm();
                 }}>
-                  Cancel
+                  {t('Cancel')}
                 </button>
               </div>
             </form>
@@ -478,25 +488,25 @@ const MenuTab = () => {
       {!menuItems.length ? (
         <div className="empty-state">
           <div className="empty-icon">🍽️</div>
-          <h3>No Menu Items Yet</h3>
-          <p>Get started by adding your first menu item</p>
+          <h3>{t('No Menu Items Yet')}</h3>
+          <p>{t('Get started by adding your first menu item')}</p>
           <button className="btn-primary" onClick={() => {
             resetForm();
             setShowForm(true);
           }}>
-            + Add Your First Item
+            + {t('Add Your First Item')}
           </button>
         </div>
       ) : !filteredMenuItems.length ? (
         <div className="empty-state search-empty-state">
           <div className="empty-icon">⌕</div>
-          <h3>No matching menu items</h3>
-          <p>Try a different name, description, or category.</p>
+          <h3>{t('No matching menu items')}</h3>
+          <p>{t('Try a different name, description, or category.')}</p>
           <button className="btn-secondary" onClick={() => {
             setSearchTerm('');
             setActiveSearch('');
           }}>
-            Clear Search
+            {t('Clear Search')}
           </button>
         </div>
       ) : (
@@ -519,23 +529,23 @@ const MenuTab = () => {
               </div>
               <div className="menu-item-content">
                 <h3>{item.name}</h3>
-                {item.nameAm && <p className="amharic-name">አማርኛ: {item.nameAm}</p>}
+                {item.nameAm && <p className="amharic-name">{t('Amharic:')} {item.nameAm}</p>}
                 <p className="description">{item.description}</p>
                 
                 <div className="menu-tags">
-                  {item.isVegetarian && <span className="tag vegetarian">🌱 Veg</span>}
-                  {item.isSpicy && <span className="tag spicy">🌶️ Spicy</span>}
-                  {item.isSignature && <span className="tag signature">⭐ Signature</span>}
+                  {item.isVegetarian && <span className="tag vegetarian">🌱 {t('Vegetarian')}</span>}
+                  {item.isSpicy && <span className="tag spicy">🌶️ {t('Spicy')}</span>}
+                  {item.isSignature && <span className="tag signature">⭐ {t('Signature')}</span>}
                 </div>
 
                 <div className="menu-item-footer">
                   <span className="price">{item.price} ETB</span>
-                  <span className="category-badge">{item.category}</span>
+                  <span className="category-badge">{translateCategory(item.category)}</span>
                 </div>
 
                 <div className="availability-badge">
                   <span className={item.isAvailable ? 'in-stock' : 'out-of-stock'}>
-                    {item.isAvailable ? '✓ In Stock' : '✗ Out of Stock'}
+                    {t(item.isAvailable ? 'In Stock' : 'Out of Stock')}
                   </span>
                 </div>
 
@@ -558,16 +568,16 @@ const MenuTab = () => {
                     setImagePreview(getImageUrl(item.image));
                     setShowForm(true);
                   }}>
-                    Edit
+                    {t('Edit')}
                   </button>
                   <button 
                     className={`btn-toggle ${item.isAvailable ? 'available' : 'unavailable'}`}
                     onClick={() => handleToggleAvailability(item._id)}
                   >
-                    {item.isAvailable ? 'Set Unavailable' : 'Set Available'}
+                    {t(item.isAvailable ? 'Set Unavailable' : 'Set Available')}
                   </button>
                   <button className="btn-delete" onClick={() => handleDelete(item._id)}>
-                    Delete
+                    {t('Delete')}
                   </button>
                 </div>
               </div>

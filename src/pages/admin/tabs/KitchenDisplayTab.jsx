@@ -205,6 +205,7 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
       });
     }
   };
+  
 
   const assignWaiterToOrder = async (orderId, waiterId) => {
     if (readOnly || user?.role !== 'admin' || !waiterId) return;
@@ -459,7 +460,7 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                             onChange={(event) => assignDeliveryToOrder(order._id, event.target.value)}
                             aria-label={`Assign delivery to order ${getOrderNumberLabel(order.orderNumber)}`}
                           >
-                            <option value="">🚚 Assign Delivery</option>
+                            <option value="">Assign Delivery</option>
                             {deliveries.map((delivery) => (
                               <option key={delivery._id} value={delivery._id}>
                                 {delivery.name}

@@ -2,7 +2,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { staffService, getOrderNumberLabel } from '../../../services/api';
+import { adminService, staffService, getOrderNumberLabel } from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
 import { useSocket } from '../../../context/SocketContext';
 import './KitchenDisplayTab.css';
 
@@ -67,11 +68,14 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   const [orders, setOrders] = useState([]);
   const [chefs, setChefs] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
+  const [waiters, setWaiters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
   const [busyChefIds, setBusyChefIds] = useState(new Set());
   const [busyDeliveryIds, setBusyDeliveryIds] = useState(new Set());
+  const [busyWaiterIds, setBusyWaiterIds] = useState(new Set());
   const [now, setNow] = useState(() => Date.now());
+  const { user } = useAuth();
   const { connected, socket } = useSocket();
 
   const loadOrders = useCallback(async (showLoading = true) => {
@@ -98,6 +102,10 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
       .getStaffByRole('delivery')
       .then((response) => setDeliveries(response?.staff || []))
       .catch((error) => console.error('Kitchen: failed to load deliveries', error));
+    staffService
+      .getStaffByRole('waiter')
+      .then((response) => setWaiters(response?.staff || []))
+      .catch((error) => console.error('Kitchen: failed to load waiters', error));
   }, [loadOrders]);
 
   useEffect(() => {
@@ -191,6 +199,28 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
       loadOrders(false);
     } finally {
       setBusyDeliveryIds((prev) => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
+    }
+  };
+
+  const assignWaiterToOrder = async (orderId, waiterId) => {
+    if (readOnly || user?.role !== 'admin' || !waiterId) return;
+    setBusyWaiterIds((prev) => new Set([...prev, orderId]));
+    try {
+      const response = await adminService.assignWaiter(orderId, waiterId);
+      const updated = response?.order;
+      if (updated) {
+        setOrders((prev) => prev.map((order) => (order._id === orderId ? updated : order)));
+      }
+    } catch (error) {
+      console.error('Kitchen: failed to assign waiter', error);
+      toast.error(error?.message || 'Failed to assign waiter');
+      loadOrders(false);
+    } finally {
+      setBusyWaiterIds((prev) => {
         const next = new Set(prev);
         next.delete(orderId);
         return next;
@@ -336,7 +366,7 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
               {queue.map(({ order, position }) => {
                 const startMs = new Date(order.createdAt).getTime();
                 const urgency = Number.isNaN(startMs) ? 'normal' : urgencyLevel(startMs, now);
-                const isBusy = busyChefIds.has(order._id) || busyDeliveryIds.has(order._id);
+                const isBusy = busyChefIds.has(order._id) || busyDeliveryIds.has(order._id) || busyWaiterIds.has(order._id);
 
                 return (
                   <div key={order._id} className={`kds-row status-${order.status} urgency-${urgency}`}>
@@ -403,9 +433,26 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                         </span>
                       ) : (
                         <div>
-                          <span className="kds-delivery-name">
-                            {order.assignedWaiter?.name ? `Waiter: ${order.assignedWaiter.name}` : ''}
-                          </span>
+                          {user?.role === 'admin' ? (
+                            <select
+                              className="kds-delivery-select"
+                              value={order.assignedWaiter?._id || ''}
+                              onChange={(event) => assignWaiterToOrder(order._id, event.target.value)}
+                              aria-label={`Assign waiter to order ${getOrderNumberLabel(order.orderNumber)}`}
+                              disabled={busyWaiterIds.has(order._id)}
+                            >
+                              <option value="">👤 Assign waiter</option>
+                              {waiters.map((waiter) => (
+                                <option key={waiter._id} value={waiter._id}>
+                                  {waiter.name}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="kds-delivery-name">
+                              {order.assignedWaiter?.name ? `Waiter: ${order.assignedWaiter.name}` : 'Waiter: —'}
+                            </span>
+                          )}
                           <select
                             className="kds-delivery-select"
                             value={order.assignedDelivery?._id || ''}

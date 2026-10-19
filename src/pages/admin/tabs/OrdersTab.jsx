@@ -32,8 +32,10 @@ const OrdersTab = () => {
   const [assigningBoth, setAssigningBoth] = useState(false);
   const [availableChefs, setAvailableChefs] = useState([]);
   const [availableDelivery, setAvailableDelivery] = useState([]);
+  const [availableWaiters, setAvailableWaiters] = useState([]);
   const [selectedChefId, setSelectedChefId] = useState('');
   const [selectedDeliveryId, setSelectedDeliveryId] = useState('');
+  const [selectedWaiterId, setSelectedWaiterId] = useState('');
   const [assignmentNotes, setAssignmentNotes] = useState('');
 
   useEffect(() => {
@@ -93,15 +95,18 @@ const OrdersTab = () => {
 
   const fetchAvailableStaff = async () => {
     try {
-      const [chefs, delivery] = await Promise.all([
+      const [chefs, delivery, waiters] = await Promise.all([
         staffService.getStaffByRole('cook'),
-        staffService.getStaffByRole('delivery')
+        staffService.getStaffByRole('delivery'),
+        staffService.getStaffByRole('waiter')
       ]);
       
       setAvailableChefs(chefs.staff || []);
       setAvailableDelivery(delivery.staff || []);
+      setAvailableWaiters(waiters.staff || []);
     } catch (error) {
       console.error('Error fetching staff:', error);
+      setAvailableWaiters([]);
       setAvailableChefs([
         { _id: 'chef1', name: 'Chef Berhanu' },
         { _id: 'chef2', name: 'Chef Tigist' },
@@ -225,8 +230,8 @@ const OrdersTab = () => {
 
   const handleAssignBoth = async () => {
     if (!selectedOrder) return;
-    if (!selectedChefId && !selectedDeliveryId) {
-      toast.error('Please select at least a chef or delivery person');
+    if (!selectedChefId && !selectedDeliveryId && !selectedWaiterId) {
+      toast.error('Please select at least one staff member');
       return;
     }
 
@@ -239,16 +244,18 @@ const OrdersTab = () => {
       if (selectedDeliveryId) {
         promises.push(adminService.assignDelivery(selectedOrder._id, selectedDeliveryId, assignmentNotes));
       }
+      if (selectedWaiterId) {
+        promises.push(adminService.assignWaiter(selectedOrder._id, selectedWaiterId));
+      }
 
       await Promise.all(promises);
 
-      toast.success(
-        `Successfully assigned ${selectedChefId && selectedDeliveryId ? 'both staff' : selectedChefId ? 'chef' : 'delivery person'}`
-      );
+      toast.success('Staff assigned successfully');
       setShowAssignStaffModal(false);
       setSelectedOrder(null);
       setSelectedChefId('');
       setSelectedDeliveryId('');
+      setSelectedWaiterId('');
       setAssignmentNotes('');
       fetchOrders();
       fetchAvailableStaff();
@@ -475,11 +482,12 @@ const OrdersTab = () => {
                       setSelectedOrder(order);
                       setSelectedChefId(order.assignedChef?._id || '');
                       setSelectedDeliveryId(order.assignedDelivery?._id || '');
+                      setSelectedWaiterId(order.assignedWaiter?._id || '');
                       setShowAssignStaffModal(true);
                     }}
                     disabled={order.status === 'delivered'}
                   >
-                    👥 Assign Both
+                    👥 Assign Staff
                   </button>
                 </div>
 
@@ -565,15 +573,19 @@ const OrdersTab = () => {
           setSelectedOrder(null);
           setSelectedChefId('');
           setSelectedDeliveryId('');
+          setSelectedWaiterId('');
           setAssignmentNotes('');
         }}
         order={selectedOrder}
         chefs={availableChefs}
         deliveryPersons={availableDelivery}
+        waiters={availableWaiters}
         selectedChefId={selectedChefId}
         setSelectedChefId={setSelectedChefId}
         selectedDeliveryId={selectedDeliveryId}
         setSelectedDeliveryId={setSelectedDeliveryId}
+        selectedWaiterId={selectedWaiterId}
+        setSelectedWaiterId={setSelectedWaiterId}
         notes={assignmentNotes}
         setNotes={setAssignmentNotes}
         onAssign={handleAssignBoth}

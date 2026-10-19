@@ -80,6 +80,9 @@ export const SocketProvider = ({ children }) => {
         } else if (userRole === 'delivery') {
           newSocket.emit('register-delivery', user._id);
           console.log('🚚 Delivery registered');
+        } else if (userRole === 'waiter') {
+          newSocket.emit('register-waiter', user._id);
+          console.log('🧑‍🍽️ Waiter registered');
         } else if (userRole === 'cashier') {
           newSocket.emit('register-cashier', user._id);
           console.log('💰 Cashier registered');

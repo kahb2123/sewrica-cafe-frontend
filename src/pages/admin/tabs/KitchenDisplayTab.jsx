@@ -14,6 +14,7 @@ const KITCHEN_REFRESH_EVENTS = [
   'order-cancelled',
   'order-assigned-chef',
   'order-assigned-delivery',
+  'order-assigned-waiter',
   'chef-accepted',
   'chef-rejected',
   'cooking-started'
@@ -395,22 +396,30 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                     <div className="kds-col-delivery" data-label="Wait / Delivery">
                       {readOnly ? (
                         <span className="kds-delivery-name">
-                          {order.assignedDelivery ? order.assignedDelivery.name : '—'}
+                          {[
+                            order.assignedWaiter?.name && `Waiter: ${order.assignedWaiter.name}`,
+                            order.assignedDelivery?.name && `Delivery: ${order.assignedDelivery.name}`
+                          ].filter(Boolean).join(' / ') || '—'}
                         </span>
                       ) : (
-                        <select
-                          className="kds-delivery-select"
-                          value={order.assignedDelivery?._id || ''}
-                          onChange={(event) => assignDeliveryToOrder(order._id, event.target.value)}
-                          aria-label={`Assign delivery to order ${getOrderNumberLabel(order.orderNumber)}`}
-                        >
-                          <option value="">⏳ Unassigned</option>
-                          {deliveries.map((delivery) => (
-                            <option key={delivery._id} value={delivery._id}>
-                              {delivery.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div>
+                          <span className="kds-delivery-name">
+                            {order.assignedWaiter?.name ? `Waiter: ${order.assignedWaiter.name}` : ''}
+                          </span>
+                          <select
+                            className="kds-delivery-select"
+                            value={order.assignedDelivery?._id || ''}
+                            onChange={(event) => assignDeliveryToOrder(order._id, event.target.value)}
+                            aria-label={`Assign delivery to order ${getOrderNumberLabel(order.orderNumber)}`}
+                          >
+                            <option value="">⏳ Unassigned</option>
+                            {deliveries.map((delivery) => (
+                              <option key={delivery._id} value={delivery._id}>
+                                {delivery.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       )}
                     </div>
 

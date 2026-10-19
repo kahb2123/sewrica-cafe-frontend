@@ -8,10 +8,13 @@ const AssignStaffModal = ({
   order,
   chefs,
   deliveryPersons,
+  waiters,
   selectedChefId,
   setSelectedChefId,
   selectedDeliveryId,
   setSelectedDeliveryId,
+  selectedWaiterId,
+  setSelectedWaiterId,
   notes,
   setNotes,
   onAssign,
@@ -22,7 +25,7 @@ const AssignStaffModal = ({
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content assign-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>👥 Assign Chef & Delivery</h2>
+        <h2>👥 Assign Staff</h2>
         <p>Order #{order.orderNumber || order._id.slice(-6)}</p>
 
         <div className="form-group">
@@ -37,6 +40,23 @@ const AssignStaffModal = ({
             {chefs.map((chef) => (
               <option key={chef._id} value={chef._id}>
                 {chef.name} {order.assignedChef?._id === chef._id ? '(Current)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>Waiter:</label>
+          <select
+            value={selectedWaiterId || ''}
+            onChange={(e) => setSelectedWaiterId(e.target.value)}
+            className="form-control"
+            disabled={assigning}
+          >
+            <option value="">-- Select Waiter --</option>
+            {waiters.map((waiter) => (
+              <option key={waiter._id} value={waiter._id}>
+                {waiter.name} {order.assignedWaiter?._id === waiter._id ? '(Current)' : ''}
               </option>
             ))}
           </select>
@@ -75,9 +95,9 @@ const AssignStaffModal = ({
           <button
             className="btn-confirm"
             onClick={onAssign}
-            disabled={assigning || (!selectedChefId && !selectedDeliveryId)}
+            disabled={assigning || (!selectedChefId && !selectedDeliveryId && !selectedWaiterId)}
           >
-            {assigning ? 'Assigning...' : 'Assign Both'}
+            {assigning ? 'Assigning...' : 'Assign Selected Staff'}
           </button>
           <button className="btn-cancel" onClick={onClose} disabled={assigning}>
             Cancel

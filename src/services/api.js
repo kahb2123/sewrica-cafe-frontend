@@ -756,6 +756,16 @@ export const adminService = {
     }
   },
 
+  assignWaiter: async (orderId, waiterId) => {
+    try {
+      const response = await api.post(`/admin/orders/${orderId}/assign-waiter`, { waiterId });
+      return response.data;
+    } catch (error) {
+      console.error('Error assigning waiter:', error);
+      throw error.response?.data || { message: 'Failed to assign waiter' };
+    }
+  },
+
   // ========== REPORT METHODS ==========
   // One endpoint serves every report in the admin panel.
   // `section` (sales | items | staff) skips the unneeded aggregations so an
@@ -1241,7 +1251,7 @@ export const staffService = {
       return [];
     } catch (error) {
       console.error('Error fetching delivery orders:', error);
-      return [];
+      throw error.response?.data || { message: 'Failed to fetch delivery orders' };
     }
   },
 

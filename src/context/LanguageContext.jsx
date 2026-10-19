@@ -700,7 +700,20 @@ const translations = {
   'Maintenance': { am: 'ጥገና', om: 'Suphaa' },
   'Supplies': { am: 'አቅርቦቶች', om: 'Dhiyeessii' },
   'Other': { am: 'ሌላ', om: 'Kan biraa' },
-  'Mobile Money': { am: 'የሞባይል ገንዘብ', om: 'Maallaqa moobaayilaa' }
+  'Mobile Money': { am: 'የሞባይል ገንዘብ', om: 'Maallaqa moobaayilaa' },
+  'Dine-in': { am: 'በካፌው ውስጥ ይመገቡ', om: 'Kaafee keessatti nyaadhaa' },
+  'Table number': { am: 'የጠረጴዛ ቁጥር', om: 'Lakkoofsa minjaalaa' },
+  'Table number:': { am: 'የጠረጴዛ ቁጥር፡', om: 'Lakkoofsa minjaalaa:' },
+  'Table number *': { am: 'የጠረጴዛ ቁጥር *', om: 'Lakkoofsa minjaalaa *' },
+  'Enter your table number': { am: 'የጠረጴዛ ቁጥርዎን ያስገቡ', om: 'Lakkoofsa minjaalaa keessan galchaa' },
+  'Complete Task': { am: 'ተግባሩን ጨርስ', om: 'Hojii xumuri' },
+  'Task completed': { am: 'ተግባሩ ተጠናቋል', om: 'Hojiin xumurameera' },
+  'Completed at': { am: 'የተጠናቀቀበት ሰዓት፡', om: 'Yeroo xumurame:' },
+  'Failed to complete task': { am: 'ተግባሩን ማጠናቀቅ አልተቻለም', om: 'Hojii xumuruun hin danda’amne' },
+  'Completing...': { am: 'በማጠናቀቅ ላይ...', om: 'Xumuraa jira...' },
+  'Completed orders today': { am: 'ዛሬ የተጠናቀቁ ትዕዛዞች', om: 'Ajajawwan har’a xumuraman' },
+  'Order revenue today': { am: 'የዛሬ ትዕዛዝ ገቢ', om: 'Galii ajaja har’aa' },
+  'Pickup location': { am: 'የመውሰጃ ቦታ', om: 'Bakka fudhannaa' }
 };
 
 export const LanguageProvider = ({ children }) => {

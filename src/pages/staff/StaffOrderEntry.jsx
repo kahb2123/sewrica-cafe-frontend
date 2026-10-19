@@ -21,9 +21,10 @@ const StaffOrderEntry = () => {
   const [showMobileSummary, setShowMobileSummary] = useState(false);
   const [search, setSearch] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
-  const [deliveryMethod, setDeliveryMethod] = useState(isDeliveryStaff ? 'delivery' : 'pickup');
+  const [deliveryMethod, setDeliveryMethod] = useState(isDeliveryStaff ? 'delivery' : 'dine-in');
   const [customerInfo, setCustomerInfo] = useState({ name: '', phone: '' });
   const [deliveryAddress, setDeliveryAddress] = useState({ street: '', area: '', city: 'Addis Ababa' });
+  const [tableNumber, setTableNumber] = useState('');
   const [loadingMenu, setLoadingMenu] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -100,6 +101,10 @@ const StaffOrderEntry = () => {
       toast.warning('Enter the customer name, phone, and delivery address');
       return;
     }
+    if (deliveryMethod === 'dine-in' && !tableNumber.trim()) {
+      toast.warning('Enter a table number for dine-in orders');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -108,12 +113,14 @@ const StaffOrderEntry = () => {
         paymentMethod,
         deliveryMethod,
         customerInfo,
-        deliveryAddress
+        deliveryAddress,
+        tableNumber
       });
       setCart({});
       setShowMobileSummary(false);
       setCustomerInfo({ name: '', phone: '' });
       setDeliveryAddress({ street: '', area: '', city: 'Addis Ababa' });
+      setTableNumber('');
       toast.success(`Order #${response.order.orderNumber} placed and paid · ETB ${Number(response.order.totalAmount).toFixed(2)}`);
     } catch (error) {
       console.error('Failed to place staff order', error);
@@ -217,11 +224,21 @@ const StaffOrderEntry = () => {
                 <input
                   type="radio"
                   name="deliveryMethod"
+                  value="dine-in"
+                  checked={deliveryMethod === 'dine-in'}
+                  onChange={() => setDeliveryMethod('dine-in')}
+                />
+                {t('Dine-in')}
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="deliveryMethod"
                   value="pickup"
                   checked={deliveryMethod === 'pickup'}
                   onChange={() => setDeliveryMethod('pickup')}
                 />
-                {t('Dine in / pickup')}
+                {t('Pickup')}
               </label>
               <label>
                 <input
@@ -234,6 +251,19 @@ const StaffOrderEntry = () => {
                 {t('Delivery')}
               </label>
             </fieldset>
+
+            {deliveryMethod === 'dine-in' && (
+              <div className="staff-order-customer-fields">
+                <input
+                  name="tableNumber"
+                  value={tableNumber}
+                  onChange={(event) => setTableNumber(event.target.value)}
+                  placeholder={t('Table number')}
+                  aria-label={t('Table number')}
+                  required
+                />
+              </div>
+            )}
 
             {deliveryMethod === 'delivery' && (
               <div className="staff-order-customer-fields">

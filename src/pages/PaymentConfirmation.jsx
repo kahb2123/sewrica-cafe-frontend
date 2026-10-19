@@ -380,9 +380,19 @@ Thank you for choosing SEWRICA Cafe!
               <div className="info-row">
                 <FaMapMarkerAlt className="info-icon" />
                 <div>
-                  <span className="info-label">{t('Delivery Address')}</span>
+                  <span className="info-label">
+                    {order.deliveryMethod === 'dine-in'
+                      ? t('Table number')
+                      : order.deliveryMethod === 'delivery'
+                        ? t('Delivery Address')
+                        : t('Pickup location')}
+                  </span>
                   <span className="info-value">
-                    {formatDeliveryAddress(order.deliveryAddress, order)}
+                    {order.deliveryMethod === 'dine-in'
+                      ? order.tableNumber || '—'
+                      : order.deliveryMethod === 'delivery'
+                        ? formatDeliveryAddress(order.deliveryAddress, order)
+                        : t('Megenagna, Metebaber Building, 2nd Floor')}
                   </span>
                 </div>
               </div>

@@ -41,6 +41,7 @@ const Cart = () => {
     building: 'Metebaber Building',
     floor: '2nd Floor',
     additionalInfo: '',
+    tableNumber: '',
     deliveryMethod: 'delivery', // 'delivery' or 'pickup'
     paymentMethod: 'cash', // 'cash', 'tele_birr', 'bank', 'card'
     deliveryTime: 'asap'
@@ -188,8 +189,12 @@ const Cart = () => {
   const validateCheckoutForm = () => {
     const errors = {};
     
-    if (!customerInfo.name.trim()) {
+    if (customerInfo.deliveryMethod !== 'dine-in' && !customerInfo.name.trim()) {
       errors.name = 'Name is required';
+    }
+
+    if (customerInfo.deliveryMethod === 'dine-in' && !customerInfo.tableNumber.trim()) {
+      errors.tableNumber = 'Table number is required';
     }
     
     if (customerInfo.phone.trim() && !/^\+?[0-9]{10,15}$/.test(customerInfo.phone.replace(/\s/g, ''))) {
@@ -362,7 +367,8 @@ const Cart = () => {
           area: customerInfo.area,
           building: customerInfo.building,
           floor: customerInfo.floor,
-          additionalInfo: customerInfo.additionalInfo
+          additionalInfo: customerInfo.additionalInfo,
+          tableNumber: customerInfo.tableNumber
         },
         paymentMethod: customerInfo.paymentMethod,
         deliveryMethod: customerInfo.deliveryMethod,
@@ -642,9 +648,19 @@ const Cart = () => {
                       />
                       <RiTakeawayLine /> {t('Pickup')}
                     </label>
+                    <label className={`method-option ${customerInfo.deliveryMethod === 'dine-in' ? 'selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="deliveryMethod"
+                        value="dine-in"
+                        checked={customerInfo.deliveryMethod === 'dine-in'}
+                        onChange={handleInputChange}
+                      />
+                      <FaUtensils /> {t('Dine-in')}
+                    </label>
                   </div>
 
-                  <div className="form-group">
+                  {customerInfo.deliveryMethod !== 'dine-in' && <div className="form-group">
                     <label>
                       <FaUser /> {t('Full Name *')}
                     </label>
@@ -657,7 +673,25 @@ const Cart = () => {
                       placeholder={t('Enter your full name')}
                     />
                     {formErrors.name && <span className="error-message">{formErrors.name}</span>}
-                  </div>
+                  </div>}
+
+                  {customerInfo.deliveryMethod === 'dine-in' && (
+                    <div className="form-group">
+                      <label>
+                        <FaUtensils /> {t('Table number *')}
+                      </label>
+                      <input
+                        type="text"
+                        name="tableNumber"
+                        value={customerInfo.tableNumber}
+                        onChange={handleInputChange}
+                        className={formErrors.tableNumber ? 'error' : ''}
+                        placeholder={t('Enter your table number')}
+                        required
+                      />
+                      {formErrors.tableNumber && <span className="error-message">{formErrors.tableNumber}</span>}
+                    </div>
+                  )}
 
                   <div className="form-group">
                     <label>
@@ -995,6 +1029,8 @@ const Cart = () => {
                           <p><strong>{t('Note:')}</strong> {customerInfo.additionalInfo}</p>
                         )}
                       </>
+                    ) : customerInfo.deliveryMethod === 'dine-in' ? (
+                      <p><strong>{t('Table number')}:</strong> {customerInfo.tableNumber}</p>
                     ) : (
                       <p><strong>{t('Pickup')}:</strong> {t('Megenagna, Metebaber Building, 2nd Floor')}</p>
                     )}

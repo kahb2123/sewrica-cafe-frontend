@@ -20,6 +20,7 @@ const StaffTaskCard = ({
   onDeliveryReject,
   onStartDelivery,
   onCompleteDelivery,
+  onCompleteWaiterTask,
   onProcessPayment
 }) => {
   const [loading, setLoading] = useState(false);
@@ -226,11 +227,24 @@ const StaffTaskCard = ({
     
     setLoading(true);
     try {
-      await onCompleteDelivery(task._id);
+       await onCompleteDelivery(task._id);
        toast.success('Order delivered');
-      if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
       toast.error(error.message || 'Failed to complete delivery');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCompleteWaiterTask = async () => {
+    if (!task._id || loading) return;
+
+    setLoading(true);
+    try {
+      await onCompleteWaiterTask(task._id);
+      toast.success(t('Task completed'));
+    } catch (error) {
+      toast.error(error.message || t('Failed to complete task'));
     } finally {
       setLoading(false);
     }
@@ -416,6 +430,19 @@ const StaffTaskCard = ({
     return null;
   };
 
+  const renderWaiterButtons = () => {
+    if (task.waiterCompletedAt || task.status === 'cancelled') return null;
+    return (
+      <button
+        className="btn-complete"
+        onClick={handleCompleteWaiterTask}
+        disabled={loading}
+      >
+        {loading ? t('Completing...') : `✅ ${t('Complete Task')}`}
+      </button>
+    );
+  };
+
   return (
     <div className={`staff-task-card ${type} ${task.status}`} data-status={task.status}>
       <div className="task-card-header">
@@ -434,8 +461,13 @@ const StaffTaskCard = ({
         </div>
 
         <div className="customer-info">
-          <p><span className="info-label">👤 {t('Customer:')}</span> {task.customerName || task.customer?.name || t('Guest')}</p>
+          {type !== 'waiter' && (
+            <p><span className="info-label">👤 {t('Customer:')}</span> {task.customerName || task.customer?.name || t('Guest')}</p>
+          )}
           <p><span className="info-label">📞 {t('Phone:')}</span> {task.customerPhone || task.customer?.phone || 'N/A'}</p>
+          {task.tableNumber && (
+            <p><span className="info-label">🍽️ {t('Table number:')}</span> {task.tableNumber}</p>
+          )}
           {type === 'delivery' && task.deliveryAddress && (
             <p><span className="info-label">📍 {t('Address:')}</span> {formatDeliveryAddress(task.deliveryAddress)}</p>
           )}
@@ -478,6 +510,7 @@ const StaffTaskCard = ({
       <div className="task-card-footer">
         {canWrite && type === 'cook' && hasPermission(PERMISSIONS.ORDERS_ACCEPT) && renderChefButtons()}
         {canWrite && type === 'delivery' && hasPermission(PERMISSIONS.ORDERS_ACCEPT) && renderDeliveryButtons()}
+        {canWrite && type === 'waiter' && renderWaiterButtons()}
         {canWrite && type === 'cashier' && hasPermission(PERMISSIONS.PAYMENTS_PROCESS) && renderCashierButtons()}
         
         <button 
@@ -545,6 +578,12 @@ const StaffTaskCard = ({
       {type === 'delivery' && task.deliveryCompletedAt && (
         <div className="completion-badge">
           ✅ Delivered at {formatTime(task.deliveryCompletedAt)} ({task.deliveryTime || '?'} min)
+        </div>
+      )}
+
+      {type === 'waiter' && task.waiterCompletedAt && (
+        <div className="completion-badge">
+          ✅ {t('Completed at')} {formatTime(task.waiterCompletedAt)}
         </div>
       )}
     </div>

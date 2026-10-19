@@ -40,6 +40,7 @@ const StaffDashboard = () => {
     completedToday: 0,
     pendingTasks: 0
   });
+  const [dailySummary, setDailySummary] = useState(null);
 
   const handleTabChange = (tab) => {
     if (tab !== activeTab) {
@@ -134,8 +135,13 @@ const StaffDashboard = () => {
       await fetchTasks();
     } catch (error) {
       console.error('Error completing delivery:', error);
-      toast.error(error.response?.data?.message || 'Failed to complete delivery');
+      throw error;
     }
+  };
+
+  const handleCompleteWaiterTask = async (orderId) => {
+    await staffService.completeWaiterTask(orderId);
+    await fetchTasks();
   };
 
   // ========== CASHIER ACTION HANDLERS ==========
@@ -172,11 +178,12 @@ const StaffDashboard = () => {
       } else if (canReadPage('staffOrdersDelivery')) {
         const response = await staffService.getMyDeliveryOrders();
         const deliveries = extractArray(response, []);
-        
+        const completedResponse = await staffService.getMyCompletedDeliveryOrders();
+
         activeTasks = deliveries.filter(d => 
           d.status === 'ready' || d.status === 'out-for-delivery'
         );
-        completed = deliveries.filter(d => 
+        completed = extractArray(completedResponse, []).filter(d => 
           d.status === 'delivered'
         );
         
@@ -185,10 +192,11 @@ const StaffDashboard = () => {
         const orders = extractArray(response, []);
 
         activeTasks = orders.filter(order =>
-          ['pending', 'confirmed', 'preparing', 'cooking', 'ready', 'out-for-delivery'].includes(order.status)
+          !order.waiterCompletedAt &&
+          ['pending', 'confirmed', 'preparing', 'cooking', 'ready', 'out-for-delivery', 'delivered'].includes(order.status)
         );
         completed = orders.filter(order =>
-          order.status === 'delivered' || order.status === 'cancelled'
+          order.waiterCompletedAt || order.status === 'cancelled'
         );
 
       } else if (userRole === 'cashier') {
@@ -201,6 +209,19 @@ const StaffDashboard = () => {
         completed = tasksArray.filter(t => 
           t.paymentStatus === 'completed' || t.status === 'completed'
         );
+      }
+
+      if (userRole === 'waiter' || userRole === 'delivery') {
+        try {
+          const response = await staffService.getDailyTaskSummary();
+          setDailySummary(response.summary || null);
+        } catch (summaryError) {
+          console.error('Error fetching daily task summary:', summaryError);
+          setDailySummary(null);
+          toast.warning(summaryError.message || 'Failed to load today’s completed order totals');
+        }
+      } else {
+        setDailySummary(null);
       }
 
       setTasks(activeTasks);
@@ -354,7 +375,7 @@ const StaffDashboard = () => {
       ? canWritePage('staffOrdersCooking')
       : taskType === 'delivery'
         ? canWritePage('staffOrdersDelivery')
-        : taskType === 'cashier'
+        : taskType === 'waiter' || taskType === 'cashier'
   );
 
   return (
@@ -421,6 +442,24 @@ const StaffDashboard = () => {
                   <p className="stat-number">{stats.pendingTasks}</p>
                 </div>
               </div>
+              {(user?.role?.toLowerCase() === 'waiter' || user?.role?.toLowerCase() === 'delivery') && (
+                <>
+                  <div className="stat-card">
+                    <div className="stat-icon">🧾</div>
+                    <div className="stat-details">
+                      <h3>{t('Completed orders today')}</h3>
+                      <p className="stat-number">{dailySummary?.completedOrders || 0}</p>
+                    </div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-icon">💵</div>
+                    <div className="stat-details">
+                      <h3>{t('Order revenue today')}</h3>
+                      <p className="stat-number">ETB {Number(dailySummary?.totalRevenue || 0).toFixed(2)}</p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="tasks-tabs">
@@ -464,6 +503,7 @@ const StaffDashboard = () => {
                             onDeliveryReject={handleDeliveryReject}
                             onStartDelivery={handleStartDelivery}
                             onCompleteDelivery={handleCompleteDelivery}
+                            onCompleteWaiterTask={handleCompleteWaiterTask}
                             onProcessPayment={handleProcessPayment}
                           />
                         ))
@@ -495,6 +535,7 @@ const StaffDashboard = () => {
                             onDeliveryReject={handleDeliveryReject}
                             onStartDelivery={handleStartDelivery}
                             onCompleteDelivery={handleCompleteDelivery}
+                            onCompleteWaiterTask={handleCompleteWaiterTask}
                             onProcessPayment={handleProcessPayment}
                           />
                         ))

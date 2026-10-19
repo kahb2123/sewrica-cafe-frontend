@@ -1161,6 +1161,26 @@ export const staffService = {
     }
   },
 
+  completeWaiterTask: async (orderId) => {
+    try {
+      const response = await api.post(`/staff/orders/${orderId}/waiter-complete`);
+      return response.data;
+    } catch (error) {
+      console.error('Error completing waiter task:', error);
+      throw error.response?.data || { message: 'Failed to complete waiter task' };
+    }
+  },
+
+  getDailyTaskSummary: async (date) => {
+    try {
+      const response = await api.get('/staff/orders/daily-summary', { params: date ? { date } : {} });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching daily staff summary:', error);
+      throw error.response?.data || { message: 'Failed to fetch daily task summary' };
+    }
+  },
+
   getMyCookingOrders: async () => {
     try {
       const response = await api.get('/staff/orders/cooking');
@@ -1202,6 +1222,16 @@ export const staffService = {
     } catch (error) {
       console.error('Error fetching delivery orders:', error);
       return [];
+    }
+  },
+
+  getMyCompletedDeliveryOrders: async () => {
+    try {
+      const response = await api.get('/staff/orders/delivery/completed');
+      return response.data?.orders || [];
+    } catch (error) {
+      console.error('Error fetching completed delivery orders:', error);
+      throw error.response?.data || { message: 'Failed to fetch completed delivery orders' };
     }
   },
 

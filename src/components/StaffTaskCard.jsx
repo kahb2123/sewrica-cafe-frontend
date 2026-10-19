@@ -21,6 +21,7 @@ const StaffTaskCard = ({
   onStartDelivery,
   onCompleteDelivery,
   onCompleteWaiterTask,
+  onGroupDeliveryAction,
   onProcessPayment
 }) => {
   const [loading, setLoading] = useState(false);
@@ -31,6 +32,7 @@ const StaffTaskCard = ({
 
   const { hasPermission } = useAuth();
   const { t } = useLanguage();
+  const sourceOrders = task.sourceOrders || [task];
 
   console.log('📋 StaffTaskCard - Task:', {
     id: task._id,
@@ -177,9 +179,16 @@ const StaffTaskCard = ({
     
     setLoading(true);
     try {
-      await onDeliveryAccept(task._id);
-       toast.success('Delivery accepted');
-      if (onTaskUpdate) onTaskUpdate(task);
+      const readyOrders = sourceOrders.filter((order) =>
+        order.status === 'ready' && !order.deliveryAccepted && !order.deliveryRejected
+      );
+      if (onGroupDeliveryAction) {
+        await onGroupDeliveryAction('accept', readyOrders.map((order) => order._id));
+      } else {
+        await onDeliveryAccept(task._id);
+        if (onTaskUpdate) onTaskUpdate(task);
+      }
+      toast.success('Delivery accepted');
     } catch (error) {
       toast.error(error.message || 'Failed to accept delivery');
     } finally {
@@ -193,11 +202,18 @@ const StaffTaskCard = ({
     
     setLoading(true);
     try {
-      await onDeliveryReject(task._id, rejectionReason);
-       toast.info('Delivery rejected');
+      const readyOrders = sourceOrders.filter((order) =>
+        order.status === 'ready' && !order.deliveryAccepted && !order.deliveryRejected
+      );
+      if (onGroupDeliveryAction) {
+        await onGroupDeliveryAction('reject', readyOrders.map((order) => order._id), rejectionReason);
+      } else {
+        await onDeliveryReject(task._id, rejectionReason);
+        if (onTaskUpdate) onTaskUpdate(task);
+      }
+      toast.info('Delivery rejected');
       setShowRejectModal(false);
       setRejectionReason('');
-      if (onTaskUpdate) onTaskUpdate(task);
     } catch (error) {
       toast.error(error.message || 'Failed to reject delivery');
     } finally {
@@ -211,9 +227,16 @@ const StaffTaskCard = ({
     
     setLoading(true);
     try {
-      await onStartDelivery(task._id);
-       toast.success('Delivery started');
-      if (onTaskUpdate) onTaskUpdate(task);
+      const readyOrders = sourceOrders.filter((order) =>
+        order.status === 'ready' && order.deliveryAccepted && !order.deliveryStartedAt
+      );
+      if (onGroupDeliveryAction) {
+        await onGroupDeliveryAction('start', readyOrders.map((order) => order._id));
+      } else {
+        await onStartDelivery(task._id);
+        if (onTaskUpdate) onTaskUpdate(task);
+      }
+      toast.success('Delivery started');
     } catch (error) {
       toast.error(error.message || 'Failed to start delivery');
     } finally {
@@ -227,7 +250,7 @@ const StaffTaskCard = ({
     
     setLoading(true);
     try {
-       await onCompleteDelivery(task._id);
+       await onCompleteDelivery(sourceOrders.map((order) => order._id));
        toast.success('Order delivered');
     } catch (error) {
       toast.error(error.message || 'Failed to complete delivery');
@@ -241,7 +264,7 @@ const StaffTaskCard = ({
 
     setLoading(true);
     try {
-      await onCompleteWaiterTask(task._id);
+      await onCompleteWaiterTask(sourceOrders.map((order) => order._id));
       toast.success(t('Task completed'));
     } catch (error) {
       toast.error(error.message || t('Failed to complete task'));
@@ -350,6 +373,12 @@ const StaffTaskCard = ({
 
   // ========== RENDER DELIVERY BUTTONS ==========
   const renderDeliveryButtons = () => {
+    const activeOrders = sourceOrders.filter((order) => order.status !== 'cancelled');
+    const readyOrders = activeOrders.filter((order) => order.status === 'ready');
+    const canAccept = readyOrders.some((order) => !order.deliveryAccepted && !order.deliveryRejected);
+    const canStart = readyOrders.some((order) => order.deliveryAccepted && !order.deliveryStartedAt);
+    const allOutForDelivery = activeOrders.length > 0 &&
+      activeOrders.every((order) => order.status === 'out-for-delivery');
     console.log('🔍 Delivery button check:', {
       status: task.status,
       deliveryAccepted: task.deliveryAccepted,
@@ -359,7 +388,7 @@ const StaffTaskCard = ({
     });
     
     // Case 1: Order ready, not accepted/rejected → Show Accept/Reject
-    if (task.status === 'ready' && !task.deliveryAccepted && !task.deliveryRejected) {
+    if (canAccept) {
       console.log('✅ Showing Accept/Reject buttons for delivery');
       return (
         <div className="button-group">
@@ -382,7 +411,7 @@ const StaffTaskCard = ({
     }
     
     // Case 2: Accepted but not started
-    if (task.status === 'ready' && task.deliveryAccepted && !task.deliveryStartedAt) {
+    if (canStart) {
       console.log('✅ Showing Start Delivery button');
       return (
         <button 
@@ -396,8 +425,7 @@ const StaffTaskCard = ({
     }
     
     // Case 3: In progress
-    if (task.status === 'out-for-delivery' && 
-        task.deliveryStartedAt && !task.deliveryCompletedAt) {
+    if (allOutForDelivery) {
       console.log('✅ Showing Complete Delivery button');
       return (
         <button 
@@ -431,7 +459,7 @@ const StaffTaskCard = ({
   };
 
   const renderWaiterButtons = () => {
-    if (task.waiterCompletedAt || task.status === 'cancelled') return null;
+    if (task.waiterCompletedAt || sourceOrders.every((order) => order.status === 'cancelled')) return null;
     return (
       <button
         className="btn-complete"
@@ -450,13 +478,17 @@ const StaffTaskCard = ({
           {type === 'cook' ? `👨‍🍳 ${t('Kitchen')}` : type === 'delivery' ? `🚚 ${t('Delivery')}` : type === 'waiter' ? `🧑‍🍽️ ${t('Waiter')}` : `💰 ${t('Cashier')}`}
         </div>
         <div className="task-status" style={{ backgroundColor: getStatusColor(task.status || task.paymentStatus) }}>
-          {getStatusIcon(task.status || task.paymentStatus)} {task.status || task.paymentStatus || 'pending'}
+          {getStatusIcon(task.status || task.paymentStatus)} {task.status === 'multiple' ? t('Multiple statuses') : task.status || task.paymentStatus || 'pending'}
         </div>
       </div>
 
       <div className="task-card-body">
         <div className="order-info">
-          <h3 className="order-number">Order #{task.orderNumber || task._id?.slice(-6)}</h3>
+          <h3 className="order-number">
+            {task.orderCount > 1
+              ? `${t('Orders')} #${task.orderNumber}`
+              : `Order #${task.orderNumber || task._id?.slice(-6)}`}
+          </h3>
           <span className="order-time">{formatDate(task.createdAt)}</span>
         </div>
 
@@ -471,7 +503,7 @@ const StaffTaskCard = ({
           {type === 'delivery' && task.deliveryAddress && (
             <p><span className="info-label">📍 {t('Address:')}</span> {formatDeliveryAddress(task.deliveryAddress)}</p>
           )}
-          <p><span className="info-label">💰 {t('Total:')}</span> ETB {task.totalAmount}</p>
+          <p><span className="info-label">💰 {t('Total:')}</span> ETB {Number(task.totalAmount || 0).toFixed(2)}</p>
         </div>
 
         <div className="items-section">
@@ -480,12 +512,12 @@ const StaffTaskCard = ({
             {task.items?.map((item, idx) => (
               <div key={idx} className="item-row">
                 <span className="item-name">{item.quantity}x {item.name}</span>
-                <span className="item-price">ETB {item.price * item.quantity}</span>
+                <span className="item-price">ETB {(Number(item.price) * Number(item.quantity)).toFixed(2)}</span>
               </div>
             ))}
           </div>
           <div className="order-total">
-            <strong>{t('Total:')} ETB {task.totalAmount}</strong>
+            <strong>{t('Total:')} ETB {Number(task.totalAmount || 0).toFixed(2)}</strong>
           </div>
         </div>
 
@@ -584,6 +616,12 @@ const StaffTaskCard = ({
       {type === 'waiter' && task.waiterCompletedAt && (
         <div className="completion-badge">
           ✅ {t('Completed at')} {formatTime(task.waiterCompletedAt)}
+        </div>
+      )}
+
+      {type === 'delivery' && task.orderCount > 1 && task.deliveryCompletedAt && (
+        <div className="completion-badge">
+          ✅ {t('Delivery group completed')} {formatTime(task.deliveryCompletedAt)}
         </div>
       )}
     </div>

@@ -713,7 +713,9 @@ const translations = {
   'Completing...': { am: 'በማጠናቀቅ ላይ...', om: 'Xumuraa jira...' },
   'Completed orders today': { am: 'ዛሬ የተጠናቀቁ ትዕዛዞች', om: 'Ajajawwan har’a xumuraman' },
   'Order revenue today': { am: 'የዛሬ ትዕዛዝ ገቢ', om: 'Galii ajaja har’aa' },
-  'Pickup location': { am: 'የመውሰጃ ቦታ', om: 'Bakka fudhannaa' }
+  'Pickup location': { am: 'የመውሰጃ ቦታ', om: 'Bakka fudhannaa' },
+  'Multiple statuses': { am: 'የተለያዩ ሁኔታዎች', om: 'Haala garaagaraa' },
+  'Delivery group completed': { am: 'የመላኪያ ቡድን ተጠናቋል፡', om: 'Gareen geejjibaa xumurameera:' }
 };
 
 export const LanguageProvider = ({ children }) => {

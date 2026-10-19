@@ -1171,6 +1171,26 @@ export const staffService = {
     }
   },
 
+  completeWaiterTasks: async (orderIds) => {
+    try {
+      const response = await api.post('/staff/orders/waiter-complete-batch', { orderIds });
+      return response.data;
+    } catch (error) {
+      console.error('Error completing waiter order group:', error);
+      throw error.response?.data || { message: 'Failed to complete waiter order group' };
+    }
+  },
+
+  completeDeliveryGroup: async (orderIds) => {
+    try {
+      const response = await api.post('/staff/orders/delivery-complete-batch', { orderIds });
+      return response.data;
+    } catch (error) {
+      console.error('Error completing delivery group:', error);
+      throw error.response?.data || { message: 'Failed to complete delivery group' };
+    }
+  },
+
   getDailyTaskSummary: async (date) => {
     try {
       const response = await api.get('/staff/orders/daily-summary', { params: date ? { date } : {} });

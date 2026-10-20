@@ -16,12 +16,8 @@ const StaffTaskCard = ({
   onChefReject,
   onStartPreparing,
   onMarkReady,
-  onDeliveryAccept,
-  onDeliveryReject,
-  onStartDelivery,
   onCompleteDelivery,
   onCompleteWaiterTask,
-  onGroupDeliveryAction,
   onProcessPayment
 }) => {
   const [loading, setLoading] = useState(false);
@@ -42,7 +38,6 @@ const StaffTaskCard = ({
     chefRejected: task.chefRejected,
     cookingStartedAt: task.cookingStartedAt,
     cookingCompletedAt: task.cookingCompletedAt,
-    deliveryAccepted: task.deliveryAccepted,
     deliveryStartedAt: task.deliveryStartedAt,
     deliveryCompletedAt: task.deliveryCompletedAt,
     type: type
@@ -173,77 +168,6 @@ const StaffTaskCard = ({
     }
   };
 
-  // ========== DELIVERY: ACCEPT DELIVERY ==========
-  const handleDeliveryAccept = async () => {
-    if (!task._id || loading) return;
-    
-    setLoading(true);
-    try {
-      const readyOrders = sourceOrders.filter((order) =>
-        order.status === 'ready' && !order.deliveryAccepted && !order.deliveryRejected
-      );
-      if (onGroupDeliveryAction) {
-        await onGroupDeliveryAction('accept', readyOrders.map((order) => order._id));
-      } else {
-        await onDeliveryAccept(task._id);
-        if (onTaskUpdate) onTaskUpdate(task);
-      }
-      toast.success('Delivery accepted');
-    } catch (error) {
-      toast.error(error.message || 'Failed to accept delivery');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ========== DELIVERY: REJECT DELIVERY ==========
-  const handleDeliveryReject = async () => {
-    if (!task._id || !rejectionReason || loading) return;
-    
-    setLoading(true);
-    try {
-      const readyOrders = sourceOrders.filter((order) =>
-        order.status === 'ready' && !order.deliveryAccepted && !order.deliveryRejected
-      );
-      if (onGroupDeliveryAction) {
-        await onGroupDeliveryAction('reject', readyOrders.map((order) => order._id), rejectionReason);
-      } else {
-        await onDeliveryReject(task._id, rejectionReason);
-        if (onTaskUpdate) onTaskUpdate(task);
-      }
-      toast.info('Delivery rejected');
-      setShowRejectModal(false);
-      setRejectionReason('');
-    } catch (error) {
-      toast.error(error.message || 'Failed to reject delivery');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ========== DELIVERY: START DELIVERY ==========
-  const handleStartDelivery = async () => {
-    if (!task._id || loading) return;
-    
-    setLoading(true);
-    try {
-      const readyOrders = sourceOrders.filter((order) =>
-        order.status === 'ready' && order.deliveryAccepted && !order.deliveryStartedAt
-      );
-      if (onGroupDeliveryAction) {
-        await onGroupDeliveryAction('start', readyOrders.map((order) => order._id));
-      } else {
-        await onStartDelivery(task._id);
-        if (onTaskUpdate) onTaskUpdate(task);
-      }
-      toast.success('Delivery started');
-    } catch (error) {
-      toast.error(error.message || 'Failed to start delivery');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // ========== DELIVERY: COMPLETE DELIVERY ==========
   const handleCompleteDelivery = async () => {
     if (!task._id || loading) return;
@@ -251,7 +175,7 @@ const StaffTaskCard = ({
     setLoading(true);
     try {
        await onCompleteDelivery(sourceOrders.map((order) => order._id));
-       toast.success('Order delivered');
+       toast.success(t('Delivery task completed'));
     } catch (error) {
       toast.error(error.message || 'Failed to complete delivery');
     } finally {
@@ -374,72 +298,19 @@ const StaffTaskCard = ({
   // ========== RENDER DELIVERY BUTTONS ==========
   const renderDeliveryButtons = () => {
     const activeOrders = sourceOrders.filter((order) => order.status !== 'cancelled');
-    const readyOrders = activeOrders.filter((order) => order.status === 'ready');
-    const canAccept = readyOrders.some((order) => !order.deliveryAccepted && !order.deliveryRejected);
-    const canStart = readyOrders.some((order) => order.deliveryAccepted && !order.deliveryStartedAt);
-    const allOutForDelivery = activeOrders.length > 0 &&
-      activeOrders.every((order) => order.status === 'out-for-delivery');
-    console.log('🔍 Delivery button check:', {
-      status: task.status,
-      deliveryAccepted: task.deliveryAccepted,
-      deliveryRejected: task.deliveryRejected,
-      deliveryStartedAt: !!task.deliveryStartedAt,
-      deliveryCompletedAt: !!task.deliveryCompletedAt
-    });
-    
-    // Case 1: Order ready, not accepted/rejected → Show Accept/Reject
-    if (canAccept) {
-      console.log('✅ Showing Accept/Reject buttons for delivery');
-      return (
-        <div className="button-group">
-          <button 
-            className="btn-accept" 
-            onClick={handleDeliveryAccept} 
-            disabled={loading}
-          >
-            {loading ? 'Processing...' : '✅ Accept Delivery'}
-          </button>
-          <button 
-            className="btn-reject" 
-            onClick={() => setShowRejectModal(true)} 
-            disabled={loading}
-          >
-            ❌ Reject Delivery
-          </button>
-        </div>
-      );
-    }
-    
-    // Case 2: Accepted but not started
-    if (canStart) {
-      console.log('✅ Showing Start Delivery button');
-      return (
-        <button 
-          className="btn-deliver" 
-          onClick={handleStartDelivery} 
-          disabled={loading}
-        >
-          {loading ? 'Starting...' : '🛵 Start Delivery'}
-        </button>
-      );
-    }
-    
-    // Case 3: In progress
-    if (allOutForDelivery) {
-      console.log('✅ Showing Complete Delivery button');
-      return (
-        <button 
-          className="btn-complete" 
-          onClick={handleCompleteDelivery} 
-          disabled={loading}
-        >
-          {loading ? 'Completing...' : '✅ Complete Delivery'}
-        </button>
-      );
-    }
-    
-    console.log('❌ No delivery buttons to show');
-    return null;
+    const canComplete = activeOrders.length > 0 &&
+      activeOrders.every((order) => ['ready', 'out-for-delivery'].includes(order.status));
+    if (!canComplete) return null;
+
+    return (
+      <button
+        className="btn-complete"
+        onClick={handleCompleteDelivery}
+        disabled={loading}
+      >
+        {loading ? 'Completing...' : `✅ ${t('Complete Task')}`}
+      </button>
+    );
   };
 
   // ========== RENDER CASHIER BUTTONS ==========
@@ -541,7 +412,7 @@ const StaffTaskCard = ({
 
       <div className="task-card-footer">
         {canWrite && type === 'cook' && hasPermission(PERMISSIONS.ORDERS_ACCEPT) && renderChefButtons()}
-        {canWrite && type === 'delivery' && hasPermission(PERMISSIONS.ORDERS_ACCEPT) && renderDeliveryButtons()}
+        {canWrite && type === 'delivery' && hasPermission(PERMISSIONS.ORDERS_COMPLETE_DELIVERY) && renderDeliveryButtons()}
         {canWrite && type === 'waiter' && renderWaiterButtons()}
         {canWrite && type === 'cashier' && hasPermission(PERMISSIONS.PAYMENTS_PROCESS) && renderCashierButtons()}
         
@@ -566,7 +437,7 @@ const StaffTaskCard = ({
       )}
 
       {/* Rejection Modal */}
-      {showRejectModal && (
+      {showRejectModal && type === 'cook' && (
         <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
           <div className="modal-content reject-modal" onClick={e => e.stopPropagation()}>
             <h2>Reject Order #{task.orderNumber || task._id?.slice(-6)}</h2>
@@ -589,7 +460,7 @@ const StaffTaskCard = ({
                 Cancel
               </button>
               <button 
-                onClick={type === 'cook' ? handleChefReject : handleDeliveryReject} 
+                onClick={handleChefReject}
                 className="btn-confirm-reject" 
                 disabled={!rejectionReason}
               >
@@ -609,7 +480,8 @@ const StaffTaskCard = ({
 
       {type === 'delivery' && task.deliveryCompletedAt && (
         <div className="completion-badge">
-          ✅ Delivered at {formatTime(task.deliveryCompletedAt)} ({task.deliveryTime || '?'} min)
+          ✅ Delivered at {formatTime(task.deliveryCompletedAt)}
+          {Number.isFinite(Number(task.deliveryTime)) && ` (${task.deliveryTime} min)`}
         </div>
       )}
 

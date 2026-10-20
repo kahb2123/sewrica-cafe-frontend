@@ -96,9 +96,8 @@ const StaffOrderEntry = () => {
       toast.warning('Select at least one menu item');
       return;
     }
-    if (deliveryMethod === 'delivery' &&
-      (!customerInfo.name.trim() || !customerInfo.phone.trim() || !deliveryAddress.street.trim())) {
-      toast.warning('Enter the customer name, phone, and delivery address');
+    if (deliveryMethod === 'delivery' && !deliveryAddress.street.trim()) {
+      toast.warning('Enter the delivery address');
       return;
     }
     if (deliveryMethod === 'dine-in' && !tableNumber.trim()) {
@@ -267,8 +266,8 @@ const StaffOrderEntry = () => {
 
             {deliveryMethod === 'delivery' && (
               <div className="staff-order-customer-fields">
-                <input name="name" value={customerInfo.name} onChange={updateCustomerInfo} placeholder={t('Customer name')} aria-label={t('Customer name')} required />
-                <input name="phone" value={customerInfo.phone} onChange={updateCustomerInfo} placeholder={t('Customer phone')} aria-label={t('Customer phone')} required />
+                <input name="name" value={customerInfo.name} onChange={updateCustomerInfo} placeholder={t('Customer name (optional)')} aria-label={t('Customer name (optional)')} />
+                <input name="phone" value={customerInfo.phone} onChange={updateCustomerInfo} placeholder={t('Customer phone (optional)')} aria-label={t('Customer phone (optional)')} />
                 <input name="street" value={deliveryAddress.street} onChange={updateDeliveryAddress} placeholder={t('Delivery address')} aria-label={t('Delivery address')} required />
                 <input name="area" value={deliveryAddress.area} onChange={updateDeliveryAddress} placeholder={t('Area (optional)')} aria-label={t('Area (optional)')} />
               </div>

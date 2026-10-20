@@ -23,7 +23,7 @@ import PaymentConfirmation from './pages/PaymentConfirmation';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Contact from './pages/Contact';
-import Admin from './pages/Admin'; // ← Updated: Import from Admin.jsx
+import Admin from './pages/admin/AdminDashboard';
 import StaffDashboard from './pages/StaffDashboard';
 import StaffLogin from './pages/StaffLogin';
 import { useLanguage } from './context/useLanguage';

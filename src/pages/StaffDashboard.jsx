@@ -89,7 +89,6 @@ const groupOrdersByLocation = (orders, role, completed = false) => {
       customerPhone: [...new Set(sourceOrders.map((order) => order.customerPhone).filter(Boolean))].join(', ') || '',
       status: statuses.length === 1 ? statuses[0] : 'multiple',
       createdAt: oldestCreatedAt,
-      deliveryAccepted: sourceOrders.every((order) => order.deliveryAccepted),
       waiterCompletedAt: completed && role === 'waiter' ? sourceOrders[0].waiterCompletedAt : null,
       deliveryCompletedAt: completed && role === 'delivery' ? sourceOrders[0].deliveryCompletedAt : null
     };
@@ -169,55 +168,6 @@ const StaffDashboard = () => {
     }
   };
 
-  // ========== DELIVERY ACTION HANDLERS ==========
-  const handleDeliveryAccept = async (orderId) => {
-    try {
-      await staffService.deliveryAcceptOrder(orderId);
-      await fetchTasks();
-    } catch (error) {
-      console.error('Error accepting delivery:', error);
-      toast.error(error.response?.data?.message || 'Failed to accept delivery');
-    }
-  };
-
-  const handleDeliveryGroupAction = async (action, orderIds, reason) => {
-    const actionMethods = {
-      accept: (id) => staffService.deliveryAcceptOrder(id),
-      reject: (id) => staffService.deliveryRejectOrder(id, reason),
-      start: (id) => staffService.startDelivery(id)
-    };
-    const runAction = actionMethods[action];
-    if (!runAction || !orderIds.length) return;
-    try {
-      await Promise.all(orderIds.map(runAction));
-      await fetchTasks();
-    } catch (error) {
-      console.error(`Error applying ${action} to delivery group:`, error);
-      await fetchTasks();
-      throw error;
-    }
-  };
-
-  const handleDeliveryReject = async (orderId, reason) => {
-    try {
-      await staffService.deliveryRejectOrder(orderId, reason);
-      await fetchTasks();
-    } catch (error) {
-      console.error('Error rejecting delivery:', error);
-      toast.error(error.response?.data?.message || 'Failed to reject delivery');
-    }
-  };
-
-  const handleStartDelivery = async (orderId) => {
-    try {
-      await staffService.startDelivery(orderId);
-      await fetchTasks();
-    } catch (error) {
-      console.error('Error starting delivery:', error);
-      toast.error(error.response?.data?.message || 'Failed to start delivery');
-    }
-  };
-
   const handleCompleteDelivery = async (orderId) => {
     try {
       if (Array.isArray(orderId)) await staffService.completeDeliveryGroup(orderId);
@@ -272,7 +222,7 @@ const StaffDashboard = () => {
         const completedResponse = await staffService.getMyCompletedDeliveryOrders();
 
         const activeOrders = deliveries.filter(d => 
-          d.status === 'ready' || d.status === 'out-for-delivery'
+          ['pending', 'confirmed', 'preparing', 'cooking', 'ready', 'out-for-delivery'].includes(d.status)
         );
         const completedOrders = extractArray(completedResponse, []).filter(d => 
           d.status === 'delivered'
@@ -594,12 +544,8 @@ const StaffDashboard = () => {
                             onChefReject={handleChefReject}
                             onStartPreparing={handleStartPreparing}
                             onMarkReady={handleMarkReady}
-                            onDeliveryAccept={handleDeliveryAccept}
-                            onDeliveryReject={handleDeliveryReject}
-                            onStartDelivery={handleStartDelivery}
                             onCompleteDelivery={handleCompleteDelivery}
                             onCompleteWaiterTask={handleCompleteWaiterTask}
-                            onGroupDeliveryAction={handleDeliveryGroupAction}
                             onProcessPayment={handleProcessPayment}
                           />
                         ))
@@ -627,12 +573,8 @@ const StaffDashboard = () => {
                             onChefReject={handleChefReject}
                             onStartPreparing={handleStartPreparing}
                             onMarkReady={handleMarkReady}
-                            onDeliveryAccept={handleDeliveryAccept}
-                            onDeliveryReject={handleDeliveryReject}
-                            onStartDelivery={handleStartDelivery}
                             onCompleteDelivery={handleCompleteDelivery}
                             onCompleteWaiterTask={handleCompleteWaiterTask}
-                            onGroupDeliveryAction={handleDeliveryGroupAction}
                             onProcessPayment={handleProcessPayment}
                           />
                         ))

@@ -185,7 +185,7 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   };
 
   const assignDeliveryToOrder = async (orderId, deliveryId) => {
-    if (readOnly || !deliveryId) return;
+    if (readOnly || user?.role !== 'admin' || !deliveryId) return;
     setBusyDeliveryIds((prev) => new Set([...prev, orderId]));
     try {
       const response = await staffService.assignDelivery(orderId, deliveryId);
@@ -205,7 +205,6 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
       });
     }
   };
-  
 
   const assignWaiterToOrder = async (orderId, waiterId) => {
     if (readOnly || user?.role !== 'admin' || !waiterId) return;
@@ -451,22 +450,27 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                             </select>
                           ) : (
                             <span className="kds-delivery-name">
-                              {order.assignedWaiter?.name ? `Waiter: ${order.assignedWaiter.name}` : 'Waiter: —'}
+                              {[
+                                order.assignedWaiter?.name && `Waiter: ${order.assignedWaiter.name}`,
+                                order.assignedDelivery?.name && `Delivery: ${order.assignedDelivery.name}`
+                              ].filter(Boolean).join(' / ') || '—'}
                             </span>
                           )}
-                          <select
-                            className="kds-delivery-select"
-                            value={order.assignedDelivery?._id || ''}
-                            onChange={(event) => assignDeliveryToOrder(order._id, event.target.value)}
-                            aria-label={`Assign delivery to order ${getOrderNumberLabel(order.orderNumber)}`}
-                          >
-                            <option value="">Assign Delivery</option>
-                            {deliveries.map((delivery) => (
-                              <option key={delivery._id} value={delivery._id}>
-                                {delivery.name}
-                              </option>
-                            ))}
-                          </select>
+                          {user?.role === 'admin' && (
+                            <select
+                              className="kds-delivery-select"
+                              value={order.assignedDelivery?._id || ''}
+                              onChange={(event) => assignDeliveryToOrder(order._id, event.target.value)}
+                              aria-label={`Assign delivery to order ${getOrderNumberLabel(order.orderNumber)}`}
+                            >
+                              <option value="">Assign Delivery</option>
+                              {deliveries.map((delivery) => (
+                                <option key={delivery._id} value={delivery._id}>
+                                  {delivery.name}
+                                </option>
+                              ))}
+                            </select>
+                          )}
                         </div>
                       )}
                     </div>

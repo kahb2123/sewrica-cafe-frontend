@@ -24,7 +24,7 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Contact from './pages/Contact';
 import Admin from './pages/admin/AdminDashboard';
-import StaffDashboard from './pages/StaffDashboard';
+import SupplyChainDashboard from './pages/SupplyChainDashboard';
 import StaffLogin from './pages/StaffLogin';
 import { useLanguage } from './context/useLanguage';
 import scrollToPageTop from './utils/scrollToPageTop';
@@ -87,11 +87,11 @@ function App() {
                   </PrivateRoute>
                 } />
                 
-                <Route path="/staff/*" element={
-                    <StaffPrivateRoute>
-                        <StaffDashboard />
-                    </StaffPrivateRoute>
-                } />
+                <Route path="/supply-chain" element={
+  <StaffPrivateRoute>
+    <SupplyChainDashboard />
+  </StaffPrivateRoute>
+} />
                 
                 {/* Catch-all route for 404 */}
                 <Route path="*" element={<div className="not-found">{t('Page Not Found')}</div>} />

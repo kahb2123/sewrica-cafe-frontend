@@ -35,9 +35,11 @@ const StaffLogin = () => {
           const pageAccess = permData.pageAccess || {};
           let redirectPath = '/staff/dashboard';
           
-          if (pageAccess.adminDashboard?.canRead) {
-            redirectPath = '/admin';
-          } else if (pageAccess.staffDashboard?.canRead) {
+           if (pageAccess.adminDashboard?.canRead && user.role !== 'supply_chain') {
+             redirectPath = '/admin';
+           } else if (user.role === 'supply_chain') {
+             redirectPath = '/supply-chain';
+           } else if (pageAccess.staffDashboard?.canRead) {
             redirectPath = '/staff/dashboard';
           }
           

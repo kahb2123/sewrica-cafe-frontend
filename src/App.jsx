@@ -92,6 +92,12 @@ function App() {
     <SupplyChainDashboard />
   </StaffPrivateRoute>
 } />
+
+<Route path="/staff/*" element={
+  <StaffPrivateRoute>
+    <StaffDashboard />
+  </StaffPrivateRoute>
+} />
                 
                 {/* Catch-all route for 404 */}
                 <Route path="*" element={<div className="not-found">{t('Page Not Found')}</div>} />

@@ -26,7 +26,10 @@ const Sidebar = ({ activeTab, onMenuClick, mobileMenuOpen, user, onClose }) => {
   ];
 
   const visibleMenuItems = menuItems.filter(item => {
-    if (!item.page) return true;
+    if (!item.page) {
+      // Tabs without a page key (lottery, giveaway, permissions) are admin-only
+      return user?.role === 'admin';
+    }
     return canReadPage(item.page);
   });
 

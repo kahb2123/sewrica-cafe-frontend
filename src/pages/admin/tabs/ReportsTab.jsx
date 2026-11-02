@@ -1,5 +1,9 @@
 // src/pages/admin/tabs/ReportsTab.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell, CartesianGrid
+} from 'recharts';
 import { toast } from 'react-toastify';
 import { adminService } from '../../../services/api';
 import scrollToPageTop from '../../../utils/scrollToPageTop';
@@ -55,6 +59,7 @@ const ROLE_LABELS = {
 
 const ReportsTab = () => {
   const [activeTab, setActiveTab] = useState('items');
+  const [itemSort, setItemSort] = useState({ key: 'revenue', dir: 'desc' });
   const [preset, setPreset] = useState('7d');
   const [range, setRange] = useState(() => ({ start: daysAgo(6), end: daysAgo(0) }));
 
@@ -308,6 +313,84 @@ const ReportsTab = () => {
               <div className="empty-state">No sales data for the selected period.</div>
             ) : (
               <>
+                <div className="kpi-cards">
+                  <div className="kpi-card">
+                    <span className="kpi-label">Top Items Listed</span>
+                    <strong className="kpi-value">{items.length}</strong>
+                  </div>
+                  <div className="kpi-card">
+                    <span className="kpi-label">Units Sold</span>
+                    <strong className="kpi-value">{items.reduce((sum, row) => sum + (Number(row.quantity) || 0), 0)}</strong>
+                  </div>
+                  <div className="kpi-card">
+                    <span className="kpi-label">Total Revenue</span>
+                    <strong className="kpi-value">{formatMoney(items.reduce((sum, row) => sum + (Number(row.revenue) || 0), 0))}</strong>
+                  </div>
+                </div>
+
+                {activeTab === 'items' && (
+                  <div className="charts-grid">
+                    <div className="chart-card">
+                      <h2>Top Sellers (Units Sold)</h2>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart
+                          data={[...items].sort((a, b) => (Number(b.quantity) || 0) - (Number(a.quantity) || 0)).slice(0, 8)}
+                          layout="vertical"
+                          margin={{ top: 8, right: 16, left: 8, bottom: 8 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" />
+                          <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="quantity" name="Units Sold" fill="#1e3a2f" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="chart-card">
+                      <h2>Revenue Mix</h2>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={items}
+                            dataKey="revenue"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={100}
+                            label
+                          >
+                            {items.map((_, i) => {
+                              const palette = ['#1e3a2f', '#2f5d4a', '#c9a227', '#e0b84a', '#8b5a2b', '#a87438', '#4a7c59', '#6b9b7a'];
+                              return <Cell key={i} fill={palette[i % palette.length]} />;
+                            })}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'staff' && (
+                  <div className="chart-card">
+                    <h2>Staff Performance</h2>
+                    <ResponsiveContainer width="100%" height={320}>
+                      <BarChart data={staff} margin={{ top: 8, right: 24, left: 8, bottom: 8 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                        <YAxis yAxisId="left" />
+                        <YAxis yAxisId="right" orientation="right" />
+                        <Tooltip />
+                        <Legend />
+                        <Bar yAxisId="left" dataKey="totalOrders" name="Orders Handled" fill="#c9a227" />
+                        <Bar yAxisId="right" dataKey="revenue" name="Total Sales (ETB)" fill="#1e3a2f" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
                 <div className="chart-card">
                   <h2>Revenue by Menu Item</h2>
                   <div className="bar-chart">
@@ -334,36 +417,29 @@ const ReportsTab = () => {
                         <tr>
                           <th>#</th>
                           <th>Menu Item</th>
-                          <th>Units Sold</th>
-                          <th>Revenue</th>
+                          <th className="sortable" onClick={() => setItemSort(s => ({ key: 'quantity', dir: s.key === 'quantity' && s.dir === 'asc' ? 'desc' : 'asc' }))}>
+                            Units Sold {itemSort.key === 'quantity' ? (itemSort.dir === 'asc' ? '▲' : '▼') : ''}
+                          </th>
+                          <th className="sortable" onClick={() => setItemSort(s => ({ key: 'revenue', dir: s.key === 'revenue' && s.dir === 'asc' ? 'desc' : 'asc' }))}>
+                            Revenue {itemSort.key === 'revenue' ? (itemSort.dir === 'asc' ? '▲' : '▼') : ''}
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
-                        {items.map((row, index) => (
+                        {[...items].sort((a, b) => {
+                          const av = itemSort.key === 'revenue' ? (Number(a.revenue) || 0) : (Number(a.quantity) || 0);
+                          const bv = itemSort.key === 'revenue' ? (Number(b.revenue) || 0) : (Number(b.quantity) || 0);
+                          return itemSort.dir === 'asc' ? av - bv : bv - av;
+                        }).map((row, index) => (
                           <tr key={row._id || row.name}>
                             <td><span className="rank-badge">{index + 1}</span></td>
                             <td className="item-name">{row.name}</td>
-                            <td>{row.quantity || 0}</td>
-                            <td>{formatMoney(row.revenue)}</td>
+                            <td className="num-cell">{row.quantity || 0}</td>
+                            <td className="num-cell">{formatMoney(row.revenue)}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                  </div>
-                </div>
-
-                <div className="summary-bar">
-                  <div className="summary-item">
-                    <span>Top Items Listed</span>
-                    <strong>{items.length}</strong>
-                  </div>
-                  <div className="summary-item">
-                    <span>Units Sold</span>
-                    <strong>{items.reduce((sum, row) => sum + (Number(row.quantity) || 0), 0)}</strong>
-                  </div>
-                  <div className="summary-item">
-                    <span>Total Revenue</span>
-                    <strong>{formatMoney(items.reduce((sum, row) => sum + (Number(row.revenue) || 0), 0))}</strong>
                   </div>
                 </div>
               </>
@@ -523,6 +599,21 @@ const ReportsTab = () => {
               <div className="empty-state">No staff activity in the selected period.</div>
             ) : (
               <>
+                <div className="kpi-cards">
+                  <div className="kpi-card">
+                    <span className="kpi-label">Staff Members</span>
+                    <strong className="kpi-value">{filteredStaff.length}</strong>
+                  </div>
+                  <div className="kpi-card">
+                    <span className="kpi-label">Total Orders Handled</span>
+                    <strong className="kpi-value">{filteredStaff.reduce((sum, row) => sum + (Number(row.totalOrders) || 0), 0)}</strong>
+                  </div>
+                  <div className="kpi-card">
+                    <span className="kpi-label">Total Order Revenue</span>
+                    <strong className="kpi-value">{formatMoney(filteredStaff.reduce((sum, row) => sum + (Number(row.revenue) || 0), 0))}</strong>
+                  </div>
+                </div>
+
                 <div className="table-card">
                   <h2>Staff Performance</h2>
                   <div className="table-responsive">
@@ -581,21 +672,6 @@ const ReportsTab = () => {
                         <span className="bar-value">{formatMoney(row.revenue)}</span>
                       </div>
                     ))}
-                  </div>
-                </div>
-
-                <div className="summary-bar">
-                  <div className="summary-item">
-                    <span>Staff Members</span>
-                    <strong>{filteredStaff.length}</strong>
-                  </div>
-                  <div className="summary-item">
-                    <span>Total Orders Handled</span>
-                    <strong>{filteredStaff.reduce((sum, row) => sum + (Number(row.totalOrders) || 0), 0)}</strong>
-                  </div>
-                  <div className="summary-item">
-                    <span>Total Order Revenue</span>
-                    <strong>{formatMoney(filteredStaff.reduce((sum, row) => sum + (Number(row.revenue) || 0), 0))}</strong>
                   </div>
                 </div>
               </>

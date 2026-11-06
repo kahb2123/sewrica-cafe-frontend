@@ -20,7 +20,7 @@ import './Cart.css';
 const Cart = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   // NEW: Initialize Stripe hooks
   const stripe = useStripe();
   const elements = useElements();
@@ -511,7 +511,7 @@ const Cart = () => {
                         {item.image ? (
                           <img 
                             src={getImageUrl(item.image)} 
-                            alt={item.name}
+                            alt={language === 'am' ? item.nameAm || item.name : item.name}
                             onError={(e) => {
                               e.target.onerror = null;
                               // Replace with emoji on error
@@ -531,8 +531,12 @@ const Cart = () => {
                       </div>
                       <div className="cart-item-details">
                         <div className="cart-item-header">
-                          <h3 className="cart-item-name">{item.name}</h3>
-                          <p className="cart-item-name-am">{item.nameAm}</p>
+                          <h3 className="cart-item-name">
+                            {language === 'am' ? item.nameAm || item.name : item.name}
+                          </h3>
+                          {language !== 'am' && item.nameAm && (
+                            <p className="cart-item-name-am">{item.nameAm}</p>
+                          )}
                         </div>
                         <p className="cart-item-price">ETB {item.price}</p>
                         <div className="cart-item-actions">
@@ -803,7 +807,7 @@ const Cart = () => {
                     {cartItems.map(item => (
                       <div key={item.id} className="checkout-item">
                         <span className="checkout-item-name">
-                          {item.name} x{item.quantity}
+                          {language === 'am' ? item.nameAm || item.name : item.name} x{item.quantity}
                         </span>
                         <span className="checkout-item-price">
                           ETB {(item.price * item.quantity).toFixed(2)}
@@ -982,7 +986,7 @@ const Cart = () => {
                     <div className="review-items">
                       {cartItems.map(item => (
                         <div key={item.id} className="review-item">
-                          <span>{item.name} x{item.quantity}</span>
+                          <span>{language === 'am' ? item.nameAm || item.name : item.name} x{item.quantity}</span>
                           <span>ETB {(item.price * item.quantity).toFixed(2)}</span>
                         </div>
                       ))}

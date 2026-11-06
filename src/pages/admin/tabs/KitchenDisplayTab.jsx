@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { adminService, staffService, getOrderNumberLabel } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { useSocket } from '../../../context/SocketContext';
+import { useLanguage } from '../../../context/useLanguage';
 import './KitchenDisplayTab.css';
 
 const KITCHEN_REFRESH_INTERVAL_MS = 15000;
@@ -22,6 +23,9 @@ const KITCHEN_REFRESH_EVENTS = [
 ];
 const WARN_AFTER_MINUTES = 10;
 const URGENT_AFTER_MINUTES = 20;
+const hasAssignedStaff = (order) => Boolean(
+  order.assignedChef || order.assignedWaiter || order.assignedDelivery
+);
 
 // Admin cannot jump straight from 'pending' to 'ready', so walk the chain one step at a time.
 const ADMIN_PATH_TO_READY = {
@@ -32,19 +36,25 @@ const ADMIN_PATH_TO_READY = {
 };
 
 const STATUS_LABELS = {
-  pending: '⏳ Pending',
-  confirmed: '📋 Confirmed',
-  preparing: '🔥 Preparing',
-  cooking: '🔥 Cooking'
+  pending: ['⏳', 'Pending'],
+  confirmed: ['📋', 'Confirmed'],
+  preparing: ['🔥', 'Preparing'],
+  cooking: ['🔥', 'Cooking']
 };
 
-const statusLabel = (status) => STATUS_LABELS[status] || status;
+const statusLabel = (status, t) => {
+  const [icon, label] = STATUS_LABELS[status] || ['', status];
+  return `${icon} ${t(label)}`.trim();
+};
 
-const formatClock = (value) => {
+const formatClock = (value, language) => {
   if (!value) return '--:--';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '--:--';
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString(language === 'am' ? 'am-ET' : undefined, {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 };
 
 const formatElapsed = (startMs, nowMs) => {
@@ -65,6 +75,7 @@ const urgencyLevel = (startMs, nowMs) => {
 
 const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   const location = useLocation();
+  const { language, t } = useLanguage();
   const [orders, setOrders] = useState([]);
   const [chefs, setChefs] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
@@ -77,6 +88,10 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   const [now, setNow] = useState(() => Date.now());
   const { user } = useAuth();
   const { connected, socket } = useSocket();
+  const visibleOrders = useMemo(
+    () => tvMode ? orders.filter(hasAssignedStaff) : orders,
+    [orders, tvMode]
+  );
 
   const loadOrders = useCallback(async (showLoading = true) => {
     try {
@@ -86,11 +101,11 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
       setOrders(allOrders.filter((order) => QUEUE_STATUSES.includes(order.status)));
     } catch (error) {
       console.error('Kitchen: failed to load orders', error);
-      toast.error('Failed to load orders');
+      toast.error(t('Failed to load orders'));
     } finally {
       if (showLoading) setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadOrders();
@@ -122,7 +137,9 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
     if (!connected || !socket) return undefined;
 
     const handleNewOrder = (data) => {
-      toast.info(`New order #${getOrderNumberLabel(data?.orderNumber)} in kitchen`);
+      if (!tvMode || hasAssignedStaff(data || {})) {
+        toast.info(`${t('New order')} #${getOrderNumberLabel(data?.orderNumber)} ${t('in kitchen')}`);
+      }
       loadOrders(false);
     };
 
@@ -141,7 +158,7 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
       socket.off('order-ready', removeReadyOrder);
       KITCHEN_REFRESH_EVENTS.forEach((eventName) => socket.off(eventName, refreshOrders));
     };
-  }, [connected, socket, loadOrders, tvMode]);
+  }, [connected, socket, loadOrders, tvMode, t]);
 
    const completeOrder = async (order) => {
      if (readOnly || busyChefIds.size > 0 || busyDeliveryIds.size > 0) return;
@@ -155,7 +172,7 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
       setOrders((prev) => prev.filter((item) => item._id !== order._id));
     } catch (error) {
       console.error('Kitchen: failed to complete order', error);
-      toast.error(error?.message || 'Failed to complete order');
+      toast.error(t('Failed to complete order'));
       loadOrders(false);
     } finally {
       setBusyChefIds(new Set());
@@ -169,11 +186,13 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
       const response = await staffService.assignChef(orderId, chefId);
       const updated = response?.order || response?.data;
       if (updated) {
-        setOrders((prev) => prev.map((order) => (order._id === orderId ? updated : order)));
+        setOrders((prev) => prev.map((order) => (
+          order._id === orderId ? { ...order, ...updated, items: order.items } : order
+        )));
       }
     } catch (error) {
       console.error('Kitchen: failed to assign chef', error);
-      toast.error(error?.message || 'Failed to assign chef');
+      toast.error(t('Failed to assign chef'));
       loadOrders(false);
     } finally {
       setBusyChefIds((prev) => {
@@ -191,11 +210,13 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
       const response = await staffService.assignDelivery(orderId, deliveryId);
       const updated = response?.order || response?.data;
       if (updated) {
-        setOrders((prev) => prev.map((order) => (order._id === orderId ? updated : order)));
+        setOrders((prev) => prev.map((order) => (
+          order._id === orderId ? { ...order, ...updated, items: order.items } : order
+        )));
       }
     } catch (error) {
       console.error('Kitchen: failed to assign delivery', error);
-      toast.error(error?.message || 'Failed to assign delivery person');
+      toast.error(t('Failed to assign delivery person'));
       loadOrders(false);
     } finally {
       setBusyDeliveryIds((prev) => {
@@ -213,11 +234,13 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
       const response = await adminService.assignWaiter(orderId, waiterId);
       const updated = response?.order;
       if (updated) {
-        setOrders((prev) => prev.map((order) => (order._id === orderId ? updated : order)));
+        setOrders((prev) => prev.map((order) => (
+          order._id === orderId ? { ...order, ...updated, items: order.items } : order
+        )));
       }
     } catch (error) {
       console.error('Kitchen: failed to assign waiter', error);
-      toast.error(error?.message || 'Failed to assign waiter');
+      toast.error(t('Failed to assign waiter'));
       loadOrders(false);
     } finally {
       setBusyWaiterIds((prev) => {
@@ -229,10 +252,10 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   };
 
   const queue = useMemo(() => {
-    const filtered = orders.filter((order) => {
+    const filtered = visibleOrders.filter((order) => {
       if (filterStatus === 'all') return true;
-      if (filterStatus === 'assigned') return Boolean(order.assignedChef);
-      if (filterStatus === 'unassigned') return !order.assignedChef;
+      if (filterStatus === 'assigned') return tvMode ? hasAssignedStaff(order) : Boolean(order.assignedChef);
+      if (filterStatus === 'unassigned') return tvMode ? !hasAssignedStaff(order) : !order.assignedChef;
       return order.status === filterStatus;
     });
 
@@ -244,14 +267,14 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
     });
 
     return sorted.map((order, index) => ({ order, position: index + 1 }));
-  }, [orders, filterStatus]);
+  }, [visibleOrders, filterStatus, tvMode]);
 
   const urgentCount = useMemo(
     () => queue.filter(({ order }) => urgencyLevel(new Date(order.createdAt).getTime(), now) === 'urgent').length,
     [queue, now]
   );
 
-  const unassignedCount = orders.filter((order) => !order.assignedChef).length;
+  const unassignedCount = visibleOrders.filter((order) => !order.assignedChef).length;
   const tvModeSearch = new URLSearchParams(location.search);
   tvModeSearch.set('mode', 'tv');
   const tvModeUrl = `${location.pathname}?${tvModeSearch.toString()}${location.hash}`;
@@ -259,7 +282,7 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   const openTvMode = () => {
     const tvWindow = window.open(tvModeUrl, '_blank');
     if (!tvWindow) {
-      toast.warn('Allow pop-ups to open the kitchen TV display in a new tab.');
+      toast.warn(t('Allow pop-ups to open the kitchen TV display in a new tab.'));
       return;
     }
     tvWindow.opener = null;
@@ -268,7 +291,7 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   if (loading) {
     return (
       <div className={`kitchen-display-tab ${tvMode ? 'tv-mode' : ''}`}>
-        <div className="kds-loading">Loading kitchen orders...</div>
+        <div className="kds-loading">{t('Loading kitchen orders...')}</div>
       </div>
     );
   }
@@ -277,12 +300,12 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
     <div className={`kitchen-display-tab ${tvMode ? 'tv-mode' : ''}`}>
       <div className="kds-header">
         <div>
-          <h1 className="kds-title">🍳 Kitchen Display System</h1>
-          <p className="kds-subtitle">Manage orders and assign chefs to cooking tasks</p>
+          <h1 className="kds-title">🍳 {t('Kitchen Display System')}</h1>
+          <p className="kds-subtitle">{t('Manage orders and assign chefs to cooking tasks')}</p>
         </div>
         <div className="kds-header-actions">
           <span className={`kds-connection ${connected ? 'online' : 'offline'}`}>
-            {connected ? '● Live' : '○ Reconnecting'}
+            {connected ? `● ${t('Live')}` : `○ ${t('Reconnecting')}`}
           </span>
           {!tvMode && (
             <>
@@ -291,9 +314,9 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                 type="button"
                 onClick={openTvMode}
               >
-                📺 Open TV mode
+                📺 {t('Open TV mode')}
               </button>
-              <button className="kds-refresh" onClick={() => loadOrders(false)}>🔄 Refresh</button>
+              <button className="kds-refresh" onClick={() => loadOrders(false)}>🔄 {t('Refresh')}</button>
             </>
           )}
         </div>
@@ -302,34 +325,34 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
       <div className="kds-stats">
         <div className="kds-stat-card">
           <span className="kds-stat-icon">📦</span>
-          <span className="kds-stat-label">In Queue</span>
-          <span className="kds-stat-value">{orders.length}</span>
+          <span className="kds-stat-label">{t('In Queue')}</span>
+          <span className="kds-stat-value">{visibleOrders.length}</span>
         </div>
         <div className="kds-stat-card pending">
           <span className="kds-stat-icon">⏳</span>
-          <span className="kds-stat-label">Pending</span>
-          <span className="kds-stat-value">{orders.filter((o) => o.status === 'pending').length}</span>
+          <span className="kds-stat-label">{t('Pending')}</span>
+          <span className="kds-stat-value">{visibleOrders.filter((o) => o.status === 'pending').length}</span>
         </div>
         <div className="kds-stat-card cooking">
           <span className="kds-stat-icon">🔥</span>
-          <span className="kds-stat-label">Cooking</span>
-          <span className="kds-stat-value">{orders.filter((o) => o.status === 'preparing' || o.status === 'cooking').length}</span>
+          <span className="kds-stat-label">{t('Cooking')}</span>
+          <span className="kds-stat-value">{visibleOrders.filter((o) => o.status === 'preparing' || o.status === 'cooking').length}</span>
         </div>
         <div className="kds-stat-card unassigned">
           <span className="kds-stat-icon">🧑‍🍳</span>
-          <span className="kds-stat-label">No Chef</span>
+          <span className="kds-stat-label">{t('No Chef')}</span>
           <span className="kds-stat-value">{unassignedCount}</span>
         </div>
         <div className="kds-stat-card urgent">
           <span className="kds-stat-icon">⏰</span>
-          <span className="kds-stat-label">Over {URGENT_AFTER_MINUTES}m</span>
+          <span className="kds-stat-label">{t('Over')} {URGENT_AFTER_MINUTES}{t('m')}</span>
           <span className="kds-stat-value">{urgentCount}</span>
         </div>
       </div>
 
       <div className="kds-controls">
         <div className="filter-group">
-          <label>Filter by Status</label>
+          <label>{t('Filter by Status')}</label>
           <div className="filter-buttons">
             {['all', 'pending', 'confirmed', 'preparing', 'cooking', 'assigned', 'unassigned'].map((status) => (
               <button
@@ -337,7 +360,15 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                 className={`filter-btn ${filterStatus === status ? 'active' : ''}`}
                 onClick={() => setFilterStatus(status)}
               >
-                {status.charAt(0).toUpperCase() + status.slice(1)}
+                {t(
+                  status === 'all'
+                    ? 'All'
+                    : status === 'assigned'
+                      ? 'Assigned'
+                      : status === 'unassigned'
+                        ? 'Unassigned'
+                        : STATUS_LABELS[status]?.[1] || status
+                )}
               </button>
             ))}
           </div>
@@ -348,19 +379,19 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
         <div className="kds-board">
           {queue.length === 0 ? (
             <div className="kds-empty">
-              <p>🎉 No orders in kitchen! Everything is caught up!</p>
+              <p>🎉 {t('No orders in kitchen! Everything is caught up!')}</p>
             </div>
           ) : (
             <>
               <div className="kds-queue-head">
                 <span className="kds-col-position">#</span>
-                <span className="kds-col-order">Order</span>
-                <span className="kds-col-items">Items</span>
-                 <span className="kds-col-ordered">Ordered</span>
-                     <span className="kds-col-elapsed">Elapsed</span>
-                     <span className="kds-col-chef">Chef</span>
-                     <span className="kds-col-delivery">Wait / Delivery</span>
-                     <span className="kds-col-action">Action</span>
+                <span className="kds-col-order">{t('Order')}</span>
+                <span className="kds-col-items">{t('Items')}</span>
+                <span className="kds-col-ordered">{t('Ordered')}</span>
+                <span className="kds-col-elapsed">{t('Elapsed')}</span>
+                <span className="kds-col-chef">{t('Chef')}</span>
+                <span className="kds-col-delivery">{t('Wait / Delivery')}</span>
+                <span className="kds-col-action">{t('Action')}</span>
               </div>
 
               {queue.map(({ order, position }) => {
@@ -370,38 +401,40 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
 
                 return (
                   <div key={order._id} className={`kds-row status-${order.status} urgency-${urgency}`}>
-                    <div className="kds-col-position" data-label="Position">
+                    <div className="kds-col-position" data-label={t('Position')}>
                       <span className="kds-position-badge">{position}</span>
                     </div>
 
-                    <div className="kds-col-order" data-label="Order">
+                    <div className="kds-col-order" data-label={t('Order')}>
                       <strong className="kds-order-number">#{getOrderNumberLabel(order.orderNumber)}</strong>
-                      <span className={`kds-status-badge ${order.status}`}>{statusLabel(order.status)}</span>
+                      <span className={`kds-status-badge ${order.status}`}>{statusLabel(order.status, t)}</span>
                     </div>
 
-                    <ul className="kds-col-items" data-label="Items">
+                    <ul className="kds-col-items" data-label={t('Items')}>
                       {(order.items || []).map((item, index) => (
                         <li key={item.menuItem?._id || item.menuItem || index} className="kds-item">
                           <span className="kds-item-qty">{item.quantity}×</span>
-                          <span className="kds-item-name">{item.name}</span>
+                          <span className="kds-item-name">
+                            {language === 'am' ? item.menuItem?.nameAm || item.name : item.name}
+                          </span>
                         </li>
                       ))}
                       <li className="kds-customer-name">
-                        Customer: {order.customerName || order.customer?.name || 'Guest'}
+                        {t('Customer')}: {order.customerName || order.customer?.name || t('Guest')}
                       </li>
                     </ul>
 
-                    <div className="kds-col-ordered" data-label="Ordered">
-                      <span className="kds-ordered-time">{formatClock(order.createdAt)}</span>
+                    <div className="kds-col-ordered" data-label={t('Ordered')}>
+                      <span className="kds-ordered-time">{formatClock(order.createdAt, language)}</span>
                     </div>
 
-                    <div className="kds-col-elapsed" data-label="Elapsed">
+                    <div className="kds-col-elapsed" data-label={t('Elapsed')}>
                       <span className="kds-elapsed-time">
                         {Number.isNaN(startMs) ? '--:--' : formatElapsed(startMs, now)}
                       </span>
                     </div>
 
-                    <div className="kds-col-chef" data-label="Chef">
+                    <div className="kds-col-chef" data-label={t('Chef')}>
                       {readOnly ? (
                         <span className="kds-chef-name">
                           {order.assignedChef ? order.assignedChef.name : '—'}
@@ -411,9 +444,9 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                           className="kds-chef-select"
                           value={order.assignedChef?._id || ''}
                           onChange={(event) => assignChefToOrder(order._id, event.target.value)}
-                          aria-label={`Assign chef to order ${getOrderNumberLabel(order.orderNumber)}`}
+                          aria-label={`${t('Assign chef')} #${getOrderNumberLabel(order.orderNumber)}`}
                         >
-                          <option value="">-- No chef --</option>
+                          <option value="">{t('No chef assigned')}</option>
                           {chefs.map((chef) => (
                             <option key={chef._id} value={chef._id}>
                               {chef.name}
@@ -423,12 +456,12 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                       )}
                     </div>
 
-                    <div className="kds-col-delivery" data-label="Wait / Delivery">
+                    <div className="kds-col-delivery" data-label={t('Wait / Delivery')}>
                       {readOnly ? (
                         <span className="kds-delivery-name">
                           {[
-                            order.assignedWaiter?.name && `Waiter: ${order.assignedWaiter.name}`,
-                            order.assignedDelivery?.name && `Delivery: ${order.assignedDelivery.name}`
+                            order.assignedWaiter?.name && `${t('Waiter')}: ${order.assignedWaiter.name}`,
+                            order.assignedDelivery?.name && `${t('Delivery')}: ${order.assignedDelivery.name}`
                           ].filter(Boolean).join(' / ') || '—'}
                         </span>
                       ) : (
@@ -438,10 +471,10 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                               className="kds-delivery-select"
                               value={order.assignedWaiter?._id || ''}
                               onChange={(event) => assignWaiterToOrder(order._id, event.target.value)}
-                              aria-label={`Assign waiter to order ${getOrderNumberLabel(order.orderNumber)}`}
+                              aria-label={`${t('Assign waiter')} #${getOrderNumberLabel(order.orderNumber)}`}
                               disabled={busyWaiterIds.has(order._id)}
                             >
-                              <option value="">👤 Assign waiter</option>
+                              <option value="">👤 {t('Assign waiter')}</option>
                               {waiters.map((waiter) => (
                                 <option key={waiter._id} value={waiter._id}>
                                   {waiter.name}
@@ -451,8 +484,8 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                           ) : (
                             <span className="kds-delivery-name">
                               {[
-                                order.assignedWaiter?.name && `Waiter: ${order.assignedWaiter.name}`,
-                                order.assignedDelivery?.name && `Delivery: ${order.assignedDelivery.name}`
+                                order.assignedWaiter?.name && `${t('Waiter')}: ${order.assignedWaiter.name}`,
+                                order.assignedDelivery?.name && `${t('Delivery')}: ${order.assignedDelivery.name}`
                               ].filter(Boolean).join(' / ') || '—'}
                             </span>
                           )}
@@ -461,9 +494,9 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                               className="kds-delivery-select"
                               value={order.assignedDelivery?._id || ''}
                               onChange={(event) => assignDeliveryToOrder(order._id, event.target.value)}
-                              aria-label={`Assign delivery to order ${getOrderNumberLabel(order.orderNumber)}`}
+                              aria-label={`${t('Assign delivery')} #${getOrderNumberLabel(order.orderNumber)}`}
                             >
-                              <option value="">Assign Delivery</option>
+                              <option value="">{t('Assign delivery')}</option>
                               {deliveries.map((delivery) => (
                                 <option key={delivery._id} value={delivery._id}>
                                   {delivery.name}
@@ -481,9 +514,9 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                           className="kds-complete-btn"
                           onClick={() => completeOrder(order)}
                           disabled={isBusy}
-                          aria-label={`Mark order ${getOrderNumberLabel(order.orderNumber)} ready`}
+                          aria-label={`${t('Mark order ready')} #${getOrderNumberLabel(order.orderNumber)}`}
                         >
-                          {isBusy ? '⏳ Saving…' : '✅ Complete'}
+                          {isBusy ? `⏳ ${t('Saving…')}` : `✅ ${t('Complete')}`}
                         </button>
                       )}
                     </div>

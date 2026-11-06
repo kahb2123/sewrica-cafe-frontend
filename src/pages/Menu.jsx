@@ -17,7 +17,7 @@ import { useLanguage } from '../context/useLanguage';
 import './Menu.css';
 
 const Menu = () => {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +41,12 @@ const Menu = () => {
   const [imageErrors, setImageErrors] = useState({});
   const [apiError, setApiError] = useState(false);
   const displayedCategories = [...new Set([...categories, 'soft-drinks', 'hot-drinks'])];
+  const getLocalizedItemName = (item) => (
+    language === 'am' ? item.nameAm || item.name : item.name
+  );
+  const getLocalizedPrepTime = (prepTime) => (
+    language === 'am' ? prepTime.replace(/\bmin\b/gi, t('minutes')) : prepTime
+  );
 
   useEffect(() => {
     fetchMenuItems();
@@ -107,17 +113,17 @@ const Menu = () => {
         setMenuItems(processedItems);
         setFilteredItems(processedItems);
         
-        toast.success(`Loaded ${processedItems.length} menu items`);
+        toast.success(`${processedItems.length} ${t('menu items loaded')}`);
       } else {
         console.log('No items found in API response');
         setMenuItems([]);
         setFilteredItems([]);
-        toast.info('No menu items available');
+        toast.info(t('No menu items available'));
       }
     } catch (error) {
       console.error('Error fetching menu:', error);
       setApiError(true);
-      toast.error(error.message || 'Failed to load menu items');
+      toast.error(t('Failed to load menu'));
     } finally {
       setLoading(false);
     }
@@ -249,7 +255,7 @@ const Menu = () => {
       
       if (existingItemIndex >= 0) {
         cart[existingItemIndex].quantity += quantity;
-        toast.info(`Updated ${item.name} quantity in cart!`);
+        toast.info(`${t('Updated cart quantity for')} ${getLocalizedItemName(item)}`);
       } else {
         cart.push({
           id: item._id,
@@ -259,7 +265,7 @@ const Menu = () => {
           image: item.image,
           quantity: quantity
         });
-        toast.success(`${item.name} added to cart!`);
+        toast.success(`${getLocalizedItemName(item)} ${t('added to cart')}`);
       }
       
       localStorage.setItem('cart', JSON.stringify(cart));
@@ -268,7 +274,7 @@ const Menu = () => {
       
     } catch (error) {
       console.error('Error adding to cart:', error);
-      toast.error('Failed to add item to cart');
+      toast.error(t('Failed to add item to cart'));
     }
   };
 
@@ -282,7 +288,7 @@ const Menu = () => {
       
       if (existingItemIndex >= 0) {
         cart[existingItemIndex].quantity += 1;
-        toast.info(`Updated ${item.name} quantity in cart!`);
+        toast.info(`${t('Updated cart quantity for')} ${getLocalizedItemName(item)}`);
       } else {
         cart.push({
           id: item._id,
@@ -292,7 +298,7 @@ const Menu = () => {
           image: item.image,
           quantity: 1
         });
-        toast.success(`${item.name} added to cart!`);
+        toast.success(`${getLocalizedItemName(item)} ${t('added to cart')}`);
       }
       
       localStorage.setItem('cart', JSON.stringify(cart));
@@ -300,7 +306,7 @@ const Menu = () => {
       
     } catch (error) {
       console.error('Error adding to cart:', error);
-      toast.error('Failed to add item to cart');
+      toast.error(t('Failed to add item to cart'));
     }
   };
 
@@ -552,7 +558,7 @@ const Menu = () => {
                     {!imageErrors[item._id] && item.image ? (
                       <img 
                         src={getImageUrl(item.image)}
-                        alt={item.name}
+                        alt={getLocalizedItemName(item)}
                         onError={() => handleImageError(item._id)}
                         onLoad={() => handleImageLoad(item._id)}
                       />
@@ -567,11 +573,10 @@ const Menu = () => {
                   </div>
                   <div className="menu-card-content">
                     <div className="menu-card-header">
-                      <h3 className="menu-card-title" title={item.name}>
-                        {item.name}
+                      <h3 className="menu-card-title" title={getLocalizedItemName(item)}>
+                        {getLocalizedItemName(item)}
                       </h3>
-                      {/* Only show Amharic name if it exists */}
-                      {item.nameAm && (
+                      {language !== 'am' && item.nameAm && (
                         <span className="menu-card-title-am" title={item.nameAm}>
                           {item.nameAm}
                         </span>
@@ -588,7 +593,7 @@ const Menu = () => {
                     
                     <div className="menu-card-meta">
                       <span className="prep-time">
-                        <FaRegClock /> {item.prepTime}
+                        <FaRegClock /> {getLocalizedPrepTime(item.prepTime)}
                       </span>
                       {item.isVegetarian && (
                         <span className="veg-icon" title={t('Vegetarian')}>
@@ -634,7 +639,7 @@ const Menu = () => {
                 {!imageErrors[`modal-${selectedItem._id}`] && selectedItem.image ? (
                   <img 
                     src={getImageUrl(selectedItem.image)}
-                    alt={selectedItem.name}
+                    alt={getLocalizedItemName(selectedItem)}
                     className="modal-image"
                     onError={() => {
                       console.log('Modal image failed to load:', selectedItem.image);
@@ -655,9 +660,8 @@ const Menu = () => {
               {/* Right Side - Details */}
               <div className="modal-details-section">
                 <div className="modal-details-container">
-                  <h2 className="modal-title">{selectedItem.name}</h2>
-                  {/* Only show Amharic title if it exists */}
-                  {selectedItem.nameAm && (
+                  <h2 className="modal-title">{getLocalizedItemName(selectedItem)}</h2>
+                  {language !== 'am' && selectedItem.nameAm && (
                     <p className="modal-title-am">{selectedItem.nameAm}</p>
                   )}
                   
@@ -689,7 +693,7 @@ const Menu = () => {
                     <div className="info-card">
                       <span className="info-card-label">{t('Spice Level')}</span>
                       <span className="info-card-value spice">
-                        {getSpiceLevelIcon(selectedItem.spiceLevel)} {selectedItem.spiceLevel}
+                        {getSpiceLevelIcon(selectedItem.spiceLevel)} {t(selectedItem.spiceLevel)}
                       </span>
                     </div>
                   </div>

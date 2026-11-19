@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
+import { useAuth } from '../../../context/AuthContext';
 import { ingredientService } from '../../../services/api';
 import './StockTab.css';
 
@@ -38,9 +39,9 @@ const getPeriodRange = (period) => {
   return { start: toInputDate(startDate), end };
 };
 
-const emptyPurchase = { ingredientId: '', quantity: '', unitCost: '', supplier: '' };
+const emptyPurchase = { ingredientId: '', quantity: '', unitCost: '' };
 const emptyWithdrawal = { ingredientId: '', quantity: '', reason: 'consumption', note: '' };
-const emptyNewIngredient = { name: '', unit: 'piece', quantity: '', unitPrice: '', reorderLevel: '0', supplier: '' };
+const emptyNewIngredient = { name: '', unit: 'piece', quantity: '', unitPrice: '', reorderLevel: '0' };
 
 const lineValue = (item) => (Number(item.unitPrice) || 0) * (Number(item.quantity) || 0);
 const isValidAmount = (value) => Number.isFinite(Number(value)) && Number(value) >= 0;
@@ -61,11 +62,14 @@ const formatDateTime = (value) => {
 };
 
 const StockTab = ({ readOnly = false }) => {
+  const { user } = useAuth();
   const [ingredients, setIngredients] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [savingId, setSavingId] = useState(null);
+  const [editingStockId, setEditingStockId] = useState(null);
+  const [editingStockOriginal, setEditingStockOriginal] = useState(null);
   const [purchase, setPurchase] = useState(emptyPurchase);
   const [withdrawal, setWithdrawal] = useState(emptyWithdrawal);
   const [newIngredient, setNewIngredient] = useState(emptyNewIngredient);
@@ -74,6 +78,8 @@ const StockTab = ({ readOnly = false }) => {
   const [reportRange, setReportRange] = useState(() => getPeriodRange('monthly'));
   const [movementReport, setMovementReport] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
+  const [editingMovement, setEditingMovement] = useState(null);
+  const [savingMovement, setSavingMovement] = useState(false);
 
   const creatingNew = purchase.ingredientId === NEW_INGREDIENT;
 
@@ -175,6 +181,73 @@ const StockTab = ({ readOnly = false }) => {
     if (period !== 'custom') setReportRange(getPeriodRange(period));
   };
 
+  const beginMovementEdit = (entry, kind) => {
+    setEditingMovement({
+      id: entry._id,
+      ingredientId: entry.ingredientId,
+      kind,
+      quantity: String(entry.quantity),
+      unitCost: String(entry.unitCost ?? 0),
+      reason: entry.reason || 'consumption',
+      note: entry.note || ''
+    });
+  };
+
+  const saveMovementEdit = async () => {
+    const quantity = Number(editingMovement.quantity);
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      toast.error('Amount must be greater than 0');
+      return;
+    }
+
+    try {
+      setSavingMovement(true);
+      if (editingMovement.kind === 'stock_in') {
+        const unitCost = Number(editingMovement.unitCost);
+        if (!Number.isFinite(unitCost) || unitCost < 0) {
+          toast.error('Unit cost cannot be negative');
+          return;
+        }
+        await ingredientService.updatePurchase(
+          editingMovement.ingredientId,
+          editingMovement.id,
+          { quantity, unitCost }
+        );
+        setMovementReport((current) => ({
+          ...current,
+          stockIn: current.stockIn.map((entry) => entry._id === editingMovement.id
+            ? {
+              ...entry,
+              quantity,
+              unitCost,
+              totalValue: quantity * unitCost
+            }
+            : entry)
+        }));
+        toast.success('Stock-in record updated');
+      } else {
+        const response = await ingredientService.updateWithdrawal(editingMovement.id, {
+          quantity,
+          reason: editingMovement.reason,
+          note: editingMovement.note
+        });
+        setMovementReport((current) => ({
+          ...current,
+          stockOut: current.stockOut.map((entry) => entry._id === editingMovement.id
+            ? { ...entry, ...response.data }
+            : entry)
+        }));
+        toast.success('Stock-out record updated');
+      }
+      setEditingMovement(null);
+      loadData(false);
+    } catch (error) {
+      toast.error(error.message || 'Failed to update stock movement');
+    } finally {
+      setSavingMovement(false);
+    }
+  };
+
   const recordStockIn = async (event) => {
     event.preventDefault();
     if (readOnly) return;
@@ -196,7 +269,7 @@ const StockTab = ({ readOnly = false }) => {
           quantity: Number(newIngredient.quantity || 0),
           unitPrice: Number(newIngredient.unitPrice || 0),
           reorderLevel: Number(newIngredient.reorderLevel || 0),
-          supplier: newIngredient.supplier
+          supplier: user?.name || ''
         });
         setIngredients((current) => [...current, response.data].sort((a, b) => a.name.localeCompare(b.name)));
         setNewIngredient(emptyNewIngredient);
@@ -231,10 +304,10 @@ const StockTab = ({ readOnly = false }) => {
       const response = await ingredientService.recordPurchase(purchase.ingredientId, {
         quantity,
         unitCost,
-        supplier: purchase.supplier
+        supplier: user?.name || ''
       });
       setIngredients((current) => current.map((item) => (item._id === response.data._id ? response.data : item)));
-      setPurchase((current) => ({ ...emptyPurchase, ingredientId: current.ingredientId, supplier: current.supplier }));
+      setPurchase((current) => ({ ...emptyPurchase, ingredientId: current.ingredientId }));
       toast.success(`${response.data.name} stock increased by ${quantity} ${response.data.unit}`);
       loadData(false);
     } catch (error) {
@@ -294,14 +367,32 @@ const StockTab = ({ readOnly = false }) => {
     }
     try {
       setSavingId(item._id);
-      const response = await ingredientService.update(item._id, { unitPrice, reorderLevel, supplier: item.supplier });
+      const response = await ingredientService.update(item._id, { unitPrice, reorderLevel });
       setIngredients((current) => current.map((entry) => (entry._id === item._id ? response.data : entry)));
+      setEditingStockId(null);
+      setEditingStockOriginal(null);
       toast.success(`${item.name} updated`);
     } catch (error) {
       toast.error(error.message || 'Failed to update ingredient');
     } finally {
       setSavingId(null);
     }
+  };
+
+  const beginStockEdit = (item) => {
+    setEditingStockId(item._id);
+    setEditingStockOriginal({
+      unitPrice: item.unitPrice ?? 0,
+      reorderLevel: item.reorderLevel ?? 0
+    });
+  };
+
+  const cancelStockEdit = (item) => {
+    setIngredients((current) => current.map((entry) => (
+      entry._id === item._id ? { ...entry, ...editingStockOriginal } : entry
+    )));
+    setEditingStockId(null);
+    setEditingStockOriginal(null);
   };
 
   const deleteIngredient = async (item) => {
@@ -446,22 +537,62 @@ const StockTab = ({ readOnly = false }) => {
                 <div className="stock-table-wrap">
                   <table className="stock-table stock-report-table">
                     <thead>
-                      <tr><th>Date</th><th>Ingredient</th><th>Quantity</th><th>Unit cost</th><th>Total value</th><th>Supplier</th><th>Recorded by</th></tr>
+                      <tr>
+                        <th>Recorded at (Addis Ababa)</th><th>Ingredient</th><th>Quantity</th>
+                        <th>Unit cost</th><th>Total value</th><th>Supply name</th><th>Recorded by</th>
+                        {!readOnly && <th>Actions</th>}
+                      </tr>
                     </thead>
                     <tbody>
                       {movementRows.stockIn.map((entry) => (
                         <tr key={entry._id}>
                           <td>{formatDateTime(entry.createdAt)}</td>
                           <td>{entry.ingredientName}</td>
-                          <td>{entry.quantity} {entry.unit}</td>
-                          <td>ETB {currency.format(entry.unitCost)}</td>
+                          <td>{editingMovement?.id === entry._id ? (
+                            <input
+                              className="stock-inline-input"
+                              aria-label="Stock-in quantity"
+                              type="number"
+                              min="0.01"
+                              step="0.01"
+                              value={editingMovement.quantity}
+                              onChange={(event) => setEditingMovement({ ...editingMovement, quantity: event.target.value })}
+                            />
+                          ) : `${entry.quantity} ${entry.unit}`}</td>
+                          <td>{editingMovement?.id === entry._id ? (
+                            <input
+                              className="stock-inline-input"
+                              aria-label="Stock-in unit cost"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={editingMovement.unitCost}
+                              onChange={(event) => setEditingMovement({ ...editingMovement, unitCost: event.target.value })}
+                            />
+                          ) : `ETB ${currency.format(entry.unitCost)}`}</td>
                           <td>ETB {currency.format(entry.totalValue)}</td>
                           <td>{entry.supplier || '--'}</td>
                           <td>{entry.performedByName || '--'}</td>
+                          {!readOnly && <td>
+                            {editingMovement?.id === entry._id ? (
+                              <div className="stock-row-actions">
+                                <button className="stock-save" type="button" disabled={savingMovement} onClick={saveMovementEdit}>
+                                  {savingMovement ? 'Saving...' : 'Save'}
+                                </button>
+                                <button className="stock-delete" type="button" disabled={savingMovement} onClick={() => setEditingMovement(null)}>
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button className="stock-save" type="button" onClick={() => beginMovementEdit(entry, 'stock_in')}>
+                                Edit
+                              </button>
+                            )}
+                          </td>}
                         </tr>
                       ))}
                       {movementRows.stockIn.length === 0 && (
-                        <tr><td colSpan="7" className="stock-report-empty">No stock received in this period.</td></tr>
+                        <tr><td colSpan={readOnly ? 7 : 8} className="stock-report-empty">No stock received in this period.</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -476,22 +607,68 @@ const StockTab = ({ readOnly = false }) => {
                 <div className="stock-table-wrap">
                   <table className="stock-table stock-report-table">
                     <thead>
-                      <tr><th>Date</th><th>Ingredient</th><th>Quantity</th><th>Reason</th><th>Total value</th><th>Recorded by</th><th>Note</th></tr>
+                      <tr>
+                        <th>Recorded at (Addis Ababa)</th><th>Ingredient</th><th>Quantity</th>
+                        <th>Reason</th><th>Total value</th><th>Recorded by</th><th>Note</th>
+                        {!readOnly && <th>Actions</th>}
+                      </tr>
                     </thead>
                     <tbody>
                       {movementRows.stockOut.map((entry) => (
                         <tr key={entry._id}>
                           <td>{formatDateTime(entry.createdAt)}</td>
                           <td>{entry.ingredientName}</td>
-                          <td>{entry.quantity} {entry.unit}</td>
-                          <td>{REASON_LABELS[entry.reason] || 'Other'}</td>
+                          <td>{editingMovement?.id === entry._id ? (
+                            <input
+                              className="stock-inline-input"
+                              aria-label="Stock-out quantity"
+                              type="number"
+                              min="0.01"
+                              step="0.01"
+                              value={editingMovement.quantity}
+                              onChange={(event) => setEditingMovement({ ...editingMovement, quantity: event.target.value })}
+                            />
+                          ) : `${entry.quantity} ${entry.unit}`}</td>
+                          <td>{editingMovement?.id === entry._id ? (
+                            <select
+                              className="stock-inline-input"
+                              aria-label="Stock-out reason"
+                              value={editingMovement.reason}
+                              onChange={(event) => setEditingMovement({ ...editingMovement, reason: event.target.value })}
+                            >
+                              {REASONS.map((reason) => <option key={reason.value} value={reason.value}>{reason.label}</option>)}
+                            </select>
+                          ) : REASON_LABELS[entry.reason] || 'Other'}</td>
                           <td>ETB {currency.format(entry.totalValue)}</td>
                           <td>{entry.performedByName || '--'}</td>
-                          <td>{entry.note || '--'}</td>
+                          <td>{editingMovement?.id === entry._id ? (
+                            <input
+                              className="stock-inline-input"
+                              aria-label="Stock-out note"
+                              value={editingMovement.note}
+                              onChange={(event) => setEditingMovement({ ...editingMovement, note: event.target.value })}
+                            />
+                          ) : entry.note || '--'}</td>
+                          {!readOnly && <td>
+                            {editingMovement?.id === entry._id ? (
+                              <div className="stock-row-actions">
+                                <button className="stock-save" type="button" disabled={savingMovement} onClick={saveMovementEdit}>
+                                  {savingMovement ? 'Saving...' : 'Save'}
+                                </button>
+                                <button className="stock-delete" type="button" disabled={savingMovement} onClick={() => setEditingMovement(null)}>
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button className="stock-save" type="button" onClick={() => beginMovementEdit(entry, 'stock_out')}>
+                                Edit
+                              </button>
+                            )}
+                          </td>}
                         </tr>
                       ))}
                       {movementRows.stockOut.length === 0 && (
-                        <tr><td colSpan="7" className="stock-report-empty">No stock taken out in this period.</td></tr>
+                        <tr><td colSpan={readOnly ? 7 : 8} className="stock-report-empty">No stock taken out in this period.</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -596,12 +773,10 @@ const StockTab = ({ readOnly = false }) => {
                   onChange={(e) => setNewIngredient({ ...newIngredient, reorderLevel: e.target.value })}
                 />
 
-                <label htmlFor="new-ingredient-supplier">Supplier</label>
-                <input
-                  id="new-ingredient-supplier"
-                  value={newIngredient.supplier}
-                  onChange={(e) => setNewIngredient({ ...newIngredient, supplier: e.target.value })}
-                />
+                <div className="stock-available">
+                  <span>Supply name</span>
+                  <strong>{user?.name || '--'}</strong>
+                </div>
 
                 <button type="submit" disabled={submitting}>Add ingredient to stock</button>
               </>
@@ -634,12 +809,10 @@ const StockTab = ({ readOnly = false }) => {
                   onChange={(e) => setPurchase({ ...purchase, unitCost: e.target.value })}
                 />
 
-                <label htmlFor="stock-in-supplier">Supplier</label>
-                <input
-                  id="stock-in-supplier"
-                  value={purchase.supplier}
-                  onChange={(e) => setPurchase({ ...purchase, supplier: e.target.value })}
-                />
+                <div className="stock-available">
+                  <span>Supply name</span>
+                  <strong>{user?.name || '--'}</strong>
+                </div>
 
                 <button type="submit" disabled={submitting}>Add to stock</button>
               </>
@@ -701,6 +874,11 @@ const StockTab = ({ readOnly = false }) => {
               onChange={(e) => setWithdrawal({ ...withdrawal, note: e.target.value })}
             />
 
+            <div className="stock-available">
+              <span>Supply name</span>
+              <strong>{user?.name || '--'}</strong>
+            </div>
+
             <button type="submit" disabled={submitting}>Take out of stock</button>
           </form>
         </div>
@@ -719,11 +897,10 @@ const StockTab = ({ readOnly = false }) => {
               <th>Ingredient</th>
               <th>Supply name</th>
               <th>Available</th>
-              <th>Reorder at</th>
+              <th>Recorded at (Addis Ababa)</th>
               <th>Unit price (ETB)</th>
               <th>Total price (ETB)</th>
-              <th>Last updated (Addis Ababa)</th>
-              {!readOnly && <th><span className="sr-only">Actions</span></th>}
+              {!readOnly && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -737,18 +914,23 @@ const StockTab = ({ readOnly = false }) => {
                   </td>
                   <td>{item.supplier || '--'}</td>
                   <td><span className="stock-quantity">{item.quantity} {item.unit}</span></td>
-                  <td>{readOnly ? item.reorderLevel : (
-                    <input
-                      className="stock-inline-input"
-                      aria-label={`${item.name} reorder level`}
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={item.reorderLevel}
-                      onChange={(e) => patchIngredientLocal(item._id, 'reorderLevel', e.target.value)}
-                    />
-                  )}</td>
-                  <td>{readOnly ? (item.unitPrice ?? 0) : (
+                  <td>
+                    {!readOnly && editingStockId === item._id && (
+                      <input
+                        className="stock-inline-input"
+                        aria-label={`${item.name} reorder level`}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.reorderLevel}
+                        onChange={(e) => patchIngredientLocal(item._id, 'reorderLevel', e.target.value)}
+                      />
+                    )}
+                    <small className="stock-recorded-time">
+                      {formatDateTime(item.updatedAt || item.createdAt)}
+                    </small>
+                  </td>
+                  <td>{readOnly || editingStockId !== item._id ? (item.unitPrice ?? 0) : (
                     <input
                       className="stock-inline-input"
                       aria-label={`${item.name} unit price`}
@@ -760,21 +942,41 @@ const StockTab = ({ readOnly = false }) => {
                     />
                   )}</td>
                   <td><span className="stock-line-total">ETB {currency.format(lineValue(item))}</span></td>
-                  <td>{formatDateTime(item.updatedAt || item.createdAt)}</td>
                   {!readOnly && <td>
                     <div className="stock-row-actions">
-                      <button
-                        className="stock-save"
-                        type="button"
-                        disabled={savingId === item._id}
-                        onClick={() => saveIngredient(item)}
-                      >
-                        {savingId === item._id ? 'Saving...' : 'Save'}
-                      </button>
+                      {editingStockId === item._id ? (
+                        <>
+                          <button
+                            className="stock-save"
+                            type="button"
+                            disabled={savingId === item._id}
+                            onClick={() => saveIngredient(item)}
+                          >
+                            {savingId === item._id ? 'Saving...' : 'Save'}
+                          </button>
+                          <button
+                            className="stock-save"
+                            type="button"
+                            disabled={savingId === item._id}
+                            onClick={() => cancelStockEdit(item)}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="stock-save"
+                          type="button"
+                          disabled={Boolean(editingStockId) || savingId === item._id}
+                          onClick={() => beginStockEdit(item)}
+                        >
+                          Edit
+                        </button>
+                      )}
                       <button
                         className="stock-delete"
                         type="button"
-                        disabled={savingId === item._id}
+                        disabled={savingId === item._id || editingStockId === item._id}
                         onClick={() => deleteIngredient(item)}
                       >
                         Delete
@@ -790,7 +992,7 @@ const StockTab = ({ readOnly = false }) => {
               <tr className="stock-total-row">
                 <td colSpan={5}>Total price of all stock</td>
                 <td><span className="stock-line-total">ETB {currency.format(stats.totalPrice)}</span></td>
-                <td colSpan={readOnly ? '1' : '2'} />
+                {!readOnly && <td />}
               </tr>
             </tfoot>
           )}

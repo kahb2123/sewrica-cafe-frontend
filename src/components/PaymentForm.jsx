@@ -13,7 +13,7 @@ import './PaymentForm.css';
 // Initialize Stripe (replace with your publishable key)
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_stripe_publishable_key_here');
 
-const PaymentForm = ({ 
+const PaymentFormInner = ({ 
   orderId, 
   amount, 
   customerInfo, // Added customer info for billing details
@@ -202,7 +202,7 @@ const PaymentForm = ({
 };
 
 // Main wrapper component with props validation
-const StripePaymentWrapper = ({ 
+const PaymentForm = ({ 
   orderId, 
   amount, 
   customerInfo = {}, // Default to empty object
@@ -241,4 +241,4 @@ const StripePaymentWrapper = ({
   );
 };
 
-export default StripePaymentWrapper;
+export default PaymentForm;

@@ -64,6 +64,7 @@ const ReportsTab = () => {
   const [range, setRange] = useState(() => ({ start: daysAgo(6), end: daysAgo(0) }));
 
   const [items, setItems] = useState([]);
+  const [taxSummary, setTaxSummary] = useState(null);
   const [staff, setStaff] = useState([]);
   const [roleFilter, setRoleFilter] = useState('all');
   const [loading, setLoading] = useState(false);
@@ -99,11 +100,12 @@ const ReportsTab = () => {
           section: activeTab
         });
         if (!cancelled && requestId.current === currentRequestId) {
-          if (activeTab === 'items') {
-            setItems(response?.data?.topItems || []);
-          } else {
-            const rows = response?.data?.staff || [];
-            setStaff(rows);
+            if (activeTab === 'items') {
+              setItems(response?.data?.topItems || []);
+              setTaxSummary(response?.data?.taxSummary || null);
+            } else {
+              const rows = response?.data?.staff || [];
+              setStaff(rows);
           }
         }
       } catch (error) {
@@ -408,6 +410,30 @@ const ReportsTab = () => {
                     ))}
                   </div>
                 </div>
+
+                {taxSummary && (
+                  <div className="tax-summary-card">
+                    <h2>Government Tax & Ledger Summary</h2>
+                    <div className="tax-grid">
+                      <div className="tax-item" title="Sum of all approved expenses in the selected period">
+                        <span className="tax-label">Total Operating Expenses</span>
+                        <strong className="tax-value">{formatMoney(taxSummary.totalOperatingExpenses)}</strong>
+                      </div>
+                      <div className="tax-item" title="Gross Sales minus Total Operating Expenses">
+                        <span className="tax-label">Taxable Net Income</span>
+                        <strong className="tax-value">{formatMoney(taxSummary.netTaxableProfit)}</strong>
+                      </div>
+                      <div className="tax-item" title="30% of Taxable Net Income">
+                        <span className="tax-label">Est. Government Tax Due (30%)</span>
+                        <strong className="tax-value">{formatMoney(taxSummary.estimatedTax)}</strong>
+                      </div>
+                      <div className="tax-item" title="Taxable Net Income minus Tax Due">
+                        <span className="tax-label">Net Take-Home Margin</span>
+                        <strong className="tax-value">{formatMoney(taxSummary.takeHomeProfit)}</strong>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="table-card">
                   <h2>Sales Details</h2>

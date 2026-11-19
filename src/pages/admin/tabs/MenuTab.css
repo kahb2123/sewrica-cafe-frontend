@@ -285,6 +285,56 @@
   border-color: #27ae60;
 }
 
+.menu-add-category {
+  margin-top: 7px;
+  padding: 5px 0;
+  border: 0;
+  background: transparent;
+  color: #16805b;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.menu-add-category-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.menu-add-category-form input {
+  flex: 1 1 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.menu-add-category-form button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding: 7px 10px;
+  border: 1px solid #d5dfd9;
+  border-radius: 6px;
+  background: #fff;
+  color: #243447;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.menu-add-category-form button:first-of-type {
+  border-color: #16805b;
+  background: #16805b;
+  color: #fff;
+}
+
+.menu-add-category-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

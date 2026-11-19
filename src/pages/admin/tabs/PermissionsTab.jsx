@@ -87,7 +87,7 @@ const PermissionsTab = () => {
   const handlePageAccessToggle = async (page, type) => {
     if (!selectedRole) return;
 
-    const current = selectedRole.pageAccess[page];
+    const current = selectedRole?.pageAccess?.[page] || {};
     const isCurrently = type === 'read' ? current?.canRead : current?.canWrite;
 
     const actionMap = {
@@ -145,13 +145,13 @@ const PermissionsTab = () => {
     if (!roleMap) return null;
 
     const allPermissionKeys = Object.values(PERMISSIONS);
-    const roles = roleMap.roles;
+    const roles = roleMap.roles || [];
 
     return (
       <div className="permission-matrix">
         <h3>{t('Role Permission Matrix')}</h3>
-        <div className="matrix-table">
-          <table>
+        <div className="matrix-scroll">
+          <table className="matrix-table">
             <thead>
               <tr>
                 <th className="sticky-col">{t('Role')}</th>
@@ -222,20 +222,20 @@ const PermissionsTab = () => {
                   <td>{t(PageLabels[page] || page)}</td>
                   <td>
                     <button
-                      className={`page-access-toggle ${access.canRead ? 'granted' : 'revoked'}`}
+                      className={`page-access-toggle ${(access?.canRead ? 'granted' : 'revoked')}`}
                       onClick={() => handlePageAccessToggle(page, 'read')}
                       disabled={saving}
                     >
-                      {t(access.canRead ? 'Yes' : 'No')}
+                      {t(access?.canRead ? 'Yes' : 'No')}
                     </button>
                   </td>
                   <td>
                     <button
-                      className={`page-access-toggle ${access.canWrite ? 'granted' : 'revoked'}`}
+                      className={`page-access-toggle ${(access?.canWrite ? 'granted' : 'revoked')}`}
                       onClick={() => handlePageAccessToggle(page, 'write')}
                       disabled={saving}
                     >
-                      {t(access.canWrite ? 'Yes' : 'No')}
+                      {t(access?.canWrite ? 'Yes' : 'No')}
                     </button>
                   </td>
                 </tr>

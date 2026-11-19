@@ -1,12 +1,10 @@
 // src/pages/admin/tabs/GiveawayTab.jsx
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../../context/AuthContext';
 import { toast } from 'react-toastify';
 import api from '../../../services/api';
 import './GiveawayTab.css';
 
 const GiveawayTab = () => {
-  const { user } = useAuth();
   const [giveaways, setGiveaways] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);

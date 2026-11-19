@@ -408,6 +408,15 @@ export const menuService = {
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch categories' };
     }
+  },
+
+  createCategory: async (name) => {
+    try {
+      const response = await api.post('/menu/categories', { name });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to create category' };
+    }
   }
 };
 
@@ -436,6 +445,15 @@ export const ingredientService = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to record purchase' };
+    }
+  },
+
+  updatePurchase: async (ingredientId, purchaseId, purchaseData) => {
+    try {
+      const response = await api.patch(`/ingredients/${ingredientId}/purchases/${purchaseId}`, purchaseData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update purchase' };
     }
   },
 
@@ -482,6 +500,15 @@ export const ingredientService = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to record withdrawal' };
+    }
+  },
+
+  updateWithdrawal: async (id, withdrawalData) => {
+    try {
+      const response = await api.patch(`/ingredients/withdrawals/${id}`, withdrawalData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update withdrawal' };
     }
   }
 };
@@ -888,6 +915,15 @@ export const adminService = {
     } catch (error) {
       console.error('Error fetching staff detail:', error);
       throw error.response?.data || { message: error.message || 'Failed to fetch staff detail' };
+    }
+  },
+
+  updateWithdrawal: async (id, withdrawalData) => {
+    try {
+      const response = await api.patch(`/ingredients/withdrawals/${id}`, withdrawalData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update withdrawal' };
     }
   },
 };

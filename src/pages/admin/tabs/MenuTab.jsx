@@ -11,7 +11,11 @@ const MenuTab = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth(); // Use auth context
   const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [showCategoryInput, setShowCategoryInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [imageFile, setImageFile] = useState(null);
@@ -70,6 +74,16 @@ const MenuTab = () => {
     }
   }, [navigate, t]);
 
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await menuService.getAllCategories();
+      setCategories(response.data || []);
+    } catch (error) {
+      console.error('Error fetching menu categories:', error);
+      toast.error(error.message || t('Failed to load menu categories'));
+    }
+  }, [t]);
+
   // Check authentication using auth context
   useEffect(() => {
     console.log('🔐 MenuTab - isAuthenticated:', isAuthenticated);
@@ -96,7 +110,8 @@ const MenuTab = () => {
 
     console.log('✅ Admin access granted for MenuTab');
     fetchMenuItems();
-  }, [isAuthenticated, user, authLoading, navigate, t, fetchMenuItems]);
+    fetchCategories();
+  }, [isAuthenticated, user, authLoading, navigate, t, fetchMenuItems, fetchCategories]);
 
   const resetForm = () => {
     setEditingItem(null);
@@ -136,6 +151,30 @@ const MenuTab = () => {
         setImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAddCategory = async (e) => {
+    e.preventDefault();
+    const name = newCategoryName.trim();
+    if (!name) {
+      toast.error(t('Enter a category name'));
+      return;
+    }
+
+    try {
+      setIsAddingCategory(true);
+      const response = await menuService.createCategory(name);
+      const category = response.data.value;
+      setCategories((current) => [...current, category].sort((a, b) => a.localeCompare(b)));
+      setFormData((current) => ({ ...current, category }));
+      setNewCategoryName('');
+      setShowCategoryInput(false);
+      toast.success(t('Category added successfully'));
+    } catch (error) {
+      toast.error(error.message || t('Failed to add category'));
+    } finally {
+      setIsAddingCategory(false);
     }
   };
 
@@ -223,7 +262,11 @@ const MenuTab = () => {
   };
 
   const translateCategory = (category) => {
-    const label = String(category || '')
+    const categoryLabels = {
+      traditional: 'Traditional Ethiopian',
+      fastfood: 'Fast Food'
+    };
+    const label = categoryLabels[category] || String(category || '')
       .split(/[-_]/)
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
@@ -409,18 +452,38 @@ const MenuTab = () => {
                     required
                   >
                     <option value="">{t('Select Category')}</option>
-                    <option value="burgers">{t('Burgers')}</option>
-                    <option value="sandwiches">{t('Sandwiches')}</option>
-                    <option value="pizza">{t('Pizza')}</option>
-                    <option value="traditional">{t('Traditional Ethiopian')}</option>
-                    <option value="fastfood">{t('Fast Food')}</option>
-                    <option value="wraps">{t('Wraps')}</option>
-                    <option value="fetira">{t('Fetira')}</option>
-                    <option value="beverages">{t('Beverages')}</option>
-                    <option value="soft-drinks">{t('Soft Drinks')}</option>
-                    <option value="hot-drinks">{t('Hot Drinks')}</option>
-                    <option value="desserts">{t('Desserts')}</option>
+                    {categories.map((category) => (
+                      <option key={category} value={category}>{translateCategory(category)}</option>
+                    ))}
                   </select>
+                  {!showCategoryInput ? (
+                    <button
+                      className="menu-add-category"
+                      type="button"
+                      onClick={() => setShowCategoryInput(true)}
+                    >
+                      + {t('Add category')}
+                    </button>
+                  ) : (
+                    <div className="menu-add-category-form">
+                      <input
+                        aria-label={t('New category name')}
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        placeholder={t('New category name')}
+                        maxLength={60}
+                      />
+                      <button type="button" disabled={isAddingCategory} onClick={handleAddCategory}>
+                        {isAddingCategory ? t('Adding...') : t('Add')}
+                      </button>
+                      <button type="button" onClick={() => {
+                        setShowCategoryInput(false);
+                        setNewCategoryName('');
+                      }}>
+                        {t('Cancel')}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               

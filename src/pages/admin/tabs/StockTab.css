@@ -331,6 +331,14 @@
   color: var(--color-text-muted, #8a7b6b);
 }
 
+.stock-recorded-time {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-text-muted, #8a7b6b);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
 .stock-inline-input {
   width: 96px;
   min-height: 36px;

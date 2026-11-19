@@ -1,12 +1,10 @@
 // src/pages/admin/tabs/LotteryTab.jsx
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../../context/AuthContext';
 import { toast } from 'react-toastify';
 import api from '../../../services/api';
 import './LotteryTab.css';
 
 const LotteryTab = () => {
-  const { user } = useAuth();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());

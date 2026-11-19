@@ -624,3 +624,59 @@
     grid-template-columns: 1fr;
   }
 }
+
+.tax-summary-card {
+  background: #fffdf8;
+  border: 1px solid #e6ddd0;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+}
+
+.tax-summary-card h2 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+  color: #2f2a24;
+}
+
+.tax-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.tax-item {
+  background: #f7f1e6;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: help;
+}
+
+.tax-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8a7b6b;
+  font-weight: 700;
+}
+
+.tax-value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #2f2a24;
+}
+
+@media (max-width: 900px) {
+  .tax-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .tax-grid {
+    grid-template-columns: 1fr;
+  }
+}

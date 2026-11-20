@@ -156,6 +156,31 @@
   padding: 0 30px 30px;
 }
 
+.completed-task-filter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: var(--color-text-muted);
+}
+
+.completed-task-filter input,
+.today-filter-btn {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #d6dbe1;
+  border-radius: 8px;
+  background: white;
+  color: var(--color-dark);
+  font: inherit;
+}
+
+.today-filter-btn {
+  cursor: pointer;
+  font-weight: 600;
+}
+
 .loading-state {
   text-align: center;
   padding: 60px;

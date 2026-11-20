@@ -26,6 +26,18 @@ const extractArray = (response, defaultArray = []) => {
 };
 
 const normalizeLocation = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+const getTaskDateKey = (date = new Date()) => {
+  const parts = new Intl.DateTimeFormat('en', {
+    timeZone: 'Africa/Addis_Ababa',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date).reduce((result, part) => {
+    if (part.type !== 'literal') result[part.type] = part.value;
+    return result;
+  }, {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+};
 
 const getTaskLocationKey = (order) => {
   if (order.tableNumber) return `table:${normalizeLocation(order.tableNumber)}`;
@@ -104,6 +116,7 @@ const StaffDashboard = () => {
   const [activeSubTab, setActiveSubTab] = useState('tasks');
   const [tasks, setTasks] = useState([]);
   const [completedTasks, setCompletedTasks] = useState([]);
+  const [completedDate, setCompletedDate] = useState(() => getTaskDateKey());
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     todayTasks: 0,
@@ -415,6 +428,12 @@ const StaffDashboard = () => {
 
   const navTabs = getNavTabs();
   const taskType = getTaskType();
+  const visibleCompletedTasks = taskType === 'waiter'
+    ? completedTasks.filter((task) => {
+        const completedAt = task.waiterCompletedAt;
+        return completedAt && getTaskDateKey(new Date(completedAt)) === completedDate;
+      })
+    : completedTasks;
   const canWriteTasks = canWritePage('staffDashboard') && (
     taskType === 'cook'
       ? canWritePage('staffOrdersCooking')
@@ -518,11 +537,29 @@ const StaffDashboard = () => {
                 className={`tab-btn ${activeSubTab === 'completed' ? 'active' : ''}`}
                 onClick={() => handleSubTabChange('completed')}
               >
-                {t('Completed')} ({completedTasks.length})
+                {t('Completed')} ({visibleCompletedTasks.length})
               </button>
             </div>
 
             <div className="tasks-container">
+              {taskType === 'waiter' && activeSubTab === 'completed' && (
+                <div className="completed-task-filter">
+                  <label htmlFor="completed-task-date">{t('Completed date')}</label>
+                  <button
+                    type="button"
+                    className="today-filter-btn"
+                    onClick={() => setCompletedDate(getTaskDateKey())}
+                  >
+                    {t('Today')}
+                  </button>
+                  <input
+                    id="completed-task-date"
+                    type="date"
+                    value={completedDate}
+                    onChange={(event) => setCompletedDate(event.target.value)}
+                  />
+                </div>
+              )}
               {loading ? (
                 <div className="loading-state">
                   <div className="spinner"></div>
@@ -561,8 +598,8 @@ const StaffDashboard = () => {
 
                   {activeSubTab === 'completed' && (
                     <>
-                      {completedTasks.length > 0 ? (
-                        completedTasks.map(task => (
+                      {visibleCompletedTasks.length > 0 ? (
+                        visibleCompletedTasks.map(task => (
                           <StaffTaskCard
                             key={task._id}
                             task={task}

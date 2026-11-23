@@ -138,7 +138,10 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
 
     const handleNewOrder = (data) => {
       if (!tvMode || hasAssignedStaff(data || {})) {
-        toast.info(`${t('New order')} #${getOrderNumberLabel(data?.orderNumber)} ${t('in kitchen')}`);
+        toast.info(
+          `${t('New order')} #${getOrderNumberLabel(data?.orderNumber)} ${t('in kitchen')}`,
+          { autoClose: false }
+        );
       }
       loadOrders(false);
     };
@@ -420,7 +423,7 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                         </li>
                       ))}
                       <li className="kds-customer-name">
-                        {t('Customer')}: {order.customerName || order.customer?.name || t('Guest')}
+                        {t('Customer')}: {order.orderName || order.customerName || order.customer?.name || t('Guest')}
                       </li>
                     </ul>
 

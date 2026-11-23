@@ -365,7 +365,7 @@ const OrdersTab = () => {
               
               <div className="order-card-body">
                 <div className="customer-info">
-                  <p><strong>👤 Customer:</strong> {order.customerName || order.customer?.name || 'Guest'}</p>
+                  <p><strong>👤 Customer:</strong> {order.orderName || order.customerName || order.customer?.name || 'Guest'}</p>
                   <p><strong>📞 Phone:</strong> {order.customerPhone || order.customer?.phone || 'N/A'}</p>
                   <p><strong>💰 Total:</strong> ETB {order.totalAmount}</p>
                 </div>

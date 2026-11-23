@@ -57,7 +57,7 @@ const AdminDashboard = () => {
     if (connected && onNewOrder) {
       const unsubscribe = onNewOrder((data) => {
         if (activeTab !== 'kitchen') {
-          toast.info(`New order #${data.orderNumber} received`);
+          toast.info(`New order #${data.orderNumber} received`, { autoClose: false });
         }
         if (activeTab === 'overview') {
           fetchDashboardStats();

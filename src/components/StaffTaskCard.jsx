@@ -365,7 +365,7 @@ const StaffTaskCard = ({
 
         <div className="customer-info">
           {type !== 'waiter' && (
-            <p><span className="info-label">👤 {t('Customer:')}</span> {task.customerName || task.customer?.name || t('Guest')}</p>
+            <p><span className="info-label">👤 {t('Customer:')}</span> {task.orderName || task.customerName || task.customer?.name || t('Guest')}</p>
           )}
           <p><span className="info-label">📞 {t('Phone:')}</span> {task.customerPhone || task.customer?.phone || 'N/A'}</p>
           {task.tableNumber && (

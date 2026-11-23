@@ -23,6 +23,7 @@ const StaffOrderEntry = () => {
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [deliveryMethod, setDeliveryMethod] = useState(isDeliveryStaff ? 'delivery' : 'dine-in');
   const [customerInfo, setCustomerInfo] = useState({ name: '', phone: '' });
+  const [orderName, setOrderName] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState({ street: '', area: '', city: 'Addis Ababa' });
   const [tableNumber, setTableNumber] = useState('');
   const [loadingMenu, setLoadingMenu] = useState(true);
@@ -111,6 +112,7 @@ const StaffOrderEntry = () => {
         items: selectedItems.map(({ _id, quantity }) => ({ menuItem: _id, quantity })),
         paymentMethod,
         deliveryMethod,
+        orderName,
         customerInfo,
         deliveryAddress,
         tableNumber
@@ -118,6 +120,7 @@ const StaffOrderEntry = () => {
       setCart({});
       setShowMobileSummary(false);
       setCustomerInfo({ name: '', phone: '' });
+      setOrderName('');
       setDeliveryAddress({ street: '', area: '', city: 'Addis Ababa' });
       setTableNumber('');
       toast.success(`Order #${response.order.orderNumber} placed and paid · ETB ${Number(response.order.totalAmount).toFixed(2)}`);
@@ -251,6 +254,16 @@ const StaffOrderEntry = () => {
               </label>
             </fieldset>
 
+            <div className="staff-order-customer-fields">
+              <input
+                name="orderName"
+                value={orderName}
+                onChange={(event) => setOrderName(event.target.value)}
+                placeholder={t('Order name (optional)')}
+                aria-label={t('Order name (optional)')}
+              />
+            </div>
+
             {deliveryMethod === 'dine-in' && (
               <div className="staff-order-customer-fields">
                 <input
@@ -266,7 +279,6 @@ const StaffOrderEntry = () => {
 
             {deliveryMethod === 'delivery' && (
               <div className="staff-order-customer-fields">
-                <input name="name" value={customerInfo.name} onChange={updateCustomerInfo} placeholder={t('Customer name (optional)')} aria-label={t('Customer name (optional)')} />
                 <input name="phone" value={customerInfo.phone} onChange={updateCustomerInfo} placeholder={t('Customer phone (optional)')} aria-label={t('Customer phone (optional)')} />
                 <input name="street" value={deliveryAddress.street} onChange={updateDeliveryAddress} placeholder={t('Delivery address')} aria-label={t('Delivery address')} required />
                 <input name="area" value={deliveryAddress.area} onChange={updateDeliveryAddress} placeholder={t('Area (optional)')} aria-label={t('Area (optional)')} />

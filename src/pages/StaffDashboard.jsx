@@ -434,22 +434,32 @@ const StaffDashboard = () => {
         return completedAt && getTaskDateKey(new Date(completedAt)) === completedDate;
       })
     : completedTasks;
-  const completedTaskRows = visibleCompletedTasks.flatMap((task) =>
-    (task.items || []).map((item, index) => {
+  const completedItemsByName = new Map();
+  visibleCompletedTasks.forEach((task) => {
+    (task.items || []).forEach((item) => {
+      const itemName = String(item.name || item.menuItem?.name || 'Unknown item').trim() || 'Unknown item';
+      const itemKey = itemName.toLocaleLowerCase();
       const quantity = Number(item.quantity) || 0;
       const unitPrice = Number(item.price) || 0;
-      return {
-        key: `${task._id}-${item.name || item.menuItem || 'item'}-${unitPrice}-${index}`,
-        taskNumber: task.orderCount > 1
-          ? `Orders #${task.orderNumber}`
-          : `#${task.orderNumber || task._id?.slice(-6) || '—'}`,
-        item: item.name || item.menuItem?.name || 'Unknown item',
-        quantity,
-        unitPrice,
-        totalRevenue: quantity * unitPrice
-      };
-    })
-  );
+      const existing = completedItemsByName.get(itemKey);
+
+      if (existing) {
+        existing.quantity += quantity;
+        existing.totalRevenue += quantity * unitPrice;
+      } else {
+        completedItemsByName.set(itemKey, {
+          key: itemKey,
+          item: itemName,
+          quantity,
+          totalRevenue: quantity * unitPrice
+        });
+      }
+    });
+  });
+  const completedTaskRows = [...completedItemsByName.values()].map((row) => ({
+    ...row,
+    unitPrice: row.quantity ? row.totalRevenue / row.quantity : 0
+  }));
   const completedItemQuantity = completedTaskRows.reduce((total, row) => total + row.quantity, 0);
   const completedItemRevenue = completedTaskRows.reduce((total, row) => total + row.totalRevenue, 0);
   const canWriteTasks = canWritePage('staffDashboard') && (
@@ -621,7 +631,6 @@ const StaffDashboard = () => {
                           <table className="completed-task-table">
                             <thead>
                               <tr>
-                                <th>Completed Task</th>
                                 <th>Item</th>
                                 <th>Quantity</th>
                                 <th>Unit Price</th>
@@ -631,7 +640,6 @@ const StaffDashboard = () => {
                             <tbody>
                               {completedTaskRows.length ? completedTaskRows.map((row) => (
                                 <tr key={row.key}>
-                                  <td>{row.taskNumber}</td>
                                   <td>{row.item}</td>
                                   <td className="completed-task-number">{row.quantity}</td>
                                   <td className="completed-task-number">ETB {row.unitPrice.toFixed(2)}</td>
@@ -639,16 +647,16 @@ const StaffDashboard = () => {
                                 </tr>
                               )) : (
                                 <tr>
-                                  <td colSpan="5">No item details are available for completed tasks.</td>
+                                  <td colSpan="4">No item details are available for completed tasks.</td>
                                 </tr>
                               )}
                             </tbody>
                             {completedTaskRows.length > 0 && (
                               <tfoot>
                                 <tr>
-                                  <th colSpan="2">Total</th>
+                                  <th>Total</th>
                                   <th className="completed-task-number">{completedItemQuantity}</th>
-                                  <th></th>
+                                  <th aria-label="Average unit price"></th>
                                   <th className="completed-task-number">ETB {completedItemRevenue.toFixed(2)}</th>
                                 </tr>
                               </tfoot>

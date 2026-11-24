@@ -181,6 +181,48 @@
   font-weight: 600;
 }
 
+.completed-task-table-wrap {
+  overflow-x: auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.completed-task-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+}
+
+.completed-task-table th,
+.completed-task-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #ecf0f1;
+  text-align: left;
+  color: #34495e;
+}
+
+.completed-task-table th {
+  background: #f8f9fa;
+  color: #2c3e50;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.completed-task-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.completed-task-table .completed-task-number {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.completed-task-table tfoot th {
+  border-top: 2px solid #d6dbe1;
+  border-bottom: none;
+}
+
 .loading-state {
   text-align: center;
   padding: 60px;

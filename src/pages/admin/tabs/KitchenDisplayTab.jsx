@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { adminService, staffService, getOrderNumberLabel } from '../../../services/api';
+import { staffService, getOrderNumberLabel } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { useSocket } from '../../../context/SocketContext';
 import { useLanguage } from '../../../context/useLanguage';
@@ -86,8 +86,11 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   const [busyDeliveryIds, setBusyDeliveryIds] = useState(new Set());
   const [busyWaiterIds, setBusyWaiterIds] = useState(new Set());
   const [now, setNow] = useState(() => Date.now());
-  const { user } = useAuth();
+  const { canWritePage } = useAuth();
   const { connected, socket } = useSocket();
+  const canAssignStaff = !readOnly
+    && canWritePage('staffDashboard')
+    && canWritePage('staffOrdersCooking');
   const visibleOrders = useMemo(
     () => tvMode ? orders.filter(hasAssignedStaff) : orders,
     [orders, tvMode]
@@ -207,7 +210,7 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   };
 
   const assignDeliveryToOrder = async (orderId, deliveryId) => {
-    if (readOnly || user?.role !== 'admin' || !deliveryId) return;
+    if (!canAssignStaff || !deliveryId) return;
     setBusyDeliveryIds((prev) => new Set([...prev, orderId]));
     try {
       const response = await staffService.assignDelivery(orderId, deliveryId);
@@ -231,10 +234,10 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   };
 
   const assignWaiterToOrder = async (orderId, waiterId) => {
-    if (readOnly || user?.role !== 'admin' || !waiterId) return;
+    if (!canAssignStaff || !waiterId) return;
     setBusyWaiterIds((prev) => new Set([...prev, orderId]));
     try {
-      const response = await adminService.assignWaiter(orderId, waiterId);
+      const response = await staffService.assignWaiter(orderId, waiterId);
       const updated = response?.order;
       if (updated) {
         setOrders((prev) => prev.map((order) => (
@@ -469,7 +472,7 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                         </span>
                       ) : (
                         <div>
-                          {user?.role === 'admin' ? (
+                          {canAssignStaff ? (
                             <select
                               className="kds-delivery-select"
                               value={order.assignedWaiter?._id || ''}
@@ -492,7 +495,7 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                               ].filter(Boolean).join(' / ') || '—'}
                             </span>
                           )}
-                          {user?.role === 'admin' && (
+                          {canAssignStaff && (
                             <select
                               className="kds-delivery-select"
                               value={order.assignedDelivery?._id || ''}

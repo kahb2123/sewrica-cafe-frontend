@@ -1,6 +1,6 @@
 // src/pages/StaffDashboard.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { staffService, PERMISSIONS } from '../services/api';
 import { useSocket } from '../context/SocketContext';
@@ -110,9 +110,11 @@ const groupOrdersByLocation = (orders, role, completed = false) => {
 const StaffDashboard = () => {
   const { user, logout, hasRole, canReadPage, canWritePage } = useAuth();
   const { t } = useLanguage();
+  const location = useLocation();
   const navigate = useNavigate();
+  const isTvMode = new URLSearchParams(location.search).get('mode') === 'tv';
   const { connected, onOrderAssigned, onOrderReady } = useSocket();
-  const [activeTab, setActiveTab] = useState(user?.role?.toLowerCase() === 'waiter' ? 'order-entry' : 'tasks');
+  const [activeTab, setActiveTab] = useState(isTvMode ? 'kitchen' : user?.role?.toLowerCase() === 'waiter' ? 'order-entry' : 'tasks');
   const [activeSubTab, setActiveSubTab] = useState('tasks');
   const [tasks, setTasks] = useState([]);
   const [completedTasks, setCompletedTasks] = useState([]);
@@ -218,7 +220,17 @@ const StaffDashboard = () => {
       let activeTasks = [];
       let completed = [];
       
-      if (canReadPage('staffOrdersCooking')) {
+      if (userRole === 'cashier') {
+        const response = await staffService.getCashierTasks();
+        const tasksArray = extractArray(response, []);
+
+        activeTasks = tasksArray.filter(t =>
+          t.paymentStatus === 'pending' || t.status === 'pending'
+        );
+        completed = tasksArray.filter(t =>
+          t.paymentStatus === 'completed' || t.status === 'completed'
+        );
+      } else if (canReadPage('staffOrdersCooking')) {
         const response = await staffService.getMyCookingOrders();
         const orders = extractArray(response, []);
         
@@ -257,16 +269,6 @@ const StaffDashboard = () => {
         activeTasks = groupOrdersByLocation(activeOrders, 'waiter');
         completed = groupOrdersByLocation(completedOrders, 'waiter', true);
 
-      } else if (userRole === 'cashier') {
-        const response = await staffService.getCashierTasks();
-        const tasksArray = extractArray(response, []);
-        
-        activeTasks = tasksArray.filter(t => 
-          t.paymentStatus === 'pending' || t.status === 'pending'
-        );
-        completed = tasksArray.filter(t => 
-          t.paymentStatus === 'completed' || t.status === 'completed'
-        );
       }
 
       if (userRole === 'waiter' || userRole === 'delivery') {
@@ -331,8 +333,13 @@ const StaffDashboard = () => {
       return;
     }
 
+    if (isTvMode) {
+      setLoading(false);
+      return;
+    }
+
     fetchTasks();
-  }, [user, canReadPage, fetchTasks, navigate]);
+  }, [user, canReadPage, fetchTasks, navigate, isTvMode]);
 
   useEffect(() => {
     if (connected) {
@@ -384,22 +391,22 @@ const StaffDashboard = () => {
   };
 
   const getRoleSpecificMessage = () => {
+    if (hasRole('cashier')) {
+      return t('Pending payments will appear here');
+    }
     if (canReadPage('staffOrdersCooking')) {
       return t('Orders ready for preparation will appear here');
     }
     if (canReadPage('staffOrdersDelivery')) {
       return t('Orders ready for delivery will appear here');
     }
-    if (hasRole('cashier')) {
-      return t('Pending payments will appear here');
-    }
     return t('Your tasks will appear here');
   };
 
   const getTaskType = () => {
+    if (hasRole('cashier')) return 'cashier';
     if (canReadPage('staffOrdersCooking')) return 'cook';
     if (canReadPage('staffOrdersDelivery')) return 'delivery';
-    if (hasRole('cashier')) return 'cashier';
     return user?.role?.toLowerCase() || 'staff';
   };
 
@@ -471,8 +478,8 @@ const StaffDashboard = () => {
   );
 
   return (
-    <div className="staff-dashboard">
-      <div className="dashboard-header">
+    <div className={`staff-dashboard ${isTvMode ? 'tv-mode' : ''}`}>
+      {!isTvMode && <div className="dashboard-header">
         <div className="header-left">
           <div className="staff-avatar-large">
             {getRoleIcon()}
@@ -488,9 +495,9 @@ const StaffDashboard = () => {
             🚪 {t('Logout')}
           </button>
         </div>
-      </div>
+      </div>}
 
-      {navTabs.length > 1 && (
+      {!isTvMode && navTabs.length > 1 && (
         <div className="staff-nav">
           {navTabs.map(tab => (
             <button
@@ -680,7 +687,10 @@ const StaffDashboard = () => {
 
         {activeTab === 'kitchen' && canReadPage('staffOrdersCooking') && (
           <div className="page-wrapper">
-            <KitchenDisplayTab readOnly={!canWritePage('staffDashboard') || !canWritePage('staffOrdersCooking')} />
+            <KitchenDisplayTab
+              readOnly={isTvMode || !canWritePage('staffDashboard') || !canWritePage('staffOrdersCooking')}
+              tvMode={isTvMode}
+            />
           </div>
         )}
 
@@ -703,9 +713,11 @@ const StaffDashboard = () => {
         )}
       </div>
 
-      <div className={`connection-status ${connected ? 'connected' : 'disconnected'}`}>
-        {connected ? '🟢 Connected' : '🔴 Reconnecting...'}
-      </div>
+      {!isTvMode && (
+        <div className={`connection-status ${connected ? 'connected' : 'disconnected'}`}>
+          {connected ? '🟢 Connected' : '🔴 Reconnecting...'}
+        </div>
+      )}
     </div>
   );
 };

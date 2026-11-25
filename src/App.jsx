@@ -46,7 +46,7 @@ function ScrollToTop() {
 function App() {
   const location = useLocation();
   const { t } = useLanguage();
-  const isKitchenTvMode = location.pathname.startsWith('/admin')
+  const isKitchenTvMode = (location.pathname.startsWith('/admin') || location.pathname.startsWith('/staff'))
     && new URLSearchParams(location.search).get('mode') === 'tv';
 
   return (

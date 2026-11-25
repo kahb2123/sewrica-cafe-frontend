@@ -816,6 +816,16 @@
   padding: 20px;
 }
 
+.staff-dashboard.tv-mode .staff-content,
+.staff-dashboard.tv-mode .page-wrapper {
+  padding: 0;
+}
+
+.staff-dashboard.tv-mode .page-wrapper {
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .page-wrapper {
   background: white;
   border-radius: 8px;

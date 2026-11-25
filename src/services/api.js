@@ -1126,6 +1126,16 @@ export const staffService = {
     }
   },
 
+  assignWaiter: async (orderId, waiterId) => {
+    try {
+      const response = await api.post(`/staff/orders/${orderId}/assign-waiter`, { waiterId });
+      return response.data;
+    } catch (error) {
+      console.error('Error assigning waiter:', error);
+      throw error.response?.data || { message: 'Failed to assign waiter' };
+    }
+  },
+
   chefAcceptOrder: async (orderId, notes = '') => {
     try {
       const response = await api.post(`/staff/orders/${orderId}/chef-accept`, { notes });

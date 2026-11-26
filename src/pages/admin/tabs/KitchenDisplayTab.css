@@ -700,6 +700,13 @@
   justify-content: flex-end;
 }
 
+.kds-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
 .kds-complete-btn {
   width: 100%;
   min-height: 44px;
@@ -725,6 +732,28 @@
 }
 
 .kds-complete-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.kds-cancel-btn {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 12px;
+  background: #fff;
+  color: #b42318;
+  border: 1px solid #e8a09b;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.kds-cancel-btn:hover:not(:disabled) {
+  background: #fff1f0;
+}
+
+.kds-cancel-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }

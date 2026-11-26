@@ -27,6 +27,7 @@ const AssignStaffModal = ({
       <div className="modal-content assign-modal" onClick={(e) => e.stopPropagation()}>
         <h2>👥 Assign Staff</h2>
         <p>Order #{order.orderNumber || order._id.slice(-6)}</p>
+        <p>Assign either a waiter or a delivery person. You can change or clear an existing assignment.</p>
 
         <div className="form-group">
           <label>Chef:</label>
@@ -95,7 +96,14 @@ const AssignStaffModal = ({
           <button
             className="btn-confirm"
             onClick={onAssign}
-            disabled={assigning || (!selectedChefId && !selectedDeliveryId && !selectedWaiterId)}
+            disabled={assigning || (
+              !selectedChefId
+              && !selectedDeliveryId
+              && !selectedWaiterId
+              && !order.assignedChef
+              && !order.assignedDelivery
+              && !order.assignedWaiter
+            )}
           >
             {assigning ? 'Assigning...' : 'Assign Selected Staff'}
           </button>

@@ -461,6 +461,7 @@ const translations = {
   'Winners announced at the end of each month': { am: 'አሸናፊዎች በየወሩ መጨረሻ ይገለጻሉ', om: 'Mo’attoonni dhuma ji’a hundaatti beeksifamu' },
   'Failed to load your orders': { am: 'ትዕዛዞችዎን መጫን አልተቻለም', om: 'Ajaja keessan fe’uun hin danda’amne' },
   'Are you sure you want to cancel this order?': { am: 'ይህን ትዕዛዝ ለመሰረዝ እርግጠኛ ነዎት?', om: 'Ajaja kana haquuf mirkanaa’oo?' },
+  'Cancel order': { am: 'ትዕዛዝ ሰርዝ', om: 'Ajaja haqi' },
   'Order cancelled successfully': { am: 'ትዕዛዙ በተሳካ ሁኔታ ተሰርዟል', om: 'Ajajni milkaa’inaan haqameera' },
   'Failed to cancel order': { am: 'ትዕዛዙን መሰረዝ አልተቻለም', om: 'Ajaja haquun hin danda’amne' },
   'Items added to cart!': { am: 'እቃዎቹ ወደ ጋሪ ተጨምረዋል!', om: 'Wantoonni gara gaariitti dabalaman!' },

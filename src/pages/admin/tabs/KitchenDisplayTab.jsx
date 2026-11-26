@@ -86,8 +86,9 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   const [busyDeliveryIds, setBusyDeliveryIds] = useState(new Set());
   const [busyWaiterIds, setBusyWaiterIds] = useState(new Set());
   const [now, setNow] = useState(() => Date.now());
-  const { canWritePage } = useAuth();
+  const { canWritePage, userRole } = useAuth();
   const { connected, socket } = useSocket();
+  const canCancelOrder = !readOnly && ['admin', 'cashier'].includes(userRole);
   const canAssignStaff = !readOnly
     && canWritePage('staffDashboard')
     && canWritePage('staffOrdersCooking');
@@ -185,6 +186,32 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
     }
   };
 
+  const cancelOrder = async (order) => {
+    if (!canCancelOrder || busyChefIds.has(order._id)) return;
+    if (!window.confirm(t('Are you sure you want to cancel this order?'))) return;
+
+    setBusyChefIds((prev) => new Set([...prev, order._id]));
+    try {
+      await staffService.updateKitchenOrderStatus(
+        order._id,
+        'cancelled',
+        'Cancelled from kitchen display'
+      );
+      setOrders((prev) => prev.filter((item) => item._id !== order._id));
+      toast.success(t('Order cancelled successfully'));
+    } catch (error) {
+      console.error('Kitchen: failed to cancel order', error);
+      toast.error(error.message || t('Failed to cancel order'));
+      loadOrders(false);
+    } finally {
+      setBusyChefIds((prev) => {
+        const next = new Set(prev);
+        next.delete(order._id);
+        return next;
+      });
+    }
+  };
+
   const assignChefToOrder = async (orderId, chefId) => {
     if (readOnly || !chefId) return;
     setBusyChefIds((prev) => new Set([...prev, orderId]));
@@ -210,7 +237,7 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   };
 
   const assignDeliveryToOrder = async (orderId, deliveryId) => {
-    if (!canAssignStaff || !deliveryId) return;
+    if (!canAssignStaff) return;
     setBusyDeliveryIds((prev) => new Set([...prev, orderId]));
     try {
       const response = await staffService.assignDelivery(orderId, deliveryId);
@@ -234,7 +261,7 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   };
 
   const assignWaiterToOrder = async (orderId, waiterId) => {
-    if (!canAssignStaff || !waiterId) return;
+    if (!canAssignStaff) return;
     setBusyWaiterIds((prev) => new Set([...prev, orderId]));
     try {
       const response = await staffService.assignWaiter(orderId, waiterId);
@@ -478,9 +505,11 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                               value={order.assignedWaiter?._id || ''}
                               onChange={(event) => assignWaiterToOrder(order._id, event.target.value)}
                               aria-label={`${t('Assign waiter')} #${getOrderNumberLabel(order.orderNumber)}`}
-                              disabled={busyWaiterIds.has(order._id)}
+                              disabled={busyWaiterIds.has(order._id) || (
+                                Boolean(order.assignedDelivery) && !order.assignedWaiter
+                              )}
                             >
-                              <option value="">👤 {t('Assign waiter')}</option>
+                              <option value="">👤 {t('No waiter assigned')}</option>
                               {waiters.map((waiter) => (
                                 <option key={waiter._id} value={waiter._id}>
                                   {waiter.name}
@@ -501,8 +530,11 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                               value={order.assignedDelivery?._id || ''}
                               onChange={(event) => assignDeliveryToOrder(order._id, event.target.value)}
                               aria-label={`${t('Assign delivery')} #${getOrderNumberLabel(order.orderNumber)}`}
+                              disabled={busyDeliveryIds.has(order._id) || (
+                                Boolean(order.assignedWaiter) && !order.assignedDelivery
+                              )}
                             >
-                              <option value="">{t('Assign delivery')}</option>
+                              <option value="">{t('No delivery assigned')}</option>
                               {deliveries.map((delivery) => (
                                 <option key={delivery._id} value={delivery._id}>
                                   {delivery.name}
@@ -516,14 +548,26 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
 
                     <div className="kds-col-action">
                       {!readOnly && (
-                        <button
-                          className="kds-complete-btn"
-                          onClick={() => completeOrder(order)}
-                          disabled={isBusy}
-                          aria-label={`${t('Mark order ready')} #${getOrderNumberLabel(order.orderNumber)}`}
-                        >
-                          {isBusy ? `⏳ ${t('Saving…')}` : `✅ ${t('Complete')}`}
-                        </button>
+                        <div className="kds-action-buttons">
+                          <button
+                            className="kds-complete-btn"
+                            onClick={() => completeOrder(order)}
+                            disabled={isBusy}
+                            aria-label={`${t('Mark order ready')} #${getOrderNumberLabel(order.orderNumber)}`}
+                          >
+                            {isBusy ? `⏳ ${t('Saving…')}` : `✅ ${t('Complete')}`}
+                          </button>
+                          {canCancelOrder && (
+                            <button
+                              className="kds-cancel-btn"
+                              onClick={() => cancelOrder(order)}
+                              disabled={isBusy}
+                              aria-label={`${t('Cancel order')} #${getOrderNumberLabel(order.orderNumber)}`}
+                            >
+                              ❌ {t('Cancel order')}
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

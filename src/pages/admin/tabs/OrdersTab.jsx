@@ -161,14 +161,14 @@ const OrdersTab = () => {
   };
 
   const handleAssignDelivery = async () => {
-    if (!selectedOrder || !selectedDeliveryId) {
-      toast.error('Please select a delivery person');
-      return;
-    }
+    if (!selectedOrder) return;
 
     try {
+      if (selectedDeliveryId && selectedOrder.assignedWaiter?._id) {
+        await adminService.assignWaiter(selectedOrder._id, '');
+      }
       await adminService.assignDelivery(selectedOrder._id, selectedDeliveryId, assignmentNotes);
-      toast.success('Delivery person assigned successfully');
+      toast.success(selectedDeliveryId ? 'Delivery person assigned successfully' : 'Delivery assignment cleared');
       setShowAssignDeliveryModal(false);
       setSelectedDeliveryId('');
       setAssignmentNotes('');
@@ -218,6 +218,10 @@ const OrdersTab = () => {
 
   const handleQuickAssignDelivery = async (orderId, deliveryId) => {
     try {
+      const order = orders.find((item) => item._id === orderId);
+      if (order?.assignedWaiter?._id) {
+        await adminService.assignWaiter(orderId, '');
+      }
       await adminService.assignDelivery(orderId, deliveryId);
       toast.success('Delivery person assigned successfully');
       fetchOrders();
@@ -230,25 +234,38 @@ const OrdersTab = () => {
 
   const handleAssignBoth = async () => {
     if (!selectedOrder) return;
-    if (!selectedChefId && !selectedDeliveryId && !selectedWaiterId) {
+    if (selectedDeliveryId && selectedWaiterId) {
+      toast.error('An order cannot have both a waiter and a delivery person assigned');
+      return;
+    }
+    const currentChefId = selectedOrder.assignedChef?._id || '';
+    const currentDeliveryId = selectedOrder.assignedDelivery?._id || '';
+    const currentWaiterId = selectedOrder.assignedWaiter?._id || '';
+    if (!selectedChefId && !selectedDeliveryId && !selectedWaiterId
+      && !currentChefId && !currentDeliveryId && !currentWaiterId) {
       toast.error('Please select at least one staff member');
       return;
     }
 
     setAssigningBoth(true);
     try {
-      const promises = [];
-      if (selectedChefId) {
-        promises.push(adminService.assignChef(selectedOrder._id, selectedChefId, assignmentNotes));
-      }
       if (selectedDeliveryId) {
-        promises.push(adminService.assignDelivery(selectedOrder._id, selectedDeliveryId, assignmentNotes));
-      }
-      if (selectedWaiterId) {
-        promises.push(adminService.assignWaiter(selectedOrder._id, selectedWaiterId));
+        if (currentWaiterId) await adminService.assignWaiter(selectedOrder._id, '');
+        if (selectedDeliveryId !== currentDeliveryId) {
+          await adminService.assignDelivery(selectedOrder._id, selectedDeliveryId, assignmentNotes);
+        }
+      } else {
+        if (currentDeliveryId) await adminService.assignDelivery(selectedOrder._id, '');
+        if (selectedWaiterId && selectedWaiterId !== currentWaiterId) {
+          await adminService.assignWaiter(selectedOrder._id, selectedWaiterId);
+        } else if (!selectedWaiterId && currentWaiterId) {
+          await adminService.assignWaiter(selectedOrder._id, '');
+        }
       }
 
-      await Promise.all(promises);
+      if (selectedChefId && selectedChefId !== currentChefId) {
+        await adminService.assignChef(selectedOrder._id, selectedChefId, assignmentNotes);
+      }
 
       toast.success('Staff assigned successfully');
       setShowAssignStaffModal(false);
@@ -583,9 +600,15 @@ const OrdersTab = () => {
         selectedChefId={selectedChefId}
         setSelectedChefId={setSelectedChefId}
         selectedDeliveryId={selectedDeliveryId}
-        setSelectedDeliveryId={setSelectedDeliveryId}
+        setSelectedDeliveryId={(value) => {
+          setSelectedDeliveryId(value);
+          if (value) setSelectedWaiterId('');
+        }}
         selectedWaiterId={selectedWaiterId}
-        setSelectedWaiterId={setSelectedWaiterId}
+        setSelectedWaiterId={(value) => {
+          setSelectedWaiterId(value);
+          if (value) setSelectedDeliveryId('');
+        }}
         notes={assignmentNotes}
         setNotes={setAssignmentNotes}
         onAssign={handleAssignBoth}

@@ -57,6 +57,8 @@ const ROLE_LABELS = {
   customer: 'Customer'
 };
 
+const REVENUE_ROLES = ['waiter', 'delivery'];
+
 const ReportsTab = () => {
   const [activeTab, setActiveTab] = useState('items');
   const [itemSort, setItemSort] = useState({ key: 'revenue', dir: 'desc' });
@@ -200,9 +202,11 @@ const ReportsTab = () => {
   const filteredStaff = roleFilter === 'all'
     ? activeStaff
     : activeStaff.filter((row) => row.role === roleFilter);
+  const showStaffRevenue = roleFilter === 'all' || REVENUE_ROLES.includes(roleFilter);
+  const revenueStaff = filteredStaff.filter((row) => REVENUE_ROLES.includes(row.role));
   const peakStaffRevenue = useMemo(
-    () => Math.max(1, ...filteredStaff.map((row) => Number(row.revenue) || 0)),
-    [filteredStaff]
+    () => Math.max(1, ...revenueStaff.map((row) => Number(row.revenue) || 0)),
+    [revenueStaff]
   );
 
   return (
@@ -513,10 +517,12 @@ const ReportsTab = () => {
                       <span>Total Orders</span>
                       <strong>{staffDetail.summary?.totalOrders || 0}</strong>
                     </div>
-                    <div className="summary-item">
-                      <span>Paid Revenue</span>
-                      <strong>{formatMoney(staffDetail.summary?.paidRevenue)}</strong>
-                    </div>
+                    {REVENUE_ROLES.includes(staffDetail.role) && (
+                      <div className="summary-item">
+                        <span>Paid Revenue</span>
+                        <strong>{formatMoney(staffDetail.summary?.paidRevenue)}</strong>
+                      </div>
+                    )}
                     <div className="summary-item">
                       <span>Completed</span>
                       <strong>{staffDetail.summary?.completedOrders || 0}</strong>
@@ -525,10 +531,12 @@ const ReportsTab = () => {
                       <span>Completion Rate</span>
                       <strong>{staffDetail.summary?.completionRate || 0}%</strong>
                     </div>
-                    <div className="summary-item">
-                      <span>Outstanding</span>
-                      <strong>{formatMoney(staffDetail.summary?.outstandingRevenue)}</strong>
-                    </div>
+                    {REVENUE_ROLES.includes(staffDetail.role) && (
+                      <div className="summary-item">
+                        <span>Outstanding</span>
+                        <strong>{formatMoney(staffDetail.summary?.outstandingRevenue)}</strong>
+                      </div>
+                    )}
                     <div className="summary-item">
                       <span>Cancelled</span>
                       <strong>{staffDetail.summary?.cancelledOrders || 0}</strong>
@@ -576,7 +584,13 @@ const ReportsTab = () => {
                       <h2>Daily Performance</h2>
                       <div className="table-responsive">
                         <table className="report-table">
-                          <thead><tr><th>Date</th><th>Orders</th><th>Completed</th><th>Cancelled</th><th>Order Value</th><th>Avg. Cooking</th></tr></thead>
+                          <thead>
+                            <tr>
+                              <th>Date</th><th>Orders</th><th>Completed</th><th>Cancelled</th>
+                              {REVENUE_ROLES.includes(staffDetail.role) && <th>Order Value</th>}
+                              <th>Avg. Cooking</th>
+                            </tr>
+                          </thead>
                           <tbody>
                             {Object.entries(staffDetail.dailyBreakdown).map(([date, day]) => (
                               <tr key={date}>
@@ -584,7 +598,7 @@ const ReportsTab = () => {
                                 <td>{day.count}</td>
                                 <td>{day.completed}</td>
                                 <td>{day.cancelled}</td>
-                                <td>{formatMoney(day.totalAmount)}</td>
+                                {REVENUE_ROLES.includes(staffDetail.role) && <td>{formatMoney(day.totalAmount)}</td>}
                                 <td>{day.avgCookingMinutes == null ? 'N/A' : `${day.avgCookingMinutes} min`}</td>
                               </tr>
                             ))}
@@ -594,28 +608,6 @@ const ReportsTab = () => {
                     </div>
                   )}
 
-                  {staffDetail.orders?.length > 0 && (
-                    <div className="table-card">
-                      <h2>Recent Orders (up to 60)</h2>
-                      <div className="table-responsive">
-                        <table className="report-table">
-                          <thead><tr><th>Order #</th><th>Date</th><th>Status</th><th>Payment</th><th>Items</th><th>Amount</th></tr></thead>
-                          <tbody>
-                            {staffDetail.orders.map((order) => (
-                              <tr key={order.orderId}>
-                                <td className="item-name">{order.orderNumber}</td>
-                                <td>{new Date(order.createdAt).toLocaleDateString()}</td>
-                                <td>{order.status}</td>
-                                <td>{order.paymentStatus}</td>
-                                <td>{(order.items || []).map((item) => `${item.name} × ${item.quantity}`).join(', ') || 'N/A'}</td>
-                                <td>{formatMoney(order.totalAmount)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </>
               ) : (
@@ -634,10 +626,12 @@ const ReportsTab = () => {
                     <span className="kpi-label">Total Orders Handled</span>
                     <strong className="kpi-value">{filteredStaff.reduce((sum, row) => sum + (Number(row.totalOrders) || 0), 0)}</strong>
                   </div>
-                  <div className="kpi-card">
-                    <span className="kpi-label">Total Order Revenue</span>
-                    <strong className="kpi-value">{formatMoney(filteredStaff.reduce((sum, row) => sum + (Number(row.revenue) || 0), 0))}</strong>
-                  </div>
+                  {showStaffRevenue && (
+                    <div className="kpi-card">
+                      <span className="kpi-label">Waiter &amp; Delivery Revenue</span>
+                      <strong className="kpi-value">{formatMoney(revenueStaff.reduce((sum, row) => sum + (Number(row.revenue) || 0), 0))}</strong>
+                    </div>
+                  )}
                 </div>
 
                 <div className="table-card">
@@ -650,7 +644,7 @@ const ReportsTab = () => {
                           <th>Name</th>
                           <th>Role</th>
                           <th>Orders Handled</th>
-                          <th>Total Revenue</th>
+                          {showStaffRevenue && <th>Total Revenue</th>}
                           <th>Action</th>
                         </tr>
                       </thead>
@@ -665,7 +659,9 @@ const ReportsTab = () => {
                               </span>
                             </td>
                             <td>{row.totalOrders || 0}</td>
-                            <td>{formatMoney(row.revenue)}</td>
+                            {showStaffRevenue && (
+                              <td>{REVENUE_ROLES.includes(row.role) ? formatMoney(row.revenue) : '—'}</td>
+                            )}
                             <td>
                               <button
                                 className="btn-view-detail"
@@ -681,25 +677,27 @@ const ReportsTab = () => {
                   </div>
                 </div>
 
-                <div className="chart-card">
-                  <h2>Revenue by Staff Member</h2>
-                  <div className="bar-chart">
-                    {filteredStaff.map((row) => (
-                      <div key={row.staffId || row._id} className="bar-row">
-                        <span className="bar-label">{row.name || 'Unassigned'}</span>
-                        <div className="bar-track">
-                          <div
-                            className="bar-fill"
-                            style={{
-                              width: `${((Number(row.revenue) || 0) / peakStaffRevenue) * 100}%`
-                            }}
-                          />
+                {showStaffRevenue && (
+                  <div className="chart-card">
+                    <h2>Revenue by Waiter and Delivery Staff</h2>
+                    <div className="bar-chart">
+                      {revenueStaff.map((row) => (
+                        <div key={row.staffId || row._id} className="bar-row">
+                          <span className="bar-label">{row.name || 'Unassigned'}</span>
+                          <div className="bar-track">
+                            <div
+                              className="bar-fill"
+                              style={{
+                                width: `${((Number(row.revenue) || 0) / peakStaffRevenue) * 100}%`
+                              }}
+                            />
+                          </div>
+                          <span className="bar-value">{formatMoney(row.revenue)}</span>
                         </div>
-                        <span className="bar-value">{formatMoney(row.revenue)}</span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </>
             )}
           </section>

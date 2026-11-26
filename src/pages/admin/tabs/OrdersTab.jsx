@@ -136,7 +136,7 @@ const OrdersTab = () => {
       fetchOrders();
     } catch (error) {
       console.error('Error rejecting order:', error);
-      toast.error('Failed to reject order');
+      toast.error(error.message || 'Failed to reject order');
     }
   };
 
@@ -431,9 +431,9 @@ const OrdersTab = () => {
               </div>
 
               <div className="order-card-footer">
-                {order.status === 'pending' && (
+                {['pending', 'confirmed', 'preparing', 'cooking'].includes(order.status) && (
                   <div className="accept-reject-buttons">
-                    <div className="workflow-note">Assign a chef to send this order to the kitchen.</div>
+                    <div className="workflow-note">Orders can be rejected until the kitchen marks them ready.</div>
                     <button onClick={() => {
                       setSelectedOrder(order);
                       setShowRejectModal(true);

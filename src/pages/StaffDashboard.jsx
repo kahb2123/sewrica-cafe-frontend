@@ -11,7 +11,6 @@ import usePagination from '../hooks/usePagination';
 import KitchenDisplayTab from './admin/tabs/KitchenDisplayTab';
 import StockTab from './admin/tabs/StockTab';
 import ExpenseTab from './admin/tabs/ExpenseTab';
-import ReportsTab from './admin/tabs/ReportsTab';
 import StaffOrderEntry from './staff/StaffOrderEntry';
 import { toast } from 'react-toastify';
 import scrollToPageTop from '../utils/scrollToPageTop';
@@ -433,9 +432,6 @@ const StaffDashboard = () => {
     if (canReadPage('adminExpenses')) {
       tabs.push({ id: 'expenses', label: t('Expenses'), icon: '💸' });
     }
-    if (canReadPage('adminReports')) {
-      tabs.push({ id: 'reports', label: t('Reports'), icon: '📈' });
-    }
     return tabs;
   };
 
@@ -721,11 +717,6 @@ const StaffDashboard = () => {
           </div>
         )}
 
-        {activeTab === 'reports' && canReadPage('adminReports') && (
-          <div className="page-wrapper">
-            <ReportsTab readOnly={!canWritePage('adminReports')} />
-          </div>
-        )}
       </div>
 
       {!isTvMode && (

@@ -174,7 +174,12 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
     try {
       const steps = ADMIN_PATH_TO_READY[order.status] || [];
       for (const step of steps) {
-        await staffService.updateKitchenOrderStatus(order._id, step);
+        await staffService.updateKitchenOrderStatus(
+          order._id,
+          step,
+          '',
+          userRole === 'admin' && step === 'ready'
+        );
       }
       setOrders((prev) => prev.filter((item) => item._id !== order._id));
     } catch (error) {
@@ -555,7 +560,9 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
                             disabled={isBusy}
                             aria-label={`${t('Mark order ready')} #${getOrderNumberLabel(order.orderNumber)}`}
                           >
-                            {isBusy ? `⏳ ${t('Saving…')}` : `✅ ${t('Complete')}`}
+                            {isBusy
+                              ? `⏳ ${t('Saving…')}`
+                              : `✅ ${t(userRole === 'admin' ? 'Complete & Mark Paid' : 'Complete')}`}
                           </button>
                           {canCancelOrder && (
                             <button

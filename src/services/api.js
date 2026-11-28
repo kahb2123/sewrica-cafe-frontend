@@ -1107,9 +1107,13 @@ export const staffService = {
     }
   },
 
-  updateKitchenOrderStatus: async (orderId, status, notes = '') => {
+  updateKitchenOrderStatus: async (orderId, status, notes = '', confirmPayment = false) => {
     try {
-      const response = await api.patch(`/staff/orders/${orderId}/status`, { status, notes });
+      const response = await api.patch(`/staff/orders/${orderId}/status`, {
+        status,
+        notes,
+        confirmPayment
+      });
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to update kitchen order status' };

@@ -66,6 +66,8 @@ const ReportsTab = () => {
   const [range, setRange] = useState(() => ({ start: daysAgo(6), end: daysAgo(0) }));
 
   const [items, setItems] = useState([]);
+  const [itemSummary, setItemSummary] = useState(null);
+  const [reportTotals, setReportTotals] = useState(null);
   const [taxSummary, setTaxSummary] = useState(null);
   const [staff, setStaff] = useState([]);
   const [roleFilter, setRoleFilter] = useState('all');
@@ -102,8 +104,10 @@ const ReportsTab = () => {
           section: activeTab
         });
         if (!cancelled && requestId.current === currentRequestId) {
+            setReportTotals(response?.data?.totals || null);
             if (activeTab === 'items') {
               setItems(response?.data?.topItems || []);
+              setItemSummary(response?.data?.itemSummary || null);
               setTaxSummary(response?.data?.taxSummary || null);
             } else {
               const rows = response?.data?.staff || [];
@@ -113,8 +117,12 @@ const ReportsTab = () => {
       } catch (error) {
         if (!cancelled && requestId.current === currentRequestId) {
           toast.error(error.message || `Failed to load ${activeTab} report`);
-          if (activeTab === 'items') setItems([]);
-          else {
+          setReportTotals(null);
+          if (activeTab === 'items') {
+            setItems([]);
+            setItemSummary(null);
+            setTaxSummary(null);
+          } else {
             setStaff([]);
           }
         }
@@ -326,11 +334,11 @@ const ReportsTab = () => {
                   </div>
                   <div className="kpi-card">
                     <span className="kpi-label">Units Sold</span>
-                    <strong className="kpi-value">{items.reduce((sum, row) => sum + (Number(row.quantity) || 0), 0)}</strong>
+                    <strong className="kpi-value">{itemSummary?.unitsSold || 0}</strong>
                   </div>
                   <div className="kpi-card">
-                    <span className="kpi-label">Total Revenue</span>
-                    <strong className="kpi-value">{formatMoney(items.reduce((sum, row) => sum + (Number(row.revenue) || 0), 0))}</strong>
+                    <span className="kpi-label">Total Paid Revenue</span>
+                    <strong className="kpi-value">{formatMoney(reportTotals?.paidRevenue)}</strong>
                   </div>
                 </div>
 
@@ -627,9 +635,12 @@ const ReportsTab = () => {
                     <strong className="kpi-value">{filteredStaff.reduce((sum, row) => sum + (Number(row.totalOrders) || 0), 0)}</strong>
                   </div>
                   {showStaffRevenue && (
-                    <div className="kpi-card">
-                      <span className="kpi-label">Waiter &amp; Delivery Revenue</span>
-                      <strong className="kpi-value">{formatMoney(revenueStaff.reduce((sum, row) => sum + (Number(row.revenue) || 0), 0))}</strong>
+                    <div
+                      className="kpi-card"
+                      title="Unique paid order totals, matching the Menu Items Report. Per-staff revenue is attributed separately."
+                    >
+                      <span className="kpi-label">Total Paid Revenue</span>
+                      <strong className="kpi-value">{formatMoney(reportTotals?.paidRevenue)}</strong>
                     </div>
                   )}
                 </div>

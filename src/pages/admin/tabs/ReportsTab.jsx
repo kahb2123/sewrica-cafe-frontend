@@ -657,7 +657,16 @@ const ReportsTab = () => {
                 <div className="table-card">
                   <h2>Staff Performance</h2>
                   <div className="table-responsive">
-                    <table className="report-table">
+                    <table className={`report-table staff-performance-table${showStaffRevenue ? ' staff-performance-table--with-revenue' : ''}`}>
+                      <colgroup>
+                        <col style={{ width: '5%' }} />
+                        <col style={{ width: showStaffRevenue ? '19%' : '23%' }} />
+                        <col style={{ width: '17%' }} />
+                        <col style={{ width: '16%' }} />
+                        <col style={{ width: '14%' }} />
+                        {showStaffRevenue && <col style={{ width: '17%' }} />}
+                        <col style={{ width: showStaffRevenue ? '12%' : '25%' }} />
+                      </colgroup>
                       <thead>
                         <tr>
                           <th>#</th>

@@ -607,9 +607,30 @@
   }
 }
 
-.report-table th:nth-child(3),
-.report-table th:nth-child(4) {
+.report-table.staff-performance-table {
+  min-width: 820px;
+  table-layout: fixed;
+}
+
+.staff-performance-table th:first-child,
+.staff-performance-table td:first-child,
+.staff-performance-table th:last-child,
+.staff-performance-table td:last-child {
+  text-align: center;
+}
+
+.staff-performance-table th:nth-child(4),
+.staff-performance-table td:nth-child(4),
+.staff-performance-table th:nth-child(5),
+.staff-performance-table td:nth-child(5) {
   text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.staff-performance-table--with-revenue th:nth-child(6),
+.staff-performance-table--with-revenue td:nth-child(6) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .charts-grid {

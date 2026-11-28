@@ -439,9 +439,11 @@ const StaffDashboard = () => {
 
   const navTabs = getNavTabs();
   const taskType = getTaskType();
-  const visibleCompletedTasks = taskType === 'waiter'
+  const visibleCompletedTasks = ['waiter', 'delivery'].includes(taskType)
     ? completedTasks.filter((task) => {
-        const completedAt = task.waiterCompletedAt;
+        const completedAt = taskType === 'waiter'
+          ? task.waiterCompletedAt
+          : task.deliveryCompletedAt;
         return completedAt && getTaskDateKey(new Date(completedAt)) === completedDate;
       })
     : completedTasks;
@@ -581,7 +583,7 @@ const StaffDashboard = () => {
             </div>
 
             <div className="tasks-container">
-              {taskType === 'waiter' && activeSubTab === 'completed' && (
+              {['waiter', 'delivery'].includes(taskType) && activeSubTab === 'completed' && (
                 <div className="completed-task-filter">
                   <label htmlFor="completed-task-date">{t('Completed date')}</label>
                   <button

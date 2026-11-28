@@ -375,6 +375,12 @@ const StaffTaskCard = ({
             <p><span className="info-label">📍 {t('Address:')}</span> {formatDeliveryAddress(task.deliveryAddress)}</p>
           )}
           <p><span className="info-label">💰 {t('Total:')}</span> ETB {Number(task.totalAmount || 0).toFixed(2)}</p>
+          {type === 'waiter' && (
+            <p>
+              <span className="info-label">💵 {t('Paid revenue:')}</span>{' '}
+              ETB {Number(task.paidAmount || 0).toFixed(2)}
+            </p>
+          )}
         </div>
 
         <div className="items-section">

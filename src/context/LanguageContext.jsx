@@ -143,6 +143,7 @@ const translations = {
   'Phone:': { am: 'ስልክ:', om: 'Bilbila:' },
   'Address:': { am: 'አድራሻ:', om: 'Teessoo:' },
   'Total:': { am: 'ጠቅላላ:', om: 'Waliigala:' },
+  'Paid revenue:': { am: 'የተከፈለ ገቢ:', om: 'Galii kaffalame:' },
   'Special Requests:': { am: 'ልዩ ጥያቄዎች:', om: 'Gaaffii addaa:' },
   'Kitchen': { am: 'ወጥ ቤት', om: 'Mana nyaataa' },
   'Add Notes': { am: 'ማስታወሻ ጨምር', om: 'Yaadannoo dabali' },

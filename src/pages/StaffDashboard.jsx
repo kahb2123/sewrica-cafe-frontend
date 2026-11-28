@@ -98,6 +98,10 @@ const groupOrdersByLocation = (orders, role, completed = false) => {
       sourceOrders,
       items: [...itemMap.values()],
       totalAmount: sourceOrders.reduce((total, order) => total + (Number(order.totalAmount) || 0), 0),
+      paidAmount: sourceOrders.reduce(
+        (total, order) => total + (order.paymentStatus === 'completed' ? Number(order.totalAmount) || 0 : 0),
+        0
+      ),
       customerPhone: [...new Set(sourceOrders.map((order) => order.customerPhone).filter(Boolean))].join(', ') || '',
       status: statuses.length === 1 ? statuses[0] : 'multiple',
       createdAt: oldestCreatedAt,

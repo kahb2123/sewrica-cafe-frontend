@@ -26,6 +26,26 @@ import GiveawayTab from './tabs/GiveawayTab';
 import PermissionsTab from './tabs/PermissionsTab';
 import KitchenDisplayTab from './tabs/KitchenDisplayTab';
 
+const ADMIN_TAB_IDS = new Set([
+  'overview',
+  'orders',
+  'kitchen',
+  'staff',
+  'menu',
+  'stock',
+  'expenses',
+  'reports',
+  'users',
+  'lottery',
+  'giveaway',
+  'permissions'
+]);
+
+const getAdminTabFromSearch = (search) => {
+  const tab = new URLSearchParams(search).get('tab');
+  return ADMIN_TAB_IDS.has(tab) ? tab : 'overview';
+};
+
 const AdminDashboard = () => {
   const { user, isAuthenticated, canReadPage, canWritePage } = useAuth();
   const { t } = useLanguage();
@@ -34,7 +54,9 @@ const AdminDashboard = () => {
   const { onNewOrder, connected } = useSocket();
   const hasAdminDashboardAccess = canReadPage('adminDashboard');
   const isTvMode = new URLSearchParams(location.search).get('mode') === 'tv';
-  const [activeTab, setActiveTab] = useState(isTvMode ? 'kitchen' : 'overview');
+  const [activeTab, setActiveTab] = useState(
+    isTvMode ? 'kitchen' : getAdminTabFromSearch(location.search)
+  );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const [stats, setStats] = useState({
@@ -49,8 +71,8 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setActiveTab(isTvMode ? 'kitchen' : 'overview');
-  }, [isTvMode]);
+    setActiveTab(isTvMode ? 'kitchen' : getAdminTabFromSearch(location.search));
+  }, [isTvMode, location.search]);
 
   // Listen for new orders via socket
   useEffect(() => {
@@ -109,6 +131,15 @@ const AdminDashboard = () => {
       scrollToPageTop();
     }
     setActiveTab(tab);
+    const searchParams = new URLSearchParams(location.search);
+    if (tab === 'overview') searchParams.delete('tab');
+    else searchParams.set('tab', tab);
+    const search = searchParams.toString();
+    navigate({
+      pathname: location.pathname,
+      search: search ? `?${search}` : '',
+      hash: location.hash
+    }, { replace: true });
     if (window.innerWidth <= 768) {
       setMobileMenuOpen(false);
     }

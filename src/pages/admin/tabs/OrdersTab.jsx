@@ -12,6 +12,21 @@ import AssignDeliveryModal from '../components/modals/AssignDeliveryModal';
 import AssignStaffModal from '../components/modals/AssignStaffModal';
 import './OrdersTab.css';
 
+const getCafeDateKey = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const parts = new Intl.DateTimeFormat('en', {
+    timeZone: 'Africa/Addis_Ababa',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date).reduce((result, part) => {
+    if (part.type !== 'literal') result[part.type] = part.value;
+    return result;
+  }, {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+};
+
 const OrdersTab = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -37,6 +52,10 @@ const OrdersTab = () => {
   const [selectedDeliveryId, setSelectedDeliveryId] = useState('');
   const [selectedWaiterId, setSelectedWaiterId] = useState('');
   const [assignmentNotes, setAssignmentNotes] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [searchStartDate, setSearchStartDate] = useState('');
+  const [searchEndDate, setSearchEndDate] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState({ query: '', startDate: '', endDate: '' });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -232,6 +251,18 @@ const OrdersTab = () => {
     }
   };
 
+  const handleQuickAssignWaiter = async (orderId, waiterId) => {
+    try {
+      await adminService.assignWaiter(orderId, waiterId);
+      toast.success(waiterId ? 'Waiter assigned successfully' : 'Waiter assignment cleared');
+      fetchOrders();
+      fetchAvailableStaff();
+    } catch (error) {
+      console.error('Error assigning waiter:', error);
+      toast.error(error.message || 'Failed to assign waiter');
+    }
+  };
+
   const handleAssignBoth = async () => {
     if (!selectedOrder) return;
     if (selectedDeliveryId && selectedWaiterId) {
@@ -326,6 +357,53 @@ const OrdersTab = () => {
     });
   };
 
+  const handleSearch = (event) => {
+    event.preventDefault();
+    if (searchStartDate && searchEndDate && searchStartDate > searchEndDate) {
+      toast.error('Start date must be on or before end date');
+      return;
+    }
+    setAppliedSearch({
+      query: searchText.trim().toLowerCase(),
+      startDate: searchStartDate,
+      endDate: searchEndDate
+    });
+  };
+
+  const clearSearch = () => {
+    setSearchText('');
+    setSearchStartDate('');
+    setSearchEndDate('');
+    setAppliedSearch({ query: '', startDate: '', endDate: '' });
+  };
+
+  const filteredOrders = orders.filter((order) => {
+    if (appliedSearch.query) {
+      const itemNames = (order.items || []).flatMap((item) => [
+        item.name,
+        typeof item.menuItem === 'object' ? item.menuItem?.name : item.menuItem
+      ]);
+      const searchableValues = [
+        order.orderName,
+        order.customerName,
+        order.customerPhone,
+        order.customer?.name,
+        order.customer?.phone,
+        ...itemNames
+      ];
+      const matchesQuery = searchableValues.some((value) =>
+        String(value || '').toLowerCase().includes(appliedSearch.query)
+      );
+      if (!matchesQuery) return false;
+    }
+
+    const orderDate = getCafeDateKey(order.createdAt);
+    if (appliedSearch.startDate && (!orderDate || orderDate < appliedSearch.startDate)) return false;
+    if (appliedSearch.endDate && (!orderDate || orderDate > appliedSearch.endDate)) return false;
+    return true;
+  });
+  const hasActiveSearch = Boolean(appliedSearch.query || appliedSearch.startDate || appliedSearch.endDate);
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -364,11 +442,45 @@ const OrdersTab = () => {
             Delivered ({orders.filter(o => o.status === 'delivered').length})
           </button>
         </div>
+        <form className="order-search" onSubmit={handleSearch}>
+          <div className="order-search-field order-search-query">
+            <label htmlFor="order-search-query">Search item or customer</label>
+            <input
+              id="order-search-query"
+              type="search"
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder="Food name, customer name, or phone"
+            />
+          </div>
+          <div className="order-search-field">
+            <label htmlFor="order-search-start">From date</label>
+            <input
+              id="order-search-start"
+              type="date"
+              value={searchStartDate}
+              onChange={(event) => setSearchStartDate(event.target.value)}
+            />
+          </div>
+          <div className="order-search-field">
+            <label htmlFor="order-search-end">To date</label>
+            <input
+              id="order-search-end"
+              type="date"
+              value={searchEndDate}
+              onChange={(event) => setSearchEndDate(event.target.value)}
+            />
+          </div>
+          <div className="order-search-actions">
+            <button type="submit" className="order-search-button">Search</button>
+            <button type="button" className="order-search-clear" onClick={clearSearch}>Clear</button>
+          </div>
+        </form>
       </div>
 
       <div className="orders-grid">
-        {orders.length > 0 ? (
-          orders.map(order => (
+        {filteredOrders.length > 0 ? (
+          filteredOrders.map(order => (
             <div key={order._id} className="order-card">
               <div className="order-card-header">
                 <div>
@@ -407,6 +519,30 @@ const OrdersTab = () => {
                           <option value="">👨‍🍳 Assign Chef</option>
                           {availableChefs.map(chef => (
                             <option key={chef._id} value={chef._id}>{chef.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="assignment-row">
+                      <div className="assignment-current">
+                        <strong>Waiter:</strong> {order.assignedWaiter?.name || 'Not assigned'}
+                        {order.assignedAt?.waiter && (
+                          <span className="assignment-time"> ({formatDate(order.assignedAt.waiter)})</span>
+                        )}
+                      </div>
+                      <div className="assignment-select">
+                        <select
+                          value={order.assignedWaiter?._id || ''}
+                          onChange={(e) => handleQuickAssignWaiter(order._id, e.target.value)}
+                          disabled={Boolean(order.assignedDelivery) || ['cancelled', 'delivered'].includes(order.status) || Boolean(order.waiterCompletedAt)}
+                          className="quick-assign-select"
+                        >
+                          <option value="">
+                            {order.assignedDelivery ? 'Delivery assigned' : order.assignedWaiter ? 'Unassign Waiter' : '🧑‍🍽️ Assign Waiter'}
+                          </option>
+                          {availableWaiters.map((waiter) => (
+                            <option key={waiter._id} value={waiter._id}>{waiter.name}</option>
                           ))}
                         </select>
                       </div>
@@ -517,7 +653,9 @@ const OrdersTab = () => {
             </div>
           ))
         ) : (
-          <div className="no-orders">No orders found</div>
+          <div className="no-orders">
+            {hasActiveSearch ? 'No orders match your search filters' : 'No orders found'}
+          </div>
         )}
       </div>
 

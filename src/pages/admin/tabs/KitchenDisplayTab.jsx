@@ -1,5 +1,5 @@
 // src/pages/admin/tabs/KitchenDisplayTab.jsx
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { staffService, getOrderNumberLabel } from '../../../services/api';
@@ -86,6 +86,8 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
   const [busyDeliveryIds, setBusyDeliveryIds] = useState(new Set());
   const [busyWaiterIds, setBusyWaiterIds] = useState(new Set());
   const [now, setNow] = useState(() => Date.now());
+  const [assignmentSoundEnabled, setAssignmentSoundEnabled] = useState(false);
+  const audioContextRef = useRef(null);
   const { canWritePage, userRole } = useAuth();
   const { connected, socket } = useSocket();
   const canCancelOrder = !readOnly && ['admin', 'cashier'].includes(userRole);
@@ -96,6 +98,52 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
     () => tvMode ? orders.filter(hasAssignedStaff) : orders,
     [orders, tvMode]
   );
+
+  const playAssignmentSound = useCallback(() => {
+    const audioContext = audioContextRef.current;
+    if (!tvMode || !assignmentSoundEnabled || !audioContext) return;
+
+    try {
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      const startAt = audioContext.currentTime;
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880, startAt);
+      oscillator.frequency.setValueAtTime(660, startAt + 0.16);
+      gain.gain.setValueAtTime(0.0001, startAt);
+      gain.gain.exponentialRampToValueAtTime(0.18, startAt + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.38);
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start(startAt);
+      oscillator.stop(startAt + 0.4);
+    } catch (error) {
+      console.error('Kitchen TV: failed to play assignment sound', error);
+    }
+  }, [assignmentSoundEnabled, tvMode]);
+
+  const enableAssignmentSound = async () => {
+    const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextConstructor) {
+      toast.error(t('This browser does not support kitchen assignment sounds.'));
+      return;
+    }
+
+    try {
+      const audioContext = audioContextRef.current || new AudioContextConstructor();
+      audioContextRef.current = audioContext;
+      await audioContext.resume();
+      setAssignmentSoundEnabled(true);
+      toast.success(t('Assignment sound enabled'));
+    } catch (error) {
+      console.error('Kitchen TV: failed to enable assignment sound', error);
+      toast.error(t('Could not enable sound. Check your browser audio settings.'));
+    }
+  };
+
+  const disableAssignmentSound = () => {
+    setAssignmentSoundEnabled(false);
+  };
 
   const loadOrders = useCallback(async (showLoading = true) => {
     try {
@@ -151,21 +199,34 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
     };
 
     const refreshOrders = () => loadOrders(false);
+    const handleStaffTaskAssigned = (data) => {
+      if (!data?.orderId) return;
+      playAssignmentSound();
+      loadOrders(false);
+    };
     const removeReadyOrder = (data) => {
       setOrders((prev) => prev.filter((order) => order._id !== data.orderId));
     };
 
     socket.on('new-order', handleNewOrder);
     socket.on('order-ready', removeReadyOrder);
+    if (tvMode) socket.on('staff-task-assigned', handleStaffTaskAssigned);
     KITCHEN_REFRESH_EVENTS.forEach((eventName) => socket.on(eventName, refreshOrders));
     loadOrders(false);
 
     return () => {
       socket.off('new-order', handleNewOrder);
       socket.off('order-ready', removeReadyOrder);
+      if (tvMode) socket.off('staff-task-assigned', handleStaffTaskAssigned);
       KITCHEN_REFRESH_EVENTS.forEach((eventName) => socket.off(eventName, refreshOrders));
     };
-  }, [connected, socket, loadOrders, tvMode, t]);
+  }, [connected, socket, loadOrders, tvMode, t, playAssignmentSound]);
+
+  useEffect(() => () => {
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close();
+    }
+  }, []);
 
    const completeOrder = async (order) => {
      if (readOnly || busyChefIds.size > 0 || busyDeliveryIds.size > 0) return;
@@ -336,6 +397,16 @@ const KitchenDisplayTab = ({ readOnly = false, tvMode = false }) => {
 
   return (
     <div className={`kitchen-display-tab ${tvMode ? 'tv-mode' : ''}`}>
+      {tvMode && (
+        <button
+          className="kds-tv-sound-toggle"
+          type="button"
+          onClick={assignmentSoundEnabled ? disableAssignmentSound : enableAssignmentSound}
+          aria-pressed={assignmentSoundEnabled}
+        >
+          {assignmentSoundEnabled ? `🔊 ${t('Sound on')}` : `🔇 ${t('Enable sound')}`}
+        </button>
+      )}
       <div className="kds-header">
         <div>
           <h1 className="kds-title">🍳 {t('Kitchen Display System')}</h1>

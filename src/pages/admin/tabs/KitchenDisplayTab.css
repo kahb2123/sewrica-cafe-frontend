@@ -24,6 +24,29 @@
   display: none;
 }
 
+.kds-tv-sound-toggle {
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  z-index: 1000;
+  min-height: 42px;
+  padding: 8px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+}
+
+.kds-tv-sound-toggle[aria-pressed="true"] {
+  border-color: #15803d;
+  background: #15803d;
+  color: #fff;
+}
+
 .kitchen-display-tab.tv-mode .kds-stats,
 .kitchen-display-tab.tv-mode .kds-controls {
   display: none;

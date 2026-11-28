@@ -398,7 +398,7 @@ const ReportsTab = () => {
                         <YAxis yAxisId="right" orientation="right" />
                         <Tooltip />
                         <Legend />
-                        <Bar yAxisId="left" dataKey="totalOrders" name="Orders Handled" fill="#c9a227" />
+                        <Bar yAxisId="left" dataKey="unitsSold" name="Units Sold" fill="#c9a227" />
                         <Bar yAxisId="right" dataKey="revenue" name="Total Sales (ETB)" fill="#1e3a2f" />
                       </BarChart>
                     </ResponsiveContainer>
@@ -525,6 +525,10 @@ const ReportsTab = () => {
                       <span>Total Orders</span>
                       <strong>{staffDetail.summary?.totalOrders || 0}</strong>
                     </div>
+                    <div className="summary-item">
+                      <span>Units Sold</span>
+                      <strong>{staffDetail.summary?.unitsSold || 0}</strong>
+                    </div>
                     {REVENUE_ROLES.includes(staffDetail.role) && (
                       <div className="summary-item">
                         <span>Paid Revenue</span>
@@ -573,10 +577,10 @@ const ReportsTab = () => {
 
                   {staffDetail.itemsBreakdown && Object.keys(staffDetail.itemsBreakdown).length > 0 && (
                     <div className="table-card">
-                      <h2>Items Handled</h2>
+                      <h2>Units Sold by Item</h2>
                       <div className="table-responsive">
                         <table className="report-table">
-                          <thead><tr><th>Item</th><th>Quantity</th></tr></thead>
+                          <thead><tr><th>Item</th><th>Units Sold</th></tr></thead>
                           <tbody>
                             {Object.entries(staffDetail.itemsBreakdown)
                               .sort(([, a], [, b]) => Number(b) - Number(a))
@@ -631,13 +635,18 @@ const ReportsTab = () => {
                     <strong className="kpi-value">{filteredStaff.length}</strong>
                   </div>
                   <div className="kpi-card">
-                    <span className="kpi-label">Total Orders Handled</span>
-                    <strong className="kpi-value">{filteredStaff.reduce((sum, row) => sum + (Number(row.totalOrders) || 0), 0)}</strong>
+                    <span
+                      className="kpi-label"
+                      title="Unique units on paid cafe orders, matching the Menu Items Report. Per-staff unit totals are attributed separately."
+                    >
+                      Total Units Sold
+                    </span>
+                    <strong className="kpi-value">{reportTotals?.unitsSold || 0}</strong>
                   </div>
                   {showStaffRevenue && (
                     <div
                       className="kpi-card"
-                      title="Unique paid order totals, matching the Menu Items Report. Per-staff revenue is attributed separately."
+                      title="Unique paid order totals, matching the Menu Items Report. Per-staff revenue and units are attributed separately."
                     >
                       <span className="kpi-label">Total Paid Revenue</span>
                       <strong className="kpi-value">{formatMoney(reportTotals?.paidRevenue)}</strong>
@@ -655,6 +664,7 @@ const ReportsTab = () => {
                           <th>Name</th>
                           <th>Role</th>
                           <th>Orders Handled</th>
+                          <th title="Units on paid orders attributed to this staff member. Staff totals may overlap.">Units Sold</th>
                           {showStaffRevenue && <th>Total Revenue</th>}
                           <th>Action</th>
                         </tr>
@@ -670,6 +680,7 @@ const ReportsTab = () => {
                               </span>
                             </td>
                             <td>{row.totalOrders || 0}</td>
+                            <td>{row.unitsSold || 0}</td>
                             {showStaffRevenue && (
                               <td>{REVENUE_ROLES.includes(row.role) ? formatMoney(row.revenue) : '—'}</td>
                             )}

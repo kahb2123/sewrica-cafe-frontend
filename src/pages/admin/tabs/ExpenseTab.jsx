@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useLanguage } from '../../../context/useLanguage';
 import { expenseService } from '../../../services/api';
+import Pagination from '../../../components/Pagination';
 import './ExpenseTab.css';
 
 const CURRENCY = new Intl.NumberFormat('en-ET', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -35,17 +36,23 @@ const ExpenseTab = ({ readOnly = false }) => {
   const [editingId, setEditingId] = useState(null);
   const [filters, setFilters] = useState({ start: daysAgo(29), end: daysAgo(0), category: '', approved: '' });
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
   const loadData = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
       const [expenseResponse, statsResponse] = await Promise.all([
-        expenseService.getAll({ ...filters, page, limit: 50 }),
+        expenseService.getAll({ ...filters, page, limit: 10 }),
         expenseService.getStats({ start: filters.start, end: filters.end })
       ]);
+      const nextTotalItems = expenseResponse.pagination?.total || 0;
+      const lastPage = Math.max(1, Math.ceil(nextTotalItems / 10));
+      if (page > lastPage) {
+        setPage(lastPage);
+        return;
+      }
       setExpenses(expenseResponse.data || []);
-      setTotalPages(expenseResponse.pagination?.pages || 1);
+      setTotalItems(nextTotalItems);
       setStats(statsResponse.data || { totalAmount: 0, count: 0, approved: 0, byCategory: [], byPaymentMethod: [] });
     } catch (error) {
       toast.error(error.message || t('Failed to load expenses'));
@@ -282,13 +289,12 @@ const ExpenseTab = ({ readOnly = false }) => {
           : t('No expenses found. Add your first expense above.')}</div>}
       </div>
 
-      {totalPages > 1 && (
-        <div className="expense-pagination">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>{t('Previous')}</button>
-          <span>{t('Page')} {page} {t('of')} {totalPages}</span>
-          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>{t('Next')}</button>
-        </div>
-      )}
+      <Pagination
+        currentPage={page}
+        pageSize={10}
+        totalItems={totalItems}
+        onPageChange={setPage}
+      />
 
       {stats.byCategory.length > 0 && (
         <div className="expense-breakdown">

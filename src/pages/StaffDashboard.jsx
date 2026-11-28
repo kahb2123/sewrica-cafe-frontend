@@ -6,6 +6,8 @@ import { staffService, PERMISSIONS } from '../services/api';
 import { useSocket } from '../context/SocketContext';
 import { useLanguage } from '../context/useLanguage';
 import StaffTaskCard from '../components/StaffTaskCard';
+import Pagination from '../components/Pagination';
+import usePagination from '../hooks/usePagination';
 import KitchenDisplayTab from './admin/tabs/KitchenDisplayTab';
 import StockTab from './admin/tabs/StockTab';
 import ExpenseTab from './admin/tabs/ExpenseTab';
@@ -473,6 +475,7 @@ const StaffDashboard = () => {
     ...row,
     unitPrice: row.quantity ? row.totalRevenue / row.quantity : 0
   }));
+  const completedRowsPagination = usePagination(completedTaskRows, 10, completedDate);
   const completedItemQuantity = completedTaskRows.reduce((total, row) => total + row.quantity, 0);
   const completedItemRevenue = completedTaskRows.reduce((total, row) => total + row.totalRevenue, 0);
   const canWriteTasks = canWritePage('staffDashboard') && (
@@ -651,7 +654,7 @@ const StaffDashboard = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {completedTaskRows.length ? completedTaskRows.map((row) => (
+                              {completedTaskRows.length ? completedRowsPagination.pageItems.map((row) => (
                                 <tr key={row.key}>
                                   <td>{row.item}</td>
                                   <td className="completed-task-number">{row.quantity}</td>
@@ -675,6 +678,12 @@ const StaffDashboard = () => {
                               </tfoot>
                             )}
                           </table>
+                          <Pagination
+                            currentPage={completedRowsPagination.currentPage}
+                            pageSize={completedRowsPagination.pageSize}
+                            totalItems={completedRowsPagination.totalItems}
+                            onPageChange={completedRowsPagination.setPage}
+                          />
                         </div>
                       ) : (
                         <div className="empty-state">

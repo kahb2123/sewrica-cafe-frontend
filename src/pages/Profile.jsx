@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { orderService } from '../services/api';
 import { toast } from 'react-toastify';
 import scrollToPageTop from '../utils/scrollToPageTop';
+import Pagination from '../components/Pagination';
+import usePagination from '../hooks/usePagination';
 import { useLanguage } from '../context/useLanguage';
 import './Profile.css';
 
@@ -13,6 +15,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState([]);
+  const orderPagination = usePagination(orders);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -231,7 +234,7 @@ const Profile = () => {
                   </div>
                 ) : (
                   <div className="orders-list">
-                    {orders.map((order) => (
+                    {orderPagination.pageItems.map((order) => (
                       <div key={order._id} className="order-card">
                         <div className="order-header">
                           <div className="order-info">
@@ -260,6 +263,12 @@ const Profile = () => {
                               <span className="item-price">{item.price * item.quantity} ETB</span>
                             </div>
                           ))}
+                          <Pagination
+                            currentPage={orderPagination.currentPage}
+                            pageSize={orderPagination.pageSize}
+                            totalItems={orderPagination.totalItems}
+                            onPageChange={orderPagination.setPage}
+                          />
                         </div>
 
                         {/* Payment Info */}

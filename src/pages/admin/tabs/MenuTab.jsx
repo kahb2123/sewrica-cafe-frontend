@@ -5,6 +5,8 @@ import { useAuth } from '../../../context/AuthContext'; // Import useAuth
 import { useLanguage } from '../../../context/useLanguage';
 import { menuService, UPLOADS_URL } from '../../../services/api';
 import { toast } from 'react-toastify';
+import Pagination from '../../../components/Pagination';
+import usePagination from '../../../hooks/usePagination';
 import './MenuTab.css';
 
 const MenuTab = () => {
@@ -298,6 +300,7 @@ const MenuTab = () => {
 
     return searchableText.includes(activeSearch.toLowerCase());
   });
+  const menuPagination = usePagination(filteredMenuItems, 10, activeSearch);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -574,7 +577,7 @@ const MenuTab = () => {
         </div>
       ) : (
         <div className="menu-items-grid">
-          {filteredMenuItems.map(item => (
+          {menuPagination.pageItems.map(item => (
             <div key={item._id} className="menu-item-card">
               <div className="menu-item-image">
                 {item.image && item.image !== 'default-food.jpg' ? (
@@ -648,6 +651,12 @@ const MenuTab = () => {
           ))}
         </div>
       )}
+      <Pagination
+        currentPage={menuPagination.currentPage}
+        pageSize={menuPagination.pageSize}
+        totalItems={menuPagination.totalItems}
+        onPageChange={menuPagination.setPage}
+      />
     </div>
   );
 };

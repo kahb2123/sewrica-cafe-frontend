@@ -10,6 +10,8 @@ import CashPaymentModal from '../components/modals/CashPaymentModal';
 import AssignChefModal from '../components/modals/AssignChefModal';
 import AssignDeliveryModal from '../components/modals/AssignDeliveryModal';
 import AssignStaffModal from '../components/modals/AssignStaffModal';
+import Pagination from '../../../components/Pagination';
+import usePagination from '../../../hooks/usePagination';
 import './OrdersTab.css';
 
 const getCafeDateKey = (value) => {
@@ -403,6 +405,11 @@ const OrdersTab = () => {
     return true;
   });
   const hasActiveSearch = Boolean(appliedSearch.query || appliedSearch.startDate || appliedSearch.endDate);
+  const orderPagination = usePagination(
+    filteredOrders,
+    10,
+    `${filter}|${appliedSearch.query}|${appliedSearch.startDate}|${appliedSearch.endDate}`
+  );
 
   if (loading) {
     return (
@@ -480,7 +487,7 @@ const OrdersTab = () => {
 
       <div className="orders-grid">
         {filteredOrders.length > 0 ? (
-          filteredOrders.map(order => (
+          orderPagination.pageItems.map(order => (
             <div key={order._id} className="order-card">
               <div className="order-card-header">
                 <div>
@@ -658,6 +665,12 @@ const OrdersTab = () => {
           </div>
         )}
       </div>
+      <Pagination
+        currentPage={orderPagination.currentPage}
+        pageSize={orderPagination.pageSize}
+        totalItems={orderPagination.totalItems}
+        onPageChange={orderPagination.setPage}
+      />
 
       {/* Modals */}
       <RejectOrderModal

@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import api from '../../../services/api';
+import Pagination from '../../../components/Pagination';
+import usePagination from '../../../hooks/usePagination';
 import './LotteryTab.css';
 
 const LotteryTab = () => {
@@ -9,6 +11,7 @@ const LotteryTab = () => {
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const ticketPagination = usePagination(tickets, 10, `${selectedMonth}-${selectedYear}`);
   const [winners, setWinners] = useState([]);
   const [drawing, setDrawing] = useState(false);
   const [stats, setStats] = useState({
@@ -259,7 +262,7 @@ const LotteryTab = () => {
                 </tr>
               </thead>
               <tbody>
-                {tickets.map((ticket, index) => (
+                {ticketPagination.pageItems.map((ticket, index) => (
                   <tr key={index} className={ticket.won ? 'winner-row' : ''}>
                     <td className="ticket-number">{ticket.lotteryTicketNumber}</td>
                     <td>{ticket.orderNumber}</td>
@@ -294,6 +297,12 @@ const LotteryTab = () => {
             </table>
           </div>
         )}
+        <Pagination
+          currentPage={ticketPagination.currentPage}
+          pageSize={ticketPagination.pageSize}
+          totalItems={ticketPagination.totalItems}
+          onPageChange={ticketPagination.setPage}
+        />
       </div>
 
       {/* Certificate Modal */}

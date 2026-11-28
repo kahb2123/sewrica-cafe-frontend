@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../context/AuthContext';
 import { ingredientService } from '../../../services/api';
+import Pagination from '../../../components/Pagination';
+import usePagination from '../../../hooks/usePagination';
 import './StockTab.css';
 
 const currency = new Intl.NumberFormat('en-ET', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -168,6 +170,18 @@ const StockTab = ({ readOnly = false }) => {
       stockOutValue: sumValue(stockOut)
     };
   }, [movementReport]);
+  const ingredientPagination = usePagination(ingredients);
+  const withdrawalPagination = usePagination(withdrawals);
+  const stockInPagination = usePagination(
+    movementRows.stockIn,
+    10,
+    `${reportRange.start}|${reportRange.end}`
+  );
+  const stockOutPagination = usePagination(
+    movementRows.stockOut,
+    10,
+    `${reportRange.start}|${reportRange.end}`
+  );
 
   const formatQuantities = (quantities) => {
     const entries = Object.entries(quantities || {});
@@ -544,7 +558,7 @@ const StockTab = ({ readOnly = false }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {movementRows.stockIn.map((entry) => (
+                      {stockInPagination.pageItems.map((entry) => (
                         <tr key={entry._id}>
                           <td>{formatDateTime(entry.createdAt)}</td>
                           <td>{entry.ingredientName}</td>
@@ -597,6 +611,12 @@ const StockTab = ({ readOnly = false }) => {
                     </tbody>
                   </table>
                 </div>
+                <Pagination
+                  currentPage={stockInPagination.currentPage}
+                  pageSize={stockInPagination.pageSize}
+                  totalItems={stockInPagination.totalItems}
+                  onPageChange={stockInPagination.setPage}
+                />
               </section>
 
               <section className="stock-report-section">
@@ -614,7 +634,7 @@ const StockTab = ({ readOnly = false }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {movementRows.stockOut.map((entry) => (
+                      {stockOutPagination.pageItems.map((entry) => (
                         <tr key={entry._id}>
                           <td>{formatDateTime(entry.createdAt)}</td>
                           <td>{entry.ingredientName}</td>
@@ -673,6 +693,12 @@ const StockTab = ({ readOnly = false }) => {
                     </tbody>
                   </table>
                 </div>
+                <Pagination
+                  currentPage={stockOutPagination.currentPage}
+                  pageSize={stockOutPagination.pageSize}
+                  totalItems={stockOutPagination.totalItems}
+                  onPageChange={stockOutPagination.setPage}
+                />
               </section>
             </div>
           </>
@@ -904,7 +930,7 @@ const StockTab = ({ readOnly = false }) => {
             </tr>
           </thead>
           <tbody>
-            {ingredients.map((item) => {
+            {ingredientPagination.pageItems.map((item) => {
               const low = Number(item.quantity) <= Number(item.reorderLevel);
               return (
                 <tr key={item._id} className={low ? 'low-stock' : ''}>
@@ -1003,6 +1029,12 @@ const StockTab = ({ readOnly = false }) => {
             : 'No ingredients yet. Use the Stock in form above to add your first one.'}</div>
         )}
       </div>
+      <Pagination
+        currentPage={ingredientPagination.currentPage}
+        pageSize={ingredientPagination.pageSize}
+        totalItems={ingredientPagination.totalItems}
+        onPageChange={ingredientPagination.setPage}
+      />
 
       <div className="stock-section-title">
         <h2>Recent stock out</h2>
@@ -1022,7 +1054,7 @@ const StockTab = ({ readOnly = false }) => {
             </tr>
           </thead>
           <tbody>
-            {withdrawals.map((item) => (
+            {withdrawalPagination.pageItems.map((item) => (
               <tr key={item._id}>
                 <td>{formatDateTime(item.createdAt)}</td>
                 <td>
@@ -1040,6 +1072,12 @@ const StockTab = ({ readOnly = false }) => {
         </table>
         {withdrawals.length === 0 && <div className="stock-empty">Nothing has been taken out of stock yet.</div>}
       </div>
+      <Pagination
+        currentPage={withdrawalPagination.currentPage}
+        pageSize={withdrawalPagination.pageSize}
+        totalItems={withdrawalPagination.totalItems}
+        onPageChange={withdrawalPagination.setPage}
+      />
     </section>
   );
 };

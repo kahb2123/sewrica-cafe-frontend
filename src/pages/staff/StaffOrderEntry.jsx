@@ -3,6 +3,8 @@ import { menuService, orderService, getImageUrl } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/useLanguage';
 import { toast } from 'react-toastify';
+import Pagination from '../../components/Pagination';
+import usePagination from '../../hooks/usePagination';
 import './StaffOrderEntry.css';
 
 const PAYMENT_METHODS = [
@@ -59,6 +61,7 @@ const StaffOrderEntry = () => {
     item.name?.toLowerCase().includes(search.trim().toLowerCase()) ||
     item.nameAm?.toLowerCase().includes(search.trim().toLowerCase())
   );
+  const menuPagination = usePagination(filteredItems, 10, search);
 
   const addItem = (item) => {
     setCart((current) => ({
@@ -167,7 +170,7 @@ const StaffOrderEntry = () => {
           {loadingMenu ? (
             <p className="staff-order-message">{t('Loading menu...')}</p>
           ) : filteredItems.length ? (
-            filteredItems.map((item) => (
+            menuPagination.pageItems.map((item) => (
               <button
                 className="staff-menu-item"
                 key={item._id}
@@ -190,6 +193,12 @@ const StaffOrderEntry = () => {
           ) : (
             <p className="staff-order-message">{t('No available menu items found.')}</p>
           )}
+          <Pagination
+            currentPage={menuPagination.currentPage}
+            pageSize={menuPagination.pageSize}
+            totalItems={menuPagination.totalItems}
+            onPageChange={menuPagination.setPage}
+          />
         </div>
 
         <form className="staff-order-summary" id="staff-order-summary" onSubmit={placeOrder}>

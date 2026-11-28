@@ -3,6 +3,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { adminService, ROLE_PERMISSIONS, PERMISSIONS } from '../../../services/api';
 import { toast } from 'react-toastify';
 import { useLanguage } from '../../../context/useLanguage';
+import Pagination from '../../../components/Pagination';
+import usePagination from '../../../hooks/usePagination';
 import PermissionGate from '../../../components/PermissionGate';
 import AddStaffModal from '../../../components/AddStaffModal';
 import './StaffTab.css';
@@ -63,6 +65,19 @@ const StaffTab = () => {
   const [showPerformanceModal, setShowPerformanceModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [staffPerformance, setStaffPerformance] = useState(null);
+  const staffPagination = usePagination(staff[activeSection] || [], 10, activeSection);
+  const performanceItemRows = Object.entries(staffPerformance?.itemsBreakdown || {});
+  const performanceDailyRows = Object.entries(staffPerformance?.dailyBreakdown || {});
+  const performanceItemsPagination = usePagination(
+    performanceItemRows,
+    10,
+    selectedStaff?.id || ''
+  );
+  const performanceDailyPagination = usePagination(
+    performanceDailyRows,
+    10,
+    selectedStaff?.id || ''
+  );
 
   const fetchStaff = useCallback(async () => {
     try {
@@ -354,7 +369,7 @@ const StaffTab = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {Object.entries(staffPerformance.itemsBreakdown || {}).map(([item, qty]) => (
+                      {performanceItemsPagination.pageItems.map(([item, qty]) => (
                         <tr key={item}>
                           <td>{item}</td>
                           <td>{qty}</td>
@@ -363,6 +378,12 @@ const StaffTab = () => {
                     </tbody>
                   </table>
                 </div>
+                <Pagination
+                  currentPage={performanceItemsPagination.currentPage}
+                  pageSize={performanceItemsPagination.pageSize}
+                  totalItems={performanceItemsPagination.totalItems}
+                  onPageChange={performanceItemsPagination.setPage}
+                />
               </div>
             )}
 
@@ -398,7 +419,7 @@ const StaffTab = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {Object.entries(staffPerformance.dailyBreakdown || {}).map(([date, data]) => (
+                      {performanceDailyPagination.pageItems.map(([date, data]) => (
                         <tr key={date}>
                           <td>{date}</td>
                           <td>{data.count}</td>
@@ -408,6 +429,12 @@ const StaffTab = () => {
                     </tbody>
                   </table>
                 </div>
+                <Pagination
+                  currentPage={performanceDailyPagination.currentPage}
+                  pageSize={performanceDailyPagination.pageSize}
+                  totalItems={performanceDailyPagination.totalItems}
+                  onPageChange={performanceDailyPagination.setPage}
+                />
               </div>
             )}
           </div>
@@ -463,36 +490,42 @@ const StaffTab = () => {
       </div>
 
       <div className="staff-grid">
-        {activeSection === 'cooks' && staff.cooks.map(member =>
+        {activeSection === 'cooks' && staffPagination.pageItems.map(member =>
           renderStaffCard(member, 'cook', [
             { field: 'assignedOrders', label: 'Active' },
             { field: 'completedOrders', label: 'Completed' },
           ])
         )}
 
-        {activeSection === 'delivery' && staff.delivery.map(member =>
+        {activeSection === 'delivery' && staffPagination.pageItems.map(member =>
           renderStaffCard(member, 'delivery', [
             { field: 'assignedOrders', label: 'Active' },
             { field: 'completedOrders', label: 'Delivered' },
           ])
         )}
 
-        {activeSection === 'cashiers' && staff.cashiers.map(member =>
+        {activeSection === 'cashiers' && staffPagination.pageItems.map(member =>
           renderStaffCard(member, 'cashier')
         )}
 
-        {activeSection === 'waiters' && staff.waiters.map(member =>
+        {activeSection === 'waiters' && staffPagination.pageItems.map(member =>
           renderStaffCard(member, 'waiter')
         )}
 
-        {activeSection === 'supplyChain' && staff.supplyChain.map(member =>
+        {activeSection === 'supplyChain' && staffPagination.pageItems.map(member =>
           renderStaffCard(member, 'supply_chain')
         )}
 
-        {activeSection === 'admins' && staff.admins.map(member =>
+        {activeSection === 'admins' && staffPagination.pageItems.map(member =>
           renderStaffCard(member, 'admin')
         )}
       </div>
+      <Pagination
+        currentPage={staffPagination.currentPage}
+        pageSize={staffPagination.pageSize}
+        totalItems={staffPagination.totalItems}
+        onPageChange={staffPagination.setPage}
+      />
 
       {staff[activeSection].length === 0 && (
         <div className="empty-state">

@@ -3,12 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { adminService } from '../../../services/api';
 import { toast } from 'react-toastify';
 import { useLanguage } from '../../../context/useLanguage';
+import Pagination from '../../../components/Pagination';
+import usePagination from '../../../hooks/usePagination';
 import './UsersTab.css';
 
 const UsersTab = () => {
   const { language, t } = useLanguage();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const pagination = usePagination(users);
   const roles = ['customer', 'cook', 'delivery', 'waiter', 'cashier', 'supply_chain', 'admin'];
   const roleLabels = {
     customer: 'Customer',
@@ -96,7 +99,7 @@ const UsersTab = () => {
           </thead>
           <tbody>
             {users.length > 0 ? (
-              users.map(user => (
+              pagination.pageItems.map(user => (
                 <tr key={user._id}>
                   <td>{user.name}</td>
                   <td>{user.email}</td>
@@ -139,6 +142,12 @@ const UsersTab = () => {
           </tbody>
         </table>
       </div>
+      <Pagination
+        currentPage={pagination.currentPage}
+        pageSize={pagination.pageSize}
+        totalItems={pagination.totalItems}
+        onPageChange={pagination.setPage}
+      />
     </div>
   );
 };

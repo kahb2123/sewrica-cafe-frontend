@@ -13,6 +13,8 @@ import { RiTakeawayLine, RiRestaurantLine } from 'react-icons/ri';
 import { toast } from 'react-toastify';
 import { menuService, UPLOADS_URL } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import Pagination from '../components/Pagination';
+import usePagination from '../hooks/usePagination';
 import { useLanguage } from '../context/useLanguage';
 import './Menu.css';
 
@@ -40,6 +42,11 @@ const Menu = () => {
   });
   const [imageErrors, setImageErrors] = useState({});
   const [apiError, setApiError] = useState(false);
+  const menuPagination = usePagination(
+    filteredItems,
+    10,
+    `${activeCategory}|${searchTerm}|${JSON.stringify(filters)}`
+  );
   const displayedCategories = [...new Set([...categories, 'soft-drinks', 'hot-drinks'])];
   const getLocalizedItemName = (item) => (
     language === 'am' ? item.nameAm || item.name : item.name
@@ -552,7 +559,7 @@ const Menu = () => {
             </div>
           ) : (
             <div className="menu-grid">
-              {filteredItems.map(item => (
+              {menuPagination.pageItems.map(item => (
                 <div key={item._id} className="menu-card" onClick={() => handleItemClick(item)}>
                   <div className="menu-card-image">
                     {!imageErrors[item._id] && item.image ? (
@@ -622,6 +629,12 @@ const Menu = () => {
               ))}
             </div>
           )}
+          <Pagination
+            currentPage={menuPagination.currentPage}
+            pageSize={menuPagination.pageSize}
+            totalItems={menuPagination.totalItems}
+            onPageChange={menuPagination.setPage}
+          />
         </div>
       </section>
 

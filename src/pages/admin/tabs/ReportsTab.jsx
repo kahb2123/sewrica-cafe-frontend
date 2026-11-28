@@ -7,6 +7,8 @@ import {
 import { toast } from 'react-toastify';
 import { adminService } from '../../../services/api';
 import scrollToPageTop from '../../../utils/scrollToPageTop';
+import Pagination from '../../../components/Pagination';
+import usePagination from '../../../hooks/usePagination';
 import './ReportsTab.css';
 
 const money = new Intl.NumberFormat('en-ET', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -212,6 +214,23 @@ const ReportsTab = () => {
     : activeStaff.filter((row) => row.role === roleFilter);
   const showStaffRevenue = roleFilter === 'all' || REVENUE_ROLES.includes(roleFilter);
   const revenueStaff = filteredStaff.filter((row) => REVENUE_ROLES.includes(row.role));
+  const reportResetKey = `${range.start}|${range.end}|${activeTab}|${roleFilter}`;
+  const itemPagination = usePagination(items, 10, reportResetKey);
+  const staffPagination = usePagination(filteredStaff, 10, reportResetKey);
+  const revenueStaffPagination = usePagination(revenueStaff, 10, reportResetKey);
+  const staffItemRows = Object.entries(staffDetail?.itemsBreakdown || {})
+    .sort(([, a], [, b]) => Number(b) - Number(a));
+  const staffDailyRows = Object.entries(staffDetail?.dailyBreakdown || {});
+  const staffItemPagination = usePagination(
+    staffItemRows,
+    10,
+    `${selectedStaff?.id || ''}|${range.start}|${range.end}`
+  );
+  const staffDailyPagination = usePagination(
+    staffDailyRows,
+    10,
+    `${selectedStaff?.id || ''}|${range.start}|${range.end}`
+  );
   const peakStaffRevenue = useMemo(
     () => Math.max(1, ...revenueStaff.map((row) => Number(row.revenue) || 0)),
     [revenueStaff]
@@ -408,7 +427,7 @@ const ReportsTab = () => {
                 <div className="chart-card">
                   <h2>Revenue by Menu Item</h2>
                   <div className="bar-chart">
-                    {items.map((row) => (
+                    {itemPagination.pageItems.map((row) => (
                       <div key={row._id || row.name} className="bar-row">
                         <span className="bar-label">{row.name}</span>
                         <div className="bar-track">
@@ -421,6 +440,12 @@ const ReportsTab = () => {
                       </div>
                     ))}
                   </div>
+                  <Pagination
+                    currentPage={itemPagination.currentPage}
+                    pageSize={itemPagination.pageSize}
+                    totalItems={itemPagination.totalItems}
+                    onPageChange={itemPagination.setPage}
+                  />
                 </div>
 
                 {taxSummary && (
@@ -582,12 +607,17 @@ const ReportsTab = () => {
                         <table className="report-table">
                           <thead><tr><th>Item</th><th>Units Sold</th></tr></thead>
                           <tbody>
-                            {Object.entries(staffDetail.itemsBreakdown)
-                              .sort(([, a], [, b]) => Number(b) - Number(a))
+                            {staffItemPagination.pageItems
                               .map(([name, qty]) => <tr key={name}><td className="item-name">{name}</td><td>{qty}</td></tr>)}
                           </tbody>
                         </table>
                       </div>
+                      <Pagination
+                        currentPage={staffItemPagination.currentPage}
+                        pageSize={staffItemPagination.pageSize}
+                        totalItems={staffItemPagination.totalItems}
+                        onPageChange={staffItemPagination.setPage}
+                      />
                     </div>
                   )}
 
@@ -604,7 +634,7 @@ const ReportsTab = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {Object.entries(staffDetail.dailyBreakdown).map(([date, day]) => (
+                            {staffDailyPagination.pageItems.map(([date, day]) => (
                               <tr key={date}>
                                 <td>{date}</td>
                                 <td>{day.count}</td>
@@ -617,6 +647,12 @@ const ReportsTab = () => {
                           </tbody>
                         </table>
                       </div>
+                      <Pagination
+                        currentPage={staffDailyPagination.currentPage}
+                        pageSize={staffDailyPagination.pageSize}
+                        totalItems={staffDailyPagination.totalItems}
+                        onPageChange={staffDailyPagination.setPage}
+                      />
                     </div>
                   )}
 
@@ -679,9 +715,9 @@ const ReportsTab = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredStaff.map((row, index) => (
+                        {staffPagination.pageItems.map((row, index) => (
                           <tr key={row.staffId || row._id || index}>
-                            <td><span className="rank-badge">{index + 1}</span></td>
+                            <td><span className="rank-badge">{(staffPagination.currentPage - 1) * staffPagination.pageSize + index + 1}</span></td>
                             <td className="item-name">{row.name || 'Unassigned'}</td>
                             <td>
                               <span className={`role-badge role-${row.role || 'unknown'}`}>
@@ -706,13 +742,19 @@ const ReportsTab = () => {
                       </tbody>
                     </table>
                   </div>
+                  <Pagination
+                    currentPage={staffPagination.currentPage}
+                    pageSize={staffPagination.pageSize}
+                    totalItems={staffPagination.totalItems}
+                    onPageChange={staffPagination.setPage}
+                  />
                 </div>
 
                 {showStaffRevenue && (
                   <div className="chart-card">
                     <h2>Revenue by Waiter and Delivery Staff</h2>
                     <div className="bar-chart">
-                      {revenueStaff.map((row) => (
+                      {revenueStaffPagination.pageItems.map((row) => (
                         <div key={row.staffId || row._id} className="bar-row">
                           <span className="bar-label">{row.name || 'Unassigned'}</span>
                           <div className="bar-track">
@@ -727,6 +769,12 @@ const ReportsTab = () => {
                         </div>
                       ))}
                     </div>
+                    <Pagination
+                      currentPage={revenueStaffPagination.currentPage}
+                      pageSize={revenueStaffPagination.pageSize}
+                      totalItems={revenueStaffPagination.totalItems}
+                      onPageChange={revenueStaffPagination.setPage}
+                    />
                   </div>
                 )}
               </>

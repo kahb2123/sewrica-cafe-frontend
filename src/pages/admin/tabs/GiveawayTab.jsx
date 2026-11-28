@@ -2,10 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import api from '../../../services/api';
+import Pagination from '../../../components/Pagination';
+import usePagination from '../../../hooks/usePagination';
 import './GiveawayTab.css';
 
 const GiveawayTab = () => {
   const [giveaways, setGiveaways] = useState([]);
+  const giveawayPagination = usePagination(giveaways);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingGiveaway, setEditingGiveaway] = useState(null);
@@ -264,7 +267,7 @@ const handleSubmit = async (e) => {
             <p>Create your first giveaway to engage customers!</p>
           </div>
         ) : (
-          giveaways.map(giveaway => (
+          giveawayPagination.pageItems.map(giveaway => (
             <div key={giveaway._id} className="giveaway-card">
               {giveaway.imageUrl && (
                 <div className="giveaway-card-image">
@@ -294,6 +297,12 @@ const handleSubmit = async (e) => {
           ))
         )}
       </div>
+      <Pagination
+        currentPage={giveawayPagination.currentPage}
+        pageSize={giveawayPagination.pageSize}
+        totalItems={giveawayPagination.totalItems}
+        onPageChange={giveawayPagination.setPage}
+      />
     </div>
   );
 };

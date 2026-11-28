@@ -1,12 +1,15 @@
 // src/pages/CustomerLottery.jsx
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/useLanguage';
+import Pagination from '../components/Pagination';
+import usePagination from '../hooks/usePagination';
 import api from '../services/api';
 import './CustomerLottery.css';
 
 const CustomerLottery = () => {
   const { language, t } = useLanguage();
   const [tickets, setTickets] = useState([]);
+  const ticketPagination = usePagination(tickets);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,7 +48,7 @@ const CustomerLottery = () => {
         </div>
       ) : (
         <div className="tickets-list">
-          {tickets.map((ticket, index) => (
+          {ticketPagination.pageItems.map((ticket, index) => (
             <div key={index} className={`ticket-card ${ticket.eligible ? 'eligible' : ''} ${ticket.won ? 'winner' : ''}`}>
               <div className="ticket-number">{ticket.lotteryTicketNumber}</div>
               <div className="ticket-details">
@@ -64,6 +67,12 @@ const CustomerLottery = () => {
               </div>
             </div>
           ))}
+          <Pagination
+            currentPage={ticketPagination.currentPage}
+            pageSize={ticketPagination.pageSize}
+            totalItems={ticketPagination.totalItems}
+            onPageChange={ticketPagination.setPage}
+          />
         </div>
       )}
     </div>

@@ -392,37 +392,6 @@
   font-size: 16px;
 }
 
-.expense-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-top: 20px;
-  padding: 16px;
-}
-
-.expense-pagination button {
-  padding: 10px 20px;
-  border: 1px solid #ddd;
-  background: #fff;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-  transition: all 0.2s;
-}
-
-.expense-pagination button:hover:not(:disabled) {
-  background: #f5f5f5;
-  border-color: #ccc;
-}
-
-.expense-pagination button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .expense-breakdown {
   margin-top: 32px;
   padding: 24px;
